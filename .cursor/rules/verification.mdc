@@ -1,0 +1,21 @@
+---
+description: Mandatory build/test/lint/e2e verification for code changes
+alwaysApply: true
+---
+
+# Verification
+
+After any code change (not asset-only), run and fix until green:
+
+```bash
+npm run build
+npm run test
+npm run lint
+npm run test:e2e
+```
+
+Asset-only diffs (JPG/PNG under `packages/hellpiercers-content/assets/` / synced `public/`, no logic/UI behavior) may skip `test:e2e`; still run `build`/`lint` if TS registration changed.
+
+Always use `npm run test:e2e` (never bare Playwright). E2e ports are `:5174` / `:3002`, not `:5173` / `:3001`.
+
+Do not commit/push/PR unless the user asks.

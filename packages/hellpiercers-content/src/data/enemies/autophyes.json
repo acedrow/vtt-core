@@ -1,0 +1,289 @@
+{
+  "name": "AUTOPHYES",
+  "tagline": "CONSUME, EXPLOIT, RETAIN AT ALL COST",
+  "threat": 5,
+  "description": "Post-industrial horrors consumed by an elemental greed. Their sole focus: to tear up all the realms of Hell to sate their bottomless avarice.",
+  "force": 2,
+  "subterfuge": 2,
+  "territory": 3,
+  "assets": 5,
+  "uniqueMechanics": [
+    {
+      "name": "ANATHEMA",
+      "effect": "A bitumen-like substance that drains life. Players touching ANATHEMA immediately take 3 damage and gain Slow:1. ANATHEMA does not affect AUTOPHYES units. Remains in play until HAAGENTI is defeated."
+    }
+  ],
+  "enemies": [
+    {
+      "name": "HAAGENTI",
+      "title": "THE NEVER-SATED",
+      "description": "A gaunt creature in the shape of a humanoid woman, her elongated hands and amorphous feet perpetually bleed a bitumen-like substance called ANATHEMA that drains the life out of everything it touches.",
+      "summary": "Autophyes boss (200 HP, scale 2, speed 8). Transference melee, fading line pull, and Blob ANATHEMA markers; bleeds ANATHEMA when moving.",
+      "tags": ["Boss"],
+      "crown": 4,
+      "hp": 200,
+      "agnosiaHp": 50,
+      "scale": 2,
+      "speed": 8,
+      "actions": "1/2",
+      "attacks": [
+        {
+          "text": "Target:1, Damage:10, Transference:8",
+          "attack": {
+            "targeting": "select",
+            "damage": "10",
+            "range": 1,
+            "effects": ["Transference:8"]
+          }
+        },
+        {
+          "text": "Line:8 Damage:10, subtract 1 damage for each space between Haagenti and the target. Any impaled characters are Pulled:3 towards her.",
+          "attack": {
+            "targeting": "assisted"
+          }
+        },
+        {
+          "text": "Blob:7 anywhere in line of sight. Deal 3 damage and Mark targeted squares. On her next turn, marked squares become a pool of ANATHEMA.",
+          "attack": {
+            "targeting": "assisted"
+          }
+        }
+      ],
+      "agnosia": "Burst:3 for 5 damage, create a 3x3 Box around Haagenti of ANATHEMA. In addition, any instance of damage dealt by ANATHEMA on the map while she is in AGNOSIA creates a special Sloucher minion with HP equal to the amount of damage dealt. It is placed directly adjacent to the victim by the GM and its sole desire in the world is to be consumed again by Haagenti, restoring her whatever HP it has when it makes it to a space adjacent to her.",
+      "special": "When Haagenti moves, she bleeds a trail of ANATHEMA behind her. ANATHEMA remains in play until Haagenti is defeated. Players touching ANATHEMA at any point immediately take 3 damage and gain Slow:1 as the life is drained from their bones. ANATHEMA does not effect AUTOPHYES units."
+    },
+    {
+      "name": "The Engine",
+      "codename": "AEOLIPILE",
+      "description": "A colossus of hellsteel and malice, it rumbles forward on massive, tank-crushing treads and lashes out with a mouth of constantly rotating, bloodstained drill nodules. The crimson leaking out of the hematic pistons let you know just what fuels this abomination.",
+      "summary": "3×3 miniboss (120 HP). Line and cone drills; agnosia burrows and re-emerges for Burst:2 Damage:7.",
+      "tags": ["Miniboss"],
+      "requiresUpgrade": "Hematic Combustion",
+      "hp": 120,
+      "agnosiaHp": 30,
+      "scale": 3,
+      "speed": 4,
+      "attacks": [
+        {
+          "text": "Line:2, Damage:5 as the drills focus their efforts.",
+          "attack": {
+            "targeting": "pattern",
+            "patternId": "line",
+            "size": 2,
+            "damage": "5"
+          }
+        },
+        {
+          "text": "Cone:2, Damage:3 as the drills splay out, Bleed:2.",
+          "attack": {
+            "targeting": "pattern",
+            "patternId": "cone",
+            "size": 2,
+            "damage": "3",
+            "effects": ["Bleed:2"]
+          }
+        }
+      ],
+      "agnosia": "The Engine burrows immediately. Create three markers on the map of rumbling stones and cracking earth. Next full turn, the Engine emerges from the one that'll be the most annoying for the players, doing Burst:2 Damage:7 to everything around it."
+    },
+    {
+      "name": "Harvester",
+      "codename": "GEORGOS",
+      "description": "This millipede-like creature is a common sight on battlefields and graveyards in AUTOPHYES territory. No two of its uncountable limbs are alike, yet all operate in concert to pluck and rip out more arms, legs, tails, and other parts from corpses to hastily attach to its wiggling body.",
+      "summary": "2×2 miniboss (120 HP, crown 3). Charge path damage and multi-target melee; agnosia splits into two Scale:1 halves. Runs over Corpses to buff next attack.",
+      "tags": ["Miniboss"],
+      "crown": 3,
+      "hp": 120,
+      "agnosiaHp": 30,
+      "scale": 2,
+      "speed": 6,
+      "attacks": [
+        {
+          "text": "Charge:6, Damage:6, deal 3 damage to any units adjacent to the charge path.",
+          "attack": {
+            "targeting": "assisted"
+          }
+        },
+        {
+          "text": "Target:X, Range:1, Damage:3. This attack can be used up to 5 times, selecting a different target each time if possible.",
+          "attack": {
+            "targeting": "assisted"
+          }
+        }
+      ],
+      "agnosia": "The Harvester splits in half like a flatworm, creating two Scale:1 Harvesters with otherwise identical attacks and Speed, with the remaining HP split between both. Both Harvester halves need to be killed for this enemy to be considered dead.",
+      "special": "When the Harvester unit becomes active in a battle, any defeated unit leaves behind a Corpse token. If the Harvester runs over a Corpse in the course of its turn, remove the Corpse and add 1 damage to the Harvesters next attack. After the attack, the damage returns to base level. Players can attack these corpses to remove them."
+    },
+    {
+      "name": "Extractors",
+      "codename": "METALLON",
+      "description": "The once-human and the never-born lurch in packs toward their next harvest site. Cracked gas masks and punctured armour conceal sallow flesh pocked with metal buboes. They lash out with hands of steel and bone pulled into the shape of tools.",
+      "summary": "1 HP swarm. Adjacent Damage:3; may skip turn to mark a LoS target for double damage for the rest of combat.",
+      "tags": ["Swarm"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 4,
+      "attacks": [
+        {
+          "text": "Damage:3, Range:1 to one adjacent creature.",
+          "attack": {
+            "targeting": "select",
+            "damage": "3",
+            "range": 1,
+            "adjacent": true
+          }
+        }
+      ],
+      "special": "Extractors may forgo their turn to observe a target in line of sight and form the perfect weapon from their limbs. For the rest of the combat encounter, their attacks do double damage against that target."
+    },
+    {
+      "name": "Whalers",
+      "codename": "THALASSOURGOS",
+      "description": "Fast moving quadrupeds resembling a large decapitated wolf's body with too many joints, their spines can be launched forth, acting as a harpoon made of bone and sinew. The spinal cord used as the fishing line feels everything. If this thing had a head, it would be screaming.",
+      "summary": "5 HP minion. Line:10 harpoon Pull:3; impaled targets stay Slow and Bleeding until Whaler dies or Range:10 breaks.",
+      "tags": ["Minion"],
+      "requiresUpgrade": "Cerebrospinal Propellants",
+      "hp": 5,
+      "scale": 1,
+      "speed": 5,
+      "attacks": [
+        {
+          "text": "Line:10 harpoon attack dealing 3 damage, Pull:3 toward Whaler to the first character in the line.",
+          "attack": {
+            "targeting": "pattern",
+            "patternId": "line",
+            "size": 10,
+            "damage": "3",
+            "effects": ["Pull:3"]
+          }
+        }
+      ],
+      "special": "Creatures damaged by Whalers are impaled and count as Slow and Bleeding until this enemy is killed or they are no longer within Range:10. The Whaler cannot strike again while it has a creature impaled."
+    },
+    {
+      "name": "Sloucher",
+      "codename": "OKATHŪMAIO",
+      "description": "Semi-motile spill of caustic sludge that lurches forward, always in search of another meal. Another MEAL. Another M E A L",
+      "summary": "1 HP swarm. Damage:2 Transference:2; allies can consume adjacent Slouchers to heal equal to their HP.",
+      "tags": ["Swarm"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 5,
+      "attacks": [
+        {
+          "text": "2 Damage, Transference:2",
+          "attack": {
+            "targeting": "select",
+            "damage": "2",
+            "range": 1,
+            "effects": ["Transference:2"]
+          }
+        }
+      ],
+      "special": "Adjacent AUTOPHYES can consume an adjacent Sloucher or Sloucher Swarm to heal damage equal to the Sloucher's HP."
+    },
+    {
+      "name": "Bulwarks",
+      "codename": "ERYMA",
+      "description": "The elites in Haagenti's personal service, these faceless, armoured opponents are far taller than they should be, never seem to tire, and breathe a toxic, fetid fog that even turns the heads of all but the most desiccated wastelander.",
+      "summary": "20 HP minion (speed 2). Shock:1 Damage:5; ending adjacent incurs Poison:2 to non-AUTOPHYES. Unlocked by The Nihilith.",
+      "tags": ["Minion"],
+      "hp": 20,
+      "scale": 1,
+      "speed": 2,
+      "attacks": [
+        {
+          "text": "Shock:1, Damage:5",
+          "attack": {
+            "targeting": "select",
+            "damage": "5",
+            "range": 1,
+            "effects": ["Shock:1"]
+          }
+        }
+      ],
+      "special": "Ending a turn adjacent to a Bulwark incurs Poison:2 to non-AUTOPHYES characters."
+    },
+    {
+      "name": "Yearnlings",
+      "codename": "POTHOS",
+      "description": "Once humanoid forms contorted to the shape of burrowing insects. Blind from lifetimes underground, they instead react to scent, vibration, and sound. Their approach is heralded by a clicking noise they make with their mouth-parts. First one, then three, then a dozen, a hundred.",
+      "summary": "1 HP swarm (speed 6). Adjacent Damage:2; may sacrifice 2 Speed to spawn another Yearnling adjacent.",
+      "tags": ["Swarm"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 6,
+      "attacks": [
+        {
+          "text": "Deal 2 damage to an adjacent creature",
+          "attack": {
+            "targeting": "select",
+            "damage": "2",
+            "adjacent": true
+          }
+        }
+      ],
+      "special": "On any turn, sacrifice 2 Speed to Spawn 1 additional Yearnling adjacent to this one."
+    },
+    {
+      "name": "Singing Scythe",
+      "codename": "HEIMA",
+      "description": "A flying manta ray made of skin and piano wire, these quick, flying creatures slice trees and old buildings to digestible sizes without slowing down. Their name comes from the musical whistling tones that emit from their permanently agape mouths as they dive upon their foes.",
+      "summary": "1 HP minion (crown 2). Charge:7 Damage:5 through allies and enemies; always Aegis:5, +1 Elevation, ignores terrain; immune to adjacent-only attacks.",
+      "tags": ["Minion"],
+      "requiresUpgrade": "Skinweaver Looms",
+      "crown": 2,
+      "hp": 1,
+      "scale": 1,
+      "speed": 5,
+      "attacks": [
+        {
+          "text": "Charge:7, Damage:5. Running into other units does not interrupt this Charge. Deal damage to all units run over or into by this attack, enemy or ally.",
+          "attack": {
+            "targeting": "assisted"
+          }
+        }
+      ],
+      "special": "These creatures always count as having Aegis:5, ignoring terrain features and are treated as having +1 Elevation. They are immune to any attack that only targets adjacent units."
+    },
+    {
+      "name": "Slavering Maw",
+      "codename": "HYDRA",
+      "description": "A seeping wound in the ground that looks bottomless, but seems to lead to an endless supply of foul creatures. Around its circumference sit a thousand teeth-like protrusions that always seem to be freshly dripping with a viscous fluid.",
+      "summary": "Immobile spawner (80 HP, scale 2). Gains charges to spawn Autophyes minions or minibosses; eats knocked-in minions for a charge.",
+      "tags": ["Spawner", "Immobile"],
+      "hp": 80,
+      "scale": 2,
+      "speed": 0,
+      "special": "Spawning — At the end of the round, The Slavering Maw gains a Charge. On the GM's turn, they may spend 1 Charge to spawn an AUTOPHYES Minion, or 5 Charges to spawn a miniboss.\n\nFeed The Abyss — Enemies with the Minion tag who are knocked into a Slavering Maw are instantly killed and Spawning is disabled for a turn while the meal is swallowed. Slavering Maw immediately gains a charge."
+    },
+    {
+      "name": "Strategic Toxic Waste",
+      "description": "The sheer variety of toxic substances available to the denizens of Hell are innumerable. Of course, it only made sense to group them all together into a kind of glowing soup and store them in loose barrels at regular intervals. What could possibly go wrong?",
+      "summary": "1 HP immobile fort. On destruction: Burst:3 Damage:5 and leaves 3×3 Toxic Sludge (Healing:2 for AUTOPHYES only).",
+      "tags": ["Fortification", "Immobile"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 0,
+      "special": "Nobody Could Have Predicted This: Destruction of these barrels will cause a Burst:3 Damage:5 explosion. In addition, it leaves behind a 3x3 square of Toxic Sludge that provides Healing:2 for AUTOPHYES units only."
+    },
+    {
+      "name": "Wireweal",
+      "description": "The cavernous, soul-crushing greed has so poisoned the land that it regularly vomits forth tumors of covetous steel to protect and retain what it has taken by force.",
+      "summary": "1 HP fort swarm (speed 1). Can be carried by a swarm for Cover:1; Wall:3 Damage:2 Pin:1.",
+      "tags": ["Fortification", "Swarm", "Cover", "Obstacle"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 1,
+      "attacks": [
+        {
+          "text": "Wall:3, Damage:2 and applying Pin:1 to anyone trapped within",
+          "attack": {
+            "targeting": "assisted"
+          }
+        }
+      ],
+      "special": "Wall: Can be chained into a Swarm as an action, granting the whole swarm Cover:1 and moving along with them. While carrying the Wireweal, the Swarm may only make one attack per round total. They may drop the Wireweal at any time as a Movement action."
+    }
+  ]
+}

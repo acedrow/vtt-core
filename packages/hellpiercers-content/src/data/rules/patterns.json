@@ -1,0 +1,104 @@
+[
+  {
+    "id": "arc",
+    "name": "Arc",
+    "description": "Draws the most direct path from the user to the nearest enemy, then from that enemy to the next closest, and so on, with a total range of X spaces without diagonals. Full damage is dealt to each enemy on the path. When routes are equally short, the attacker chooses the path.",
+    "kind": "drawable",
+    "origin": "self",
+    "directional": false,
+    "adjacency": "orthogonal",
+    "size": { "min": 1, "max": 20, "default": 3 }
+  },
+  {
+    "id": "blob",
+    "name": "Blob",
+    "description": "An amorphous mass of X contiguous tiles, with placement determined by the attacker. There cannot be any enclosed gaps (tiles unaffected while surrounded on all four sides).",
+    "kind": "drawable",
+    "origin": "self",
+    "directional": false,
+    "adjacency": "orthogonal",
+    "size": { "min": 1, "max": 20, "default": 3 }
+  },
+  {
+    "id": "burst",
+    "name": "Burst",
+    "description": "An AOE pattern centered on the ability user. Burst:1 affects all tiles within 1 space of the user, orthogonally or diagonally. Each additional point of size increases that radius by 1.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": false,
+    "metric": "chebyshev",
+    "includesOrigin": true,
+    "size": { "min": 1, "max": 10, "default": 1 }
+  },
+  {
+    "id": "blast",
+    "name": "Blast",
+    "description": "An AOE projected away from the user in one of the four cardinal directions. Blast:1 creates a cross-shaped pattern. Blast:2 creates a 3×3 box. Blast:3 creates a 5×5 box, and so on.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": true,
+    "size": { "min": 1, "max": 5, "default": 1 }
+  },
+  {
+    "id": "charge",
+    "name": "Charge",
+    "description": "A straight line of up to X spaces. During resolution the user is placed on the last tile of the line. This does not count as movement. Charge must stop if interrupted by units or obstacles unless stated otherwise.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": true,
+    "includesOrigin": false,
+    "size": { "min": 1, "max": 20, "default": 3 }
+  },
+  {
+    "id": "cone",
+    "name": "Cone",
+    "description": "Spreads out from the user like a pyramid. Cone:1 is a single orthogonally adjacent square. Cone:2 adds three spaces in a sideways line one more square away, and so on. Cones cannot be aimed diagonally.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": true,
+    "includesOrigin": false,
+    "size": { "min": 1, "max": 10, "default": 2 }
+  },
+  {
+    "id": "line",
+    "name": "Line",
+    "description": "Creates a straight line in any of the four cardinal directions extending X spaces from the user.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": true,
+    "includesOrigin": false,
+    "size": { "min": 1, "max": 20, "default": 4 }
+  },
+  {
+    "id": "ring",
+    "name": "Ring",
+    "description": "Centered on the user and creates a box around them. Range determines the space between the user and the ring; the size value determines the width of the ring itself. Defaults to Range:1 when previewing.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": false,
+    "includesOrigin": false,
+    "defaultRange": 1,
+    "size": { "min": 1, "max": 5, "default": 1 }
+  },
+  {
+    "id": "star",
+    "name": "Star",
+    "description": "Centered on the user and spreads outward diagonally. The size determines how many spaces in all four diagonal directions the attack reaches.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": false,
+    "includesOrigin": true,
+    "size": { "min": 1, "max": 10, "default": 2 }
+  },
+  {
+    "id": "wall",
+    "name": "Wall",
+    "description": "Affects spaces in a line of squares sideways, centered relative to the source. The size determines how many spaces left and right are in the pattern. Even sizes are lopsided; the user chooses which side gets the extra square.",
+    "kind": "fixed",
+    "origin": "self",
+    "directional": true,
+    "includesOrigin": true,
+    "lopsided": true,
+    "size": { "min": 1, "max": 10, "default": 2 }
+  }
+]

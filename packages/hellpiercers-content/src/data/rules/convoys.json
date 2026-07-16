@@ -1,0 +1,78 @@
+[
+  {
+    "id": "supply",
+    "name": "Supply",
+    "summary": "Moving a load of materials or finished products from its creation point to where it will be used.",
+    "escort": "Armed depending on the army's Force quality; Force:1 might have a smattering of Minion-level troops, while Force:5 armies defend with a full force of Minibosses and Minions.",
+    "completionOptions": [
+      {
+        "name": "Fortify Stronghold",
+        "description": "Select a Fortification from a non-active faction and add it to your forces until the start of the next STRATCOM phase."
+      },
+      {
+        "name": "Unit Drills",
+        "description": "Write which detachment is being trained and where they are garrisoned. Choose one: +1 Speed, +1 damage on all attacks, or add Pin, Bleed, or Slow to one attack. Reveal at the start of the next TACCOM at that location."
+      },
+      {
+        "name": "Research Project",
+        "description": "Select a Research Project from the research list."
+      }
+    ]
+  },
+  {
+    "id": "support",
+    "name": "Support",
+    "summary": "These convoys carry weapons, troops, slaves, and other support materials to and from locations. The most valuable convoys a demon lord can send out.",
+    "escort": "Heavily defended with at least two minibosses and a full array of minions regardless of the army's current Force value.",
+    "completionOptions": [
+      {
+        "name": "Unit Drills",
+        "description": "Write which detachment is being trained and where they are garrisoned. Choose one: +1 Speed, +1 damage on all attacks, or add Pin, Bleed, or Slow to one attack. Reveal at the start of the next TACCOM at that location."
+      },
+      {
+        "name": "Research Project",
+        "description": "Select a Research Project from the research list."
+      }
+    ]
+  },
+  {
+    "id": "assault",
+    "name": "Assault",
+    "summary": "A convoy aimed at retaking lost territory, or attacking opposing forces.",
+    "escort": "Contents depend on the faction's Force value, but likely includes several minibosses and a full division of minions. Might even have a Faction Leader involved.",
+    "completionOptions": [
+      {
+        "name": "Trigger TACCOM or Force roll",
+        "description": "When it arrives, either trigger a TACCOM scene with player characters, or roll Force to see if it succeeds. If this targets another faction, make it an opposed roll."
+      }
+    ]
+  },
+  {
+    "id": "diplomatic",
+    "name": "Diplomatic",
+    "summary": "A convoy carrying an important diplomat, vital commander, or other VIPs. One of the few that often move between other demons' territory.",
+    "escort": "Frequently carry Boss-level opponents.",
+    "completionOptions": [
+      {
+        "name": "Research Project",
+        "description": "Select a Research Project from the research list."
+      },
+      {
+        "name": "Infernal Mass",
+        "description": "Write where the ritual is performed and define its intention, duration, needs, and weaknesses. Small, local, contained rituals are quicker, cheaper, and more vulnerable than global, unrestrained ones."
+      }
+    ]
+  },
+  {
+    "id": "decoy",
+    "name": "Decoy",
+    "summary": "Decoy convoys do nothing themselves. Their purpose is to mislead and misdirect players, confuse them, and lead them into traps.",
+    "escort": "Almost always have either zero defenses, or an overwhelming force of minions, minibosses, and more.",
+    "completionOptions": [
+      {
+        "name": "Misdirection",
+        "description": "No mechanical completion reward. Use to deliver plot information, hint at upcoming assaults, play with NPCs, or spring traps. Always be sure a Decoy is not a waste of time for the table."
+      }
+    ]
+  }
+]

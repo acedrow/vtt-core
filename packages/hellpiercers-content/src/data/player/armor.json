@@ -1,0 +1,220 @@
+[
+  {
+    "name": "MALAKBEL",
+    "summary": "This armor is fast and unusually maneuverable.",
+    "description": "\"O' Rises The Sun, Whose New Light Shines Free Of The Eyes of The Enemy. Woe To The Dark, Which Faces Now A Blinded Sun\"",
+    "speed": 7,
+    "specialMovement": "Condensed Dimensional Theorem — You can move diagonally.",
+    "armorAction": "Formless — Select an adjacent enemy unit or Swarm. Move into any free space adjacent to them.",
+    "armorActionStructured": { "tier": "support", "kind": "teleport_adjacent" },
+    "reversal": {
+      "description": "\"It fled the rotunda after the first charges went off. Streaked like lightning, like light. It moved like a spider-web, everywhere at once, in that second the entire universe was Malakbel, and its word was the universe. We grew a sun in its heart, and watched its voice burn.\"",
+      "charges": 6,
+      "trigger": "Targeted by a non-adjacent enemy.",
+      "effect": "Move outside the pattern or range of the attack, then move the same number of spaces again after the enemy's attack is complete."
+    }
+  },
+  {
+    "name": "KUSHIEL",
+    "summary": "Instead of walking, push yourself off of nearby terrain or characters.",
+    "description": "Unlike the HELLPIERCERS' other armors, this was forged in Hell itself; Kushiel played the role of watchman while ensuring the Demiurge's power reached deep into this dark place. Its corpse was uncovered during rebuilding efforts, ringed in her shattered halo and broken wings.",
+    "speed": 4,
+    "specialMovement": "Assisted Launch — When you start your turn adjacent to a wall or an allied unit, you may move in the opposite direction for free until you collide with an enemy, special environment tile, wall, friendly unit, or other obstacle. This free movement ends adjacent to the obstacle. When you begin adjacent to more than one wall or allied unit, you decide which to launch from, if any.",
+    "armorAction": "Hasaphet's Palm — Target an adjacent creature and Push:1, Push:2, or Push:3 with equal Recoil.",
+    "armorActionStructured": { "tier": "support", "kind": "push_recoil", "push": 3 },
+    "reversal": {
+      "description": "\"She was the only one who came at us after the demiurge fell. She held aloft a burnished sword, you could see her body straining against the physics of the world, sapped of divinity, and silver draining from her form. In one hand she held the blooded body of a man to her lips. It did not save her.\"",
+      "charges": 5,
+      "trigger": "Targeted by an adjacent enemy.",
+      "effect": "Move away from the original attacker until you collide with a wall, obstacle, or unit. Deal the damage of their attack to whatever you collide with. Spend an additional charge to instead Push your attacker until they collide with a wall, obstacle, or unit. When you do, deal that unit's damage to itself."
+    }
+  },
+  {
+    "name": "ASMODEL",
+    "summary": "Build up Speed and then discharge it in an explosive Burst.",
+    "description": "Asmodel's cruelty wove the strings of agape with threads of the bull, and coated tongues in carnelian. His minions roamed the palaces of devotion and brought ruin to the beauty therein. He was slain by the lovers Orisia and Karisia, whose tongues broke his.",
+    "speed": 4,
+    "specialMovement": "Marble-Breaking Focus — Gain +1 Speed at the end of your turn as long as you moved your entire Speed in a straight line during your turn.",
+    "armorAction": "Physical Edification — Convert all Speed you haven't spent this turn into a Burst:1 attack centered on the point you ended your movement. Reset your Speed to default.",
+    "reversal": {
+      "description": "\"We broke the Lord of Patience. I sealed the Heavenly Quarter in a time-loop and led 10 of our best in. One of the first uses of inverted ogdoadian technology. The siege lasted a subjective eternity, but our grit proved hardier—He rode a bull to face us. We roasted its corpse and feasted to celebrate his defeat.\"",
+      "charges": 6,
+      "trigger": "Adjacent ally is targeted by any attack.",
+      "effect": "You take the attack's damage instead. Heal any ally within Range:3 for the amount of damage you received. Heal yourself for half that amount."
+    }
+  },
+  {
+    "name": "BARAQIEL",
+    "summary": "Take to the skies and then slam down upon your foes.",
+    "description": "He Who Bound The Lightning came at us like a beam of light; to catch his eye was to catch his doom. His battleslaves held Heaven's sky in locked-motion and baffled our airforce. It is said a Cainite adept made allegiances of the heavenly thunder, and used forbidden bindings to catch the Aeon, and turn him into a bullet in the head of God.",
+    "speed": 6,
+    "specialMovement": "DVORAK Momentum Principles — When moving, you can spend 1 Speed to gain +1 Elevation, to the normal cap of Elevation +3. You may choose not to descend to lower elevations when you move over lower terrain.",
+    "armorAction": "Crepusular Hammer — Lose levels of elevation until you reach the Terrain below you and attack with Burst:X, where X is half of the levels of elevation lost (e.g. 3 levels when going from +3 Elevation to 0 Elevation or 6 levels when going from +3 Elevation to -3 Elevation). This attack does flat damage equal to the number of spaces you moved this turn.",
+    "reversal": {
+      "description": "Each feather fell suffused in milky-sweet ambrosia from Baraqiel's nest atop the grandest tree in Ogdoad's Breast. We sang for our homes knee-deep in the dirt-streaked nectar by the featherless body strewn across the massive stump.",
+      "charges": 4,
+      "trigger": "Targeted by an attack from an enemy at your elevation or lower.",
+      "effect": "Launch the attacking enemy to elevation 3, interrupting their attack. Unless otherwise brought to the ground or defeated, at the start of the enemy's next turn they fall to the ground, taking the damage of their own attack. Then, their impact deals the same damage plus one for each Elevation they fell in Burst:2 centered on the unit's impact site. All units damaged by your reversal gain Pin:1. If another unit occupies the space where the enemy falls, the occupying unit is pushed to the nearest unoccupied space."
+    }
+  },
+  {
+    "name": "MURIEL",
+    "summary": "Move through enemies freely and trade your HP for explosions.",
+    "description": "To be encased in the Heavenly Magus's flesh is to feel the desperate eager need bulging and straining in every nucleus. To feel the membrane of every cell in your body screaming for growth. Feed it, gorge yourself on gnosis until your renewed enlightenment sears ignorance from the air.",
+    "speed": 5,
+    "specialMovement": "Nous-Agnostic Deployment — Moving through enemy spaces does not incur a movement penalty. You may treat Scale:2 and above units' zones of influence as standard terrain. Special terrain effects still apply to you. You may end your turn within an enemy's zone of influence. You do not Provoke enemies you have moved through during your turn.",
+    "armorAction": "Flashburst — Spend any amount of HP. Deal damage equal to the spent HP within Burst:2, then move into a free space within Burst:2. This action can kill you.",
+    "reversal": {
+      "description": "The collapse turned outward, boiling with the heat of sacrificial pyre, of all the hate that ever rung through a heart, of the purest love in its purest moment. The Liturgical Dampeners strained, threatening to buckle under the force stripping 2847 prayers inside it. Then it was dark. The first beam of light cast over Muriel's corpse revealed a withered thing, bent over a chair. The angel appeared to have died in its sleep.",
+      "charges": 1,
+      "trigger": "Targeted by an enemy attack.",
+      "effect": "Immediately trigger your armor ability. Add the damage you would receive from this attack to the ability before you add any of your own HP."
+    }
+  },
+  {
+    "name": "ABATUR",
+    "summary": "Rearrange the terrain or consume it for bonuses.",
+    "description": "\"In the Bythos we found him. The last of them, by his word. The oldest of them by ours. He judged us unworthy, and barred our way to the Demiurge's chambers.\"",
+    "speed": 4,
+    "specialMovement": {
+      "name": "Meditation On Past Gnosis",
+      "intro": "When you begin your turn adjacent to special terrain (Uneasy, Void, Impassable, Obstacle, Advantageous), you may absorb one square of the special terrain, converting it into Standard terrain and gaining one of the following until the end of your turn:",
+      "sections": [
+        {
+          "options": ["Speed: 2", "Aegis:1", "+1 Damage"]
+        }
+      ]
+    },
+    "armorAction": "Perfected Precognitive Evasion — During an attack, if any of your pattern overlaps with at least one special terrain tile, you may spend a Support Action to move that terrain to any other valid square within your attack pattern. You may move up to three tiles in this way per action.",
+    "reversal": {
+      "description": "\"They surrendered before we even drew steel. Their scales clattered to the ground, and this titan knelt before us in the darkness of the Eternal Tribunal. They sloughed off their flesh, and I watched a God turn into a Mortal.\"",
+      "charges": 4,
+      "trigger": "Targeted by any enemy attack.",
+      "effect": "Negate and absorb the attack, preventing any and all damage and Effects to you, anyone else targeted, the terrain, etc. Then, repeat the attack from yourself. This repetition does no damage and removes 1 stack of each negative Effect from each HELLPIERCER it targets."
+    }
+  },
+  {
+    "name": "JEHOEL",
+    "summary": "Turn special terrain into Linked Terrain, combining distant tiles into one.",
+    "description": "Synthetic monadic links: Life and Death, Mind and Truth, Word and Life, Man and Faith—each an eternally collapsing contradiction. The first monadic technique builds similar symbolic links between the abstracted self and others, for a moment transforming both subjects into universal concepts. Real like radiation or hope.",
+    "speed": 6,
+    "specialMovement": "Quark-Gluon-Celestium Form — When moving into or out of special terrain, you do not Provoke. Additionally, you may treat Void, Obstacle, and Impassable terrain as Uneasy.",
+    "armorAction": "Particle Interchangeability Module — When moving into any kind of special terrain, you may spend a Support Action to permanently convert it into Link terrain. Link terrain allows movement between itself and any other Link terrain as if the spaces were adjacent. Link does not count as one of the two types of special terrain a tile can be.",
+    "reversal": {
+      "description": "The hunt was one of endurance. Of hundreds of thousands of footsteps and with each the question of if the next would take you where your senses told you they would. As long as humanity has hunted, it has excelled in outpacing and exhausting its prey. Jehoel, despite her cunning, was no different. We gutted her like a mammoth on a dais made of firmament.",
+      "charges": 4,
+      "trigger": "Targeted by an enemy attack while on or adjacent to special terrain.",
+      "effect": "Immediately convert the nearest special terrain to Link and send the attacker through it. If there are no other Link tiles on the map at this time, the enemy vanishes and emerges from the next Link tile you create. Whether the enemy emerges immediately or later, you may rotate it to any facing you choose, then it completes its attack, inflicting its damage and Effects wherever it now aims."
+    }
+  },
+  {
+    "name": "MACROPROSOPUS",
+    "summary": "Assail your foes with an army of clones.",
+    "description": "The awakened spinther turns the nous along uncharted directions; an ascended being is an nth-dimensional being, and their imprints are just as deadly as the original. Quantum clones, tulpic representations, alternative time-lines, we share our spark with a boundless army. A hive-mind of the self.",
+    "speed": 5,
+    "specialMovement": "N/A",
+    "special": "Blood-Marked Annihilation — When one of your copies is destroyed, mark the attacker. Any ally's next attack against a marked target removes the mark and gains +1 Damage and Transference:1.",
+    "armorAction": "Litany of Transmogrification — Place a copy of yourself within Range:3. This copy has 1 HP. Actions, including attacks and movement, may be made from either your original self or the copy. You may have up to 3 copies active at any time. Characters in this armor and copies made using its ability have the Swarm trait, and may convert into a Swarm as a Support Action. This Swarm does not receive the HP benefits of swarming, but does receive +1 damage for each square of the Swarm adjacent to the target. When you swarm, you are not limited to attacking adjacent enemies like demon Swarms. You may split your actions and movement between your clones however you wish (e.g. you may spend 3 Speed on a clone and 2 Speed on yourself) but all movement must occur at the same time.",
+    "reversal": {
+      "description": "Depth and Silence, Mind and Truth, Word and Life, Man and Faith. Generations unfurled in boundless time until, instead of a twin, only a single emanation stepped forth from the sixth generation. Sophia stood alone.",
+      "charges": 4,
+      "trigger": "Targeted by an enemy attack and you have at least one clone.",
+      "effect": "Instead of any of the original attack's damage, Effects, etc., it Breaks and destroys one clone of your choosing—nothing more, nothing less."
+    }
+  },
+  {
+    "name": "YADATHAN",
+    "summary": "Create structures that empower your allies or harm your foes.",
+    "description": "Blessed is the mason who cuts the stone. Exalted is the architect who envisages the tower. Most celebrated is the worker, beyond reproach, who joins stone and vision with calloused hands and sweat. Diabolical is the knave who would cut the tower at its root.",
+    "speed": 5,
+    "specialMovement": "You may spend all of your Speed during your turn to teleport to a space adjacent to one of your existing towers. This does not trigger Provoke.",
+    "armorAction": "Demiurge's Hammer — Place your tower within Range:2. You may only have one active tower at a time. If you place a tower on a battlefield with a tower already present, the older tower vanishes as soon as your new tower is placed.",
+    "armorActionStructured": { "tier": "support", "kind": "place_tower", "range": 2 },
+    "towers": [
+      {
+        "name": "Katapty",
+        "tags": "Immobile",
+        "hp": 5,
+        "scale": 1,
+        "special": "At the end of this unit's turn, deal 1 damage to 3 enemies within Range:4 of this tower."
+      },
+      {
+        "name": "Kerauno",
+        "tags": "Immobile",
+        "hp": 4,
+        "scale": 1,
+        "special": "When teleported to, select one adjacent enemy, deal 5 damage, and inflict Pin:2."
+      },
+      {
+        "name": "Hermńdion",
+        "tags": "Immobile",
+        "hp": 6,
+        "scale": 1,
+        "special": "Whenever an allied unit ends their turn adjacent to this tower, grant them Haste:1."
+      },
+      {
+        "name": "Iatrós",
+        "tags": "Immobile",
+        "hp": 3,
+        "scale": 1,
+        "special": "At the end of this unit's turn, this tower places 1 Seed within Range:2 of its position. Any allied unit who interacts with a seed removes it from the map and immediately heals 5 HP."
+      }
+    ],
+    "reversal": {
+      "description": "Turn your head, look through a closed eye. The wheel becomes a tower. The galaxy becomes a spear.",
+      "charges": 2,
+      "trigger": "Targeted by an enemy attack and you have at least one tower.",
+      "effect": "Draw a Line between yourself and your tower, ignoring line of sight. Deal damage equal to the incoming attack to all enemy units within that line. You may spend additional charges to draw additional lines between yourself, the tower, and your allies. If one of the towers being drawn to or from is Iatrós, then heal allied units within or connected by that line instead of damaging enemies."
+    }
+  },
+  {
+    "name": "SACHIEL",
+    "summary": "Create and manipulate Advantageous Terrain for unique effects.",
+    "description": "Honeyed was the blood of Sachiel in his deep compassion, though its sweetness made of him a miser. He met his end toppled and flayed by Tolgar and his legions who had never tasted sweetness. Whomsoever wears Sachiel's skin wears too Tolgar's stern lesson, \"kindness given is not lost.\"",
+    "speed": 7,
+    "specialMovement": "When you end your movement, your current square becomes Advantageous Terrain.",
+    "armorAction": {
+      "name": "Blessed Wake",
+      "intro": "While in or adjacent to Advantageous Terrain, you may spend a Support Action to Activate it. Select one of the benefits below:",
+      "sections": [
+        {
+          "title": "Shelter",
+          "options": ["The Advantageous terrain becomes Advantageous with Cover."]
+        },
+        {
+          "title": "Succor",
+          "options": ["The Advantageous terrain becomes Advantageous with Healing:1."]
+        },
+        {
+          "title": "Stymie",
+          "options": ["The Advantageous terrain becomes Advantageous with Uneasy."]
+        },
+        {
+          "title": "Settle",
+          "options": ["The Advantageous terrain becomes Advantageous with Fortified."]
+        }
+      ],
+      "outro": "Activation is contagious—it affects all contiguous Advantageous spaces at once. You may only have one benefit active at any one time. Changing the active benefit or applying the benefit to a different cluster of advantageous terrain removes any previously applied benefits to any previously activated spaces. Previously enhanced tiles revert to Advantageous terrain with no other modifiers."
+    },
+    "reversal": {
+      "description": "\"We found him in the vaults of heaven. One final count of the arrayed treasures of Ogdoad. What need has heaven for goblets and silver coins? It was no matter. We melted the ocean of gilded sorrow in his screaming blood, and crafted his isolationism into strength.\" — Heradan, 8th Adherent to the Rebel Fist",
+      "charges": 3,
+      "trigger": "Targeted by an adjacent enemy.",
+      "effect": "Push:3 to all adjacent units. This may Break Swarms."
+    }
+  },
+  {
+    "name": "NBAT",
+    "summary": "Create Uneasy Terrain, surround enemies with it, and then detonate it.",
+    "description": "A sleek shining suit like a sewing needle. When you wear it, it feels like your guilt is being pulled out of your very bones.",
+    "speed": 8,
+    "specialMovement": "Normal terrain costs 2 Speed to move through and Uneasy Terrain costs 0 Speed to move through. You can spend 1 Speed to turn an adjacent tile into Uneasy Terrain.",
+    "armorAction": "Silver Moontear — When an area is enclosed on all sides by a continuous ring of Uneasy terrain, as a Support Action you may detonate the terrain to damage all enemy units within the enclosed area. Deal damage equal to the number of Uneasy terrain tiles surrounding them and inflict Pin:1. Remove all detonated Uneasy squares.",
+    "reversal": {
+      "description": "Those who strike against you strike against the light of the Monad and the breath of the world. A wound against one is a wound against all.",
+      "charges": 3,
+      "trigger": "Targeted by any enemy attack.",
+      "effect": "Transform into a tile of Advantageous Terrain, avoiding the initial attack. Remain in this state until the end of your next turn. In this form you may move as normal, but all other actions are impossible until the end of your next turn. Players may trigger you as if you were any other piece of Advantage terrain, and you may move under other players and enemies, imparting any relevant effects when you do."
+    }
+  }
+]

@@ -1,0 +1,357 @@
+{
+  "name": "PARACLETUS",
+  "tagline": "REMAKE THE STRANGE INTO SOMETHING FAMILIAR",
+  "threat": 5,
+  "description": "A living infection of strange shapes spying on our world. They seek to assimilate their foes in order to compute the Samsaran Sequence.",
+  "force": 2,
+  "subterfuge": 2,
+  "territory": 5,
+  "assets": 2,
+  "uniqueMechanics": [
+    {
+      "name": "Stained Squares",
+      "effect": "Any square may be stained through various effects. Enemies or other factions cannot build on Stained squares."
+    },
+    {
+      "name": "Stainwalk",
+      "effect": "Stainwalk abilities are triggered when that unit occupies a stained square."
+    }
+  ],
+  "enemies": [
+    {
+      "name": "OROBAS",
+      "portrait": "orobas",
+      "portraitBgExcludeHues": [[38, 90]],
+      "title": "THE SPEAKER",
+      "description": "The herald of the Paracletus and the first to pour from the Source Seed, OROBAS sees the world around it for what it could be. It does not want to kill you—it wants to free you.",
+      "summary": "Paracletus boss (200 HP, scale 3). Stain-focused line attacks, kill-to-spawn, and enemy repositioning; can stain when hit and moves faster on stain.",
+      "tags": ["Boss"],
+      "crown": 4,
+      "hp": 200,
+      "agnosiaHp": 50,
+      "scale": 3,
+      "speed": 4,
+      "actions": "1/2",
+      "attacks": [
+        {
+          "text": "Line:4. If the target is on a Stained square, deal 8 damage. Otherwise deal 3 damage.",
+          "attack": {
+            "targeting": "pattern",
+            "patternId": "line",
+            "size": 4,
+            "damage": "3",
+            "specialId": "orobas-stained-line"
+          }
+        },
+        {
+          "text": "Deal 5 damage to an adjacent unit. If it kills that creature, spawn one new miniboss of your choosing under your control.",
+          "attack": {
+            "targeting": "assisted"
+          }
+        },
+        {
+          "text": "Move any unit adjacent to any stained square onto that stained square, and deal that unit 5 damage.",
+          "attack": {
+            "targeting": "select",
+            "damage": "5",
+            "adjacent": true,
+            "specialId": "stain-teleport"
+          }
+        }
+      ],
+      "agnosia": "Immediately spawn any one unique fortification within 5 squares of OROBAS.",
+      "special": "When OROBAS takes damage, you may increase that damage by 1 to Stain an adjacent square.",
+      "stainwalk": "When on a Stained square, OROBAS moves twice as fast."
+    },
+    {
+      "name": "Eyesting Rose",
+      "portrait": "eyesting-rose",
+      "codename": "PRISTIR",
+      "description": "When the Source Seed was experimenting with fractals, PRISTIR was born. Those that try to trace its patterns may lose track of its size and subsequent threat.",
+      "summary": "Fractal miniboss that grows and shrinks. Swells for push damage, then bursts for AoE; stainwalk shares damage with linked allies on stain.",
+      "tags": ["Miniboss"],
+      "hp": 100,
+      "agnosiaHp": 30,
+      "scale": 1,
+      "speed": 3,
+      "attacks": [
+        {
+          "text": "Increase PRISTIR's scale by 2. Any occupied spaces take 5 damage and are pushed out.",
+          "attack": {
+            "targeting": "assisted"
+          }
+        },
+        {
+          "text": "Deal 10 damage to Burst:1, then decrease PRISTIR's scale by 1.",
+          "attack": {
+            "targeting": "pattern",
+            "patternId": "burst",
+            "size": 1,
+            "damage": "10"
+          }
+        }
+      ],
+      "agnosia": "Increase PRISTIR's scale by 1 and PRISTIR is now Primed. Any occupied spaces take 5 damage and are pushed out.",
+      "stainwalk": "When PRISTIR is on Stain, allies on connected Stained squares take 2 less damage when attacked and PRISTIR takes 2 more damage when attacked."
+    },
+    {
+      "name": "Gorgenaut",
+      "portrait": "gorgenaut",
+      "codename": "RETIARIUS",
+      "description": "Formed at the Scyllan Convergence of thirteen seas, RETIARIUS is bent on consumption. By swirling its energy in a Charybdic array pattern, it generates a near-inescapable vacuum.",
+      "summary": "Fast 2×2 miniboss. Cone pull and stain-teleport strikes; agnosia stains a 5×5 and pulls; heals 10 HP on stain each turn.",
+      "tags": ["Miniboss"],
+      "hp": 100,
+      "agnosiaHp": 20,
+      "scale": 2,
+      "speed": 6,
+      "attacks": [
+        {
+          "text": "Cone:3. Deal 5 damage and pull any unit 1 space towards RETIARIUS.",
+          "attack": {
+            "targeting": "pattern",
+            "patternId": "cone",
+            "size": 3,
+            "damage": "5",
+            "effects": ["Pull:1"]
+          }
+        },
+        {
+          "text": "Deal 10 damage to an adjacent unit. Move that unit to any stained square.",
+          "attack": {
+            "targeting": "select",
+            "damage": "10",
+            "adjacent": true,
+            "specialId": "stain-teleport"
+          }
+        }
+      ],
+      "agnosia": "Draw a 5x5 box with RETIARIUS at the center and Stain them. Pull any enemies within the box 1 square towards RETIARIUS.",
+      "stainwalk": "When RETIARIUS is on a Stained square, it recovers 10 HP at the end of your turn."
+    },
+    {
+      "name": "Soaring Bombardier",
+      "portrait": "soaring-bombardier",
+      "codename": "CHALAZAOR",
+      "description": "When the stain washed over a stygian anemone, it rose to flight in the form of CHALAZAOR. Its volatile spawn are said to be irremovable when planted.",
+      "summary": "Flying miniboss. Plants Flowerbuds that bloom into Stain Flowers; agnosia counts down to a death explosion after negating damage.",
+      "tags": ["Miniboss", "Flying"],
+      "requiresUpgrade": "Extrarterran Evolution",
+      "crown": 3,
+      "hp": 80,
+      "agnosiaHp": 10,
+      "scale": 1,
+      "speed": 8,
+      "attacks": [
+        {
+          "text": "Create a Flowerbud on an adjacent square with 1 HP and Countdown:2. When the timer reaches 0, it blooms into a Stain Flower.",
+          "attack": {
+            "targeting": "none",
+            "adjacent": true,
+            "specialId": "flowerbud-plant"
+          }
+        },
+        {
+          "text": "Deal 3 damage and Bleed:2 to an adjacent unit.",
+          "attack": {
+            "targeting": "select",
+            "damage": "3",
+            "effects": ["Bleed:2"],
+            "adjacent": true
+          }
+        }
+      ],
+      "agnosia": "CHALAZAOR emits a hypnotic pattern of colors that mortal eyes weren't meant to see. Countdown:10. Whenever CHALAZAOR would take damage, it takes 0 damage instead and reduces Countdown by 1. When Countdown reaches zero, CHALAZAOR dies and deals 5 damage to Burst:2."
+    },
+    {
+      "name": "Lurking Freak",
+      "portrait": "lurking-freak",
+      "codename": "POTAGON",
+      "description": "Direct descendant of some of the first beings spawned from the Source Seed and the catalyst for the Contagion Mind, POTAGON once saw to the safety of the Seed on its journey through the rivers of Hell until it reached its nest in the depths.",
+      "summary": "2×2 ambusher. Ranged line stains tiles; melee pins. Burrows as stain terrain; takes 10 damage if it ends off stain.",
+      "tags": ["Miniboss"],
+      "requiresUpgrade": "Extrarterran Evolution",
+      "hp": 90,
+      "agnosiaHp": 10,
+      "scale": 2,
+      "speed": 4,
+      "attacks": [
+        {
+          "text": "Range:2, Line:4 Damage:4, and stain targeted squares.",
+          "attack": {
+            "targeting": "pattern",
+            "patternId": "line",
+            "size": 4,
+            "range": 2,
+            "damage": "4",
+            "onHit": [{ "kind": "stainTiles" }]
+          }
+        },
+        {
+          "text": "Deal 10 damage to an adjacent unit, and target gets Pinned:1.",
+          "attack": {
+            "targeting": "select",
+            "damage": "10",
+            "effects": ["Pin:1"],
+            "adjacent": true
+          }
+        }
+      ],
+      "agnosia": "POTAGON burrows into the ground and counts as Stained ground for other units to occupy.",
+      "stainwalk": "When POTAGON ends its turn on a square that isn't stained, it takes 10 HP damage."
+    },
+    {
+      "name": "Scorned Eyes",
+      "portrait": "scorned-eyes",
+      "codename": "KATAGOS",
+      "description": "When the Source Seed purged parasites from its body, they arose a new Stained being. The Contagion Mind deemed KATAGOS more useful, integrating them into their own sub-link of the mind network.",
+      "summary": "1 HP swarm skirmisher. Ranged chip damage; a primed swarm of 4+ self-destructs and stains its tiles.",
+      "tags": ["Swarm"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 6,
+      "attacks": [
+        {
+          "text": "Damage:2, Range:1",
+          "attack": {
+            "targeting": "select",
+            "damage": "2",
+            "range": 1
+          }
+        }
+      ],
+      "special": "When a Swarm contains 4 or more units, a Swarm may Prime itself. Any Swarm that is Primed will destroy the entire Swarm when taking damage, leaving any spaces they occupied with the Stained condition."
+    },
+    {
+      "name": "Stain Creep",
+      "portrait": "stain-creep",
+      "codename": "KALUPTID",
+      "description": "Sentient stain that walked before it could think. Nearby creatures will hear a constant ringing—a comfort for the Paracletus but a source of unease for everyone else.",
+      "summary": "1 HP minion. Adjacent 4 damage; dies off stain. Allies can share its square.",
+      "hp": 1,
+      "scale": 1,
+      "speed": 5,
+      "attacks": [
+        {
+          "text": "Deal 4 damage to an adjacent creature.",
+          "attack": {
+            "targeting": "select",
+            "damage": "4",
+            "adjacent": true
+          }
+        }
+      ],
+      "special": "If a Stain Creep ends its turn on a square that isn't Stained, it dies.",
+      "stainwalk": "Allied units can inhabit the same square as Stain Creep."
+    },
+    {
+      "name": "Shadowing Witness",
+      "portrait": "shadowing-witness",
+      "codename": "AULAEA",
+      "description": "When the Source Seed bleeds during a hurricane, AULAEA are formed in the foamy waters. It's rumored that their intense gaze can relieve headaches in humans—an uncanny ability some see as a boon instead of an omen.",
+      "summary": "Flying 1 HP swarm. Range:2 poke; leaves squares stained until your next turn when it moves.",
+      "tags": ["Swarm", "Flying"],
+      "crown": 2,
+      "hp": 1,
+      "scale": 1,
+      "speed": 4,
+      "attacks": [
+        {
+          "text": "Range:2, Damage:2",
+          "attack": {
+            "targeting": "select",
+            "damage": "2",
+            "range": 2
+          }
+        }
+      ],
+      "special": "When AULAEA leaves a square, it counts as stained until your next turn."
+    },
+    {
+      "name": "Latent Pudding",
+      "portrait": "latent-pudding",
+      "codename": "AMBROID",
+      "description": "In the pressures of the deep sea, compressed Paraclesal flesh will roil and condense into an AMBROID. AMBROID will sing an alien aria before they turn into a new weapon on the terrain.",
+      "summary": "1 HP minion. Push:2; transforms into any Paracletus fortification when ending on stain.",
+      "hp": 1,
+      "scale": 1,
+      "speed": 4,
+      "attacks": [
+        {
+          "text": "Push:2",
+          "attack": {
+            "targeting": "select",
+            "effects": ["Push:2"],
+            "adjacent": true
+          }
+        }
+      ],
+      "special": "When ending its turn on a Stained tile, Latent Pudding may transform into any Paracletus Fortification."
+    },
+    {
+      "name": "Paracletus Loom",
+      "portrait": "paracletus-loom",
+      "description": "The creation of Paracletal spinnerets connected to the Source Seed with a transpatial superequation can transport demons across great distances almost instantaneously. Each being in the Contagion Mind acts as a roller on a conveyor belt to move their presence along.",
+      "summary": "Immobile spawner (50 HP). Gains charges each round to spawn minions or minibosses.",
+      "tags": ["Spawner", "Immobile"],
+      "hp": 50,
+      "scale": 1,
+      "special": "At the end of the round, Paracletus Loom gains a Charge. On the GM's turn, they may spend 1 Charge to spawn a Paracletus minion, or 5 Charges to spawn a miniboss."
+    },
+    {
+      "name": "Flowerbud",
+      "portrait": "stain-flower",
+      "description": "Volatile spawn planted by CHALAZAOR. When its countdown ends, it blooms into a Stain Flower.",
+      "summary": "Immobile 1 HP pod. Countdown:2 blooms into a Stain Flower.",
+      "tags": ["Fortification", "Immobile", "Obstacle"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 0,
+      "special": "When Countdown reaches 0, blooms into a Stain Flower."
+    },
+    {
+      "name": "Stain Flower",
+      "portrait": "stain-flower",
+      "description": "In corrupting the Fibonacci sequence with Paraclesal mathematics, seeds injected into the battlefield can bloom into viable stand-ins for lower level demons. Swarms including a Stain Flower will notice an empty presence in the Contagion Mind that merely echoes the units it is linked with.",
+      "summary": "Immobile fort (10 HP). Counts toward nearby swarms but cannot move or act.",
+      "tags": ["Fortification", "Immobile", "Obstacle"],
+      "hp": 10,
+      "scale": 1,
+      "speed": 0,
+      "special": "These pods count as part of a Swarm when next to any minions without joining them. They cannot move or take any action, and have 1 HP."
+    },
+    {
+      "name": "Stain Geyser",
+      "portrait": "stain-gyser",
+      "description": "By adjusting the flow of subterranean stain rivers, they may bore upwards into a geyser on the surface. The stain travels through the earth in a helix pattern, erupting in an efficient and beautiful fractal array.",
+      "summary": "Immobile fort (30 HP). Stains a 4×4 area while it stands.",
+      "tags": ["Fortification", "Immobile", "Obstacle"],
+      "hp": 30,
+      "scale": 1,
+      "speed": 0,
+      "special": "Draw a 4x4 square around Stain Geyser. This area is stained while the Stain Geyser exists."
+    },
+    {
+      "name": "Creep Station",
+      "portrait": "creep-station",
+      "description": "By using a modified version of the transpatial superequation, the Contagion Mind links two Paraclesal cubes on the battlefield. When boarded, the occupants of one cube will safely be launched to a linked cube at a high speed.",
+      "summary": "2×2 fort (50 HP). Linked stations teleport boarders next turn; line between them damages passers.",
+      "tags": ["Fortification", "Carrier", "Manned"],
+      "hp": 50,
+      "scale": 2,
+      "speed": 0,
+      "special": "Draw a line of squares between any two Creep Stations. This line cannot pass through any obstacles or void tiles. Any unit may board on one Creep Station and arrive at a connected Creep Station at the beginning of their next turn. Units on the line while the Creep Station is being used take 10 damage."
+    },
+    {
+      "name": "Bubbling Presence",
+      "portrait": "bubbling-presence",
+      "description": "A bubble made out of stain, containing a lightweight gas that can redisperse into stain when popped. It accepts a single command before being excised from the Contagion Mind.",
+      "summary": "Moving fort (1 HP, speed 4). Drifts one way; bursts for 3 Burst:1 damage and stains on contact or hit.",
+      "tags": ["Fortification", "Cover", "Moving"],
+      "hp": 1,
+      "scale": 1,
+      "speed": 4,
+      "special": "Creates a bubble of stain that drifts in a single direction. If it hits an obstacle, unit, or is attacked, it bursts, deals 3 damage in Burst:1, and creates stain in every targetted tile."
+    }
+  ]
+}

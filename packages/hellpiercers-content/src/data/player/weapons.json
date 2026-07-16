@@ -1,0 +1,286 @@
+[
+  {
+    "name": "Ten Thousand Year Reign Shattering Blade",
+    "description": "Taken from Abraxas's broken hands and plunged into the heart of his lover. The first of Divine Humanity's purified weapons is said to know the 18 hymns of tyrant-woe, and it scalds the air in the presence of crowned heads.",
+    "attack": {
+      "damage": "4+2D10",
+      "tiles": [[-1, 0], [1, 0], [0, -1], [0, 1]]
+    },
+    "activeAbility": {
+      "name": "Roaming Strikes",
+      "intro": "You take a powerful riposte stance. Until your next move or attack, you gain Armor:2 and Compel:1 and you may not use any Reversal abilities. Enemy attacks against you grant 1 stack of Retaliation while you are in this stance. When you end your turn with stacks of Retaliation, but aren't in this stance, you lose 1 stack of it. On any of your turns following this one when you have at least Retaliation:1, you may make an attack with Charge, Arc:X, where X is your starting Speed plus your stacks of Retaliation. When making this attack, you may spend Retaliation to modify the attack. You may gain 1 modifier per 1 stack of Retaliation spent, with no restrictions on duplicate effects:",
+      "sections": [
+        {
+          "options": [
+            "You gain Aegis:1 before your attack",
+            "Your attack gains the Breaker tag",
+            "Your attack gains Bleed:1",
+            "Your attack gains Lingering:1",
+            "Your attack gains Push:2",
+            "Your attack gains +1 Damage",
+            "You may make one square in your pattern Uneasy after your attack"
+          ]
+        }
+      ]
+    },
+    "passiveAbility": "Eight-Folded Four-Fold Tetragram — When you kill an enemy with this weapon, you may move into the empty space and perform a regular attack as a free action."
+  },
+  {
+    "name": "She Speaks The Language Of Kings",
+    "description": "\"The ruins of a dead god, the splintered bones of the exalted dead, and consecrated plasma-baked ceramics imbue this weapon with a 189% Devastation Coefficient across the psionic planes. Do not fire this thing Hylic-side if you value your nebula\" — Technite Zostrianos",
+    "attack": {
+      "damage": "3+2D10",
+      "rangeTargets": { "range": 4, "maxTargets": 3 }
+    },
+    "activeAbility": "Anointed With Heavenfallen Brass — Mark up to 3 enemies within Range:4 of at least one ally. If they move on their turn, even if pushed or teleported, instantly deal half damage to them without using an action and remove their mark. This damage ignores all range and line-of-sight restrictions. You may have up to 6 enemies Marked this way. You may dismiss or replace a Mark at any time at no cost.",
+    "passiveAbility": "Foresight Enhanced Targeting Systems — This weapon has the Breaker tag."
+  },
+  {
+    "name": "Sethian Externalized Annihilation Cannon",
+    "description": "\"It's an inversion of the Heimarne matrix—it projects, rather than contains. Expands, rather than condenses. And frees, rather than enslaves. You need condensed celestials for power, but that's child's play for us these days.\" — Technite Zostrianos",
+    "attack": {
+      "damage": "3+5D6",
+      "tiles": [[2, -1], [2, 0], [2, 1], [3, 0]]
+    },
+    "activeAbility": "Canticle Boosted Warhook — Target an enemy, obstacle, or wall within Range:3. Instantly move adjacent to your target. If the target is an enemy, inflict Blazing:2 and deal damage. You become immune to Blazing until the end of your next turn.",
+    "passiveAbility": "Precise Chaos — This weapon has the Breaker tag. If you choose not to deal damage to the squares of a Swarm separately with Breaker, deal this weapon's damage to the Swarm once for each square of your pattern that targets it (up to a maximum of 12+20D6 damage)."
+  },
+  {
+    "name": "Regrettable Precaution",
+    "description": "Halfway between a gun and a prayer. Each invocation sends sympathies through the arrayed realities in hopes of finding a causality where you have a better weapon in your hands.",
+    "attack": {
+      "damage": "3+3D6",
+      "tiles": [[1, 0], [2, 0]]
+    },
+    "activeAbility": "Instant Materialization — Throw your weapon at a target within Range:4. Mark the tile and deal damage to all enemies within Burst:1 of the target. You must step on the marked tile to retrieve Regrettable Precaution.",
+    "passiveAbility": "Weapon-Based Lifeform — You may use an Aux Action to attack with Regrettable Precaution, even when you have already attacked, you have another weapon equipped, or your Regrettable Precaution is currently on the ground. If it's on the ground, use the marked tile as the source of its attack pattern. This cannot be used to fire someone else's Regrettable Precaution."
+  },
+  {
+    "name": "Heaven Burning Sword",
+    "description": "Zubana ascended first among the stars, and her rage claimed a million barren planets before it was quelled. Awakening the heavens to the brutality inflicted in their false name can only lead to righteous fury and immolating flame. Now her fury, and that of her three sisters, is set to a task worthy of its nuclear flame.",
+    "attack": {
+      "damage": "6",
+      "tiles": [[1, 0], [1, 1], [1, -1], [2, 0], [3, 0]],
+      "levels": [
+        {
+          "label": "Level 1",
+          "damage": "6",
+          "tiles": [[1, 0], [1, 1], [1, -1], [2, 0], [3, 0]]
+        },
+        {
+          "label": "Level 2",
+          "damage": "15",
+          "tiles": [[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [6, 1], [6, -1], [7, 0]]
+        },
+        {
+          "label": "Level 3",
+          "damage": "25",
+          "tiles": [
+            [1, 0],
+            [2, -1], [2, 0], [2, 1],
+            [3, -2], [3, -1], [3, 0], [3, 1], [3, 2],
+            [4, -2], [4, -1], [4, 0], [4, 1], [4, 2],
+            [5, -2], [5, -1], [5, 0], [5, 1], [5, 2],
+            [6, -2], [6, -1], [6, 0], [6, 1], [6, 2],
+            [7, -2], [7, -1], [7, 0], [7, 1], [7, 2],
+            [8, -2], [8, -1], [8, 0], [8, 1], [8, 2]
+          ]
+        }
+      ]
+    },
+    "activeAbility": "Unfolding — As an Aux Action, charge the Heaven Burning Sword. Its level increases by 1 to a maximum of 3.",
+    "passiveAbility": {
+      "name": "Allogenetic Tactics",
+      "intro": "The Heaven Burning Sword resets to Level 1 after every attack.",
+      "sections": [
+        { "title": "Level 1", "options": ["Damage 6"] },
+        { "title": "Level 2", "options": ["Damage 15"] },
+        { "title": "Level 3", "options": ["Damage 25"] }
+      ]
+    }
+  },
+  {
+    "name": "Ambiguous Intentions",
+    "description": "In Eve-Sophia's final congress, she granted her nameless ambassador a shred of the Beast's senecta. This convent of true divinity calls to an age of promised gold, should those who hear its whispers follow their hearts.",
+    "attack": {
+      "damage": "3+2D8",
+      "tiles": [[0, -2], [0, -1], [1, -1], [1, 1]]
+    },
+    "activeAbility": "Terminating The Eightfold Path — When you attack, if one of the squares in your attack pattern is empty, you may immediately move into that square for zero movement cost and take a free attack with -1 damage. You may repeat this as long as you deal at least 1 damage to any target, with each subsequent attack dealing an additional -1 damage. When you move, Mark the spaces you step into. You may not move into a Marked tile in this way. Remove all of your Marks at the start of your next turn.",
+    "passiveAbility": "Blood-Hungry Enhancement Prayer — For each enemy killed with Ambiguous Intentions during your turn, gain 1 Charge. When you attack with 3 or more Charges, the attack is Burst:2 and ignores the weapon's damage reduction penalties, then loses 3 Charges."
+  },
+  {
+    "name": "Sabaoth-Class Obliteration Charges",
+    "description": "\"The 9th Layer of Heaven seemed impenetrable, but the pillars separating realms proved vulnerable to shaped charges\"",
+    "attack": {
+      "damage": "variable",
+      "bombs": [
+        {
+          "name": "Aragmos",
+          "damage": "5",
+          "range": "3-6",
+          "description": "Range: 3-6, Damage: 5",
+          "tiles": [[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [2, 1], [2, -1], [4, 1], [4, -1]],
+          "anchorTile": [3, 0]
+        },
+        {
+          "name": "Doration",
+          "damage": "6",
+          "range": "4-6",
+          "description": "Range: 4-6, Damage: 6",
+          "tiles": [[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [4, 1], [4, -1]],
+          "anchorTile": [4, 0]
+        },
+        {
+          "name": "Akinakis",
+          "damage": "10",
+          "range": "5-6",
+          "description": "Range: 5-6, Damage: 10",
+          "tiles": [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]
+        },
+        {
+          "name": "Pelti",
+          "damage": "0",
+          "range": "3-5",
+          "description": "Range: 3-5, Damage: 0. All affected squares become Advantageous.",
+          "tiles": [[1, 0], [2, 0], [3, 0], [1, 2], [2, 2], [3, 2]],
+          "anchorTile": [2, 0],
+          "effects": ["Advantageous"]
+        },
+        {
+          "name": "Akeomai",
+          "damage": "0",
+          "range": "1-3",
+          "description": "Range: 1-3, Damage: 0. All blue squares inflict Healing:2. If any targeted squares are Advantageous, you may spend 1 Charge for all connected Advantageous squares to inflict Healing:2 as well. You may do this multiple times as long as an adjacent square is Advantageous.",
+          "heal": true,
+          "tiles": [[0, 0], [0, 2], [0, 3], [1, 1], [-1, 1]],
+          "healTiles": [[0, 0], [0, 2], [0, 3], [1, 1], [-1, 1]],
+          "boundsTiles": [[0, 1]],
+          "anchorTile": [0, 1],
+          "effects": ["Healing:2"]
+        }
+      ]
+    },
+    "activeAbility": "Apocalypse Sundering Omnistrike — Spend a Charge (see below). Make an attack combining the attack patterns of any two bomb types, which may fit together in any shape as long as they have at least one pair of squares adjacent to, or overlapping, each other. Apply the Effects and damage from each bomb in all squares of the combined pattern.",
+    "passiveAbility": {
+      "name": "Dynamic Gnosis",
+      "intro": "You begin each TACCOM Combat with 5 Charges. You can spend a Charge at any time to set your current bomb type, selecting an option below and using its Damage, Pattern, and Effects for your weapon attacks until the end of the combat or you replace your selected bomb type by spending another Charge. Any time an ability or effect would restore your Equipment, you also return to 5 Charges. You cannot make weapon attacks with no bomb type selected.",
+      "sections": [
+        { "title": "Aragmos", "options": ["Range: 3-6, Damage: 5"] },
+        { "title": "Doration", "options": ["Range: 4-6, Damage: 6"] },
+        { "title": "Akinakis", "options": ["Range: 5-6, Damage: 10"] },
+        {
+          "title": "Pelti",
+          "options": ["Range: 3-5, Damage: 0. All affected squares become Advantageous."]
+        },
+        {
+          "title": "Akeomai",
+          "options": [
+            "Range: 1-3, Damage: 0. All blue squares inflict Healing:2. If any targeted squares are Advantageous, you may spend 1 Charge for all connected Advantageous squares to inflict Healing:2 as well. You may do this multiple times as long as an adjacent square is Advantageous."
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "Love Without Consideration",
+    "description": "\"First, we ascended ourselves. Second, we etched the patterns of awakening on the coils of flame, so that our oldest ally might join us in eternity\"",
+    "attack": {
+      "damage": "2",
+      "tiles": [[-2, 0], [2, 0], [-1, -1], [1, -1], [0, -2]]
+    },
+    "activeAbility": "Hungry Flame — Target one enemy within Range:4. Deal damage and inflict Blazing:2 on that target and any adjacent enemies.",
+    "passiveAbility": "Persistent Will — Every time you fire this weapon, select exactly three tiles of its attack pattern. They gain Lingering:1."
+  },
+  {
+    "name": "Paradigm-Shattering Cauldron",
+    "description": "A monadic implement, its true purpose long since forgotten. Once it swirled with kamarupa, fizzy with premature individualism. The heavenly ceramics are grooved with these threadlings of burgeoning consciousness.",
+    "attack": {
+      "damage": "3+2D6",
+      "tiles": [[1, 0], [2, 0], [3, 0], [2, 1], [2, -1]]
+    },
+    "activeAbility": "Alchemy For A New Age — After defeating a non-minion enemy, a minion currently Swarmed, or a Minion Broken from a Swarm using the Cauldron, you may spend a Support Action to convert that space into Void terrain.",
+    "passiveAbility": "Outpace The Torrent — This weapon has the Breaker tag."
+  },
+  {
+    "name": "Heaven Or Hell",
+    "description": "Torn from the Demiurge's wrists, these gauntlets channel the fists of every punch thrown in the direction of an oppressor, calling forth every brutality of every war in a single, sickening blow.",
+    "attack": {
+      "damage": "3",
+      "tiles": [[1, 0]]
+    },
+    "activeAbility": "Entangled Simulation Collapse — If you are attacked at any point before your next turn, move to a space adjacent to your attacker, gain Throw:1, and make a free weapon attack.",
+    "passiveAbility": {
+      "name": "Schmovement",
+      "intro": "When you hit an enemy with a weapon attack or use your Armor Reversal, you also gain 1 stack of one of the following Combo Tags: Juggle, Knockdown, or Pressure. Combo Tag stacks stay until you use them or TACCOM ends. Any time you cause damage in any way, as a free action you may spend any number of stacks of Combo Tags on the following options without limits on duplication:",
+      "sections": [
+        {
+          "title": "Juggle",
+          "options": [
+            "Deal 1 damage and gain Pressure:1.",
+            "Deal 3 damage to an adjacent unit other than the one you just hit."
+          ]
+        },
+        {
+          "title": "Knockdown",
+          "options": [
+            "Flip a coin and call it. If you are right, deal 5 more damage and gain Pressure:1. If you are wrong, take 2 damage for each Knockdown spent this turn.",
+            "Gain Throw:1."
+          ]
+        },
+        {
+          "title": "Pressure",
+          "options": [
+            "Push your opponent 2 spaces. If the opponent collides with another unit, wall, or other impassable terrain, gain Bounce:1, then deal 1 damage to both targets.",
+            "Move up to 3 spaces, then deal 3 damage to an adjacent unit."
+          ]
+        },
+        {
+          "title": "Bounce",
+          "options": [
+            "Deal 1 damage and push your target 1 space. If the opponent collides with another unit, deal 1 damage to that unit and you gain Knockdown:1.",
+            "Deal 3 damage and move 1 space."
+          ]
+        },
+        {
+          "title": "Throw",
+          "options": [
+            "Push your target up to 3 spaces in any direction.",
+            "Deal 2 damage, then flip a coin and call it. If you are right, gain Knockdown:1. If you are wrong, take 1 damage."
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "Consecrated Behemoth Spines",
+    "description": "The Great Divine Beast lay rotting in the center of DIS, dead long before free eyes set themselves upon the dark city. This abortion of prophecy is no great loss; yet the old futures strain to be heard in the song of these blades.",
+    "attack": {
+      "damage": "2+3D8",
+      "tiles": [[1, 0], [2, 0], [1, -1], [1, 1]]
+    },
+    "activeAbility": "From Blood To Blood — Lose all Temporary HP and apply Healing:X to yourself or an adjacent character, where X is the amount of Temporary HP lost.",
+    "passiveAbility": "Sophia's Blooded Gifts — When you hit an enemy, gain 2 Temporary HP. Damage from future attacks subtracts from your Temporary HP first. When TACCOM ends, all remaining Temporary HP is lost."
+  },
+  {
+    "name": "Her Tears Formed Our World",
+    "description": "A droplet from the silvery crystal tears Sophia shed for the cruelty visited upon humankind, or perhaps for her child, ignorant in the dark water. Left orphaned until discovered after our ascension, it had fractured in the eons since, gaining a jagged edge. Bound in scripture to a transuranic metal haft, this axe makes Her sorrow our strength.",
+    "attack": {
+      "damage": "0+1D10",
+      "tiles": [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]
+    },
+    "activeAbility": "Ophthalmos — Gain 2 Spin Charge and move up to your Speed in a straight line.",
+    "passiveAbility": "Blood-Lined Sairo — When an enemy enters your range, deal your damage and then reduce spin by 1. When you kill an enemy on a turn that isn't yours, move up to your Speed."
+  },
+  {
+    "name": "Duty Before Indulgence",
+    "description": "\"Humanity, now clad in bronze, repeated the cycle of pain and forged the first crowns with the bodies of their enemies.\"",
+    "attack": {
+      "damage": "6+2D6",
+      "tiles": [[2, -1], [2, 0], [2, 1], [3, -1], [3, 0], [3, 1]],
+      "effects": ["Bleed:2"]
+    },
+    "activeAbility": "Saturn's Lament — Apply Bleed:2 to every enemy in your target area.",
+    "passiveAbility": "Gigantomachy Relitigated — When you use your movement, you can spend 1 Speed to move adjacent to any creature with Bleed. Reduce their Bleed by 1."
+  }
+]

@@ -1,0 +1,45 @@
+name = "gaem"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+
+# Workers Builds restores dependency caches without gitignored dist/ output.
+# Alias to source so wrangler bundles @gaem/shared directly; [build] still
+# compiles shared first so typecheck runs before deploy.
+[alias]
+"@gaem/shared" = "../shared/src/index.ts"
+"@gaem/hellpiercers-content/register" = "../hellpiercers-content/src/register.ts"
+
+[build]
+command = "bash scripts/cf-wrangler-build.sh"
+cwd = "../.."
+# watch_dir is relative to this config file (not build.cwd). Client is served by
+# Vite HMR in dev:cf, so we only watch worker + aliased shared/content source.
+watch_dir = ["src", "../shared/src", "../hellpiercers-content/src"]
+
+[assets]
+directory = "../client/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[durable_objects.bindings]]
+name = "GAME_ROOM"
+class_name = "GameRoom"
+
+[[kv_namespaces]]
+binding = "PLAYER_KV"
+id = "880eeee77c4b4f7ab78cf0861e4f40e5"
+preview_id = "b45b7ded8e1b417e8aaf6b65d69e9c2e"
+
+[[kv_namespaces]]
+binding = "MAP_KV"
+id = "bc5c9c49543d4e3884364184422b5a5c"
+preview_id = "1261597feb9c46bdb1c56c46fb6420a2"
+
+[[r2_buckets]]
+binding = "PORTRAIT_R2"
+bucket_name = "gaem-portraits"
+preview_bucket_name = "gaem-portraits-preview"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]

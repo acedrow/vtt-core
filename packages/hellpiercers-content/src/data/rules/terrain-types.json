@@ -1,0 +1,50 @@
+[
+  {
+    "id": "standard",
+    "name": "Standard",
+    "summary": "Basic ground with no movement penalty.",
+    "description": "Standard terrain covers any basic kind of ground that confers no advantage or disadvantage. Movement over this terrain costs a single point of Speed, and all units may traverse it without any problems."
+  },
+  {
+    "id": "uneasy",
+    "name": "Uneasy",
+    "summary": "Hard to walk on; costs +1 Speed to enter.",
+    "description": "Uneasy Terrain is anywhere your characters would have a hard time walking without stumbling or taking their time—thick mud, hellstreams, soulbrick, etc. Uneasy Terrain costs +1 Speed to move into.",
+    "icon": "M3 6 H13 M3 10 H13"
+  },
+  {
+    "id": "impassable",
+    "name": "Impassable",
+    "summary": "Cannot be entered unless a game effect allows it.",
+    "description": "Impassable Terrain can only be entered if a specific game effect allows it, and only for as long as that effect allows it.",
+    "icon": "M4 4 L12 12 M12 4 L4 12"
+  },
+  {
+    "id": "cover",
+    "name": "Cover",
+    "summary": "Units here gain Cover (−1 damage from attacks targeting them).",
+    "description": "Units in Cover terrain gain the Cover effect, taking -1 damage from any attacks targeting them.",
+    "icon": "M4 11 L8 4 L12 11"
+  },
+  {
+    "id": "obstacle",
+    "name": "Obstacle",
+    "summary": "Impassable, breaks line of sight, can be attacked and destroyed.",
+    "description": "Obstacle is Impassable, breaks Line of Sight, and can be targeted by attacks. HP is written inside the symbol; if no HP is listed, it breaks after one hit. Consider how many turns it would take a HELLPIERCER to break when placing Obstacles; a basic attack deals somewhere around 15 damage, for reference.",
+    "icon": "M8 3 L13 7 L11 13 L5 13 L3 7 Z"
+  },
+  {
+    "id": "advantageous",
+    "name": "Advantageous",
+    "summary": "Inert until triggered by a relevant character ability.",
+    "description": "Advantageous tiles do nothing until interacted with by a relevant character ability.",
+    "icon": "M8 2 L9.5 6.5 L14 6.5 L10.5 9 L12 14 L8 11 L4 14 L5.5 9 L2 6.5 L6.5 6.5 Z"
+  },
+  {
+    "id": "void",
+    "name": "Void",
+    "summary": "Impassable; entering causes instant death. Replaces all other terrain when created.",
+    "description": "Void is Impassable, but units can be pushed into it. Entering Void causes instant death. When this terrain type is created, it instantly removes all other terrain on that space, leaving only Void.",
+    "icon": "M8 3.5 A4.5 4.5 0 1 1 8 12.5 A4.5 4.5 0 1 1 8 3.5"
+  }
+]

@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": [],
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "paths": {
+      "@gaem/client/content-pack": ["./src/client-content-pack.ts"],
+      "@gaem/client/*": ["./src/*"],
+      "@gaem/hellpiercers-content/tiles": [
+        "../hellpiercers-content/src/client/tiles/index.ts"
+      ],
+      "@gaem/hellpiercers-content/combat-ui": [
+        "../hellpiercers-content/src/combat-ui.ts"
+      ],
+      "@gaem/hellpiercers-content/register": [
+        "../hellpiercers-content/src/register.ts"
+      ],
+      "@gaem/hellpiercers-content/register-client": [
+        "../hellpiercers-content/src/register-client.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "../hellpiercers-content/src/client/**/*.ts",
+    "../hellpiercers-content/src/client/**/*.vue",
+    "../hellpiercers-content/src/register-client.ts",
+    "../hellpiercers-content/src/combat-ui.ts",
+    "../hellpiercers-content/src/combat/**/*.ts"
+  ],
+  "exclude": [
+    "../hellpiercers-content/src/**/*.test.ts"
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "id": "corridors",
+  "name": "Corridors",
+  "die": 20,
+  "entries": [
+    {
+      "roll": 1,
+      "text": "The walls of this hall are thick with vines and ancient, dying plants. Yellow-brown rot and misty spore clouds cloud the senses. A single break in the ceiling shines the red-black light of Hell’s sky onto a single, disheveled Welwischia plant—the last of its kind here, or anywhere else. Once a powerful being by Abigor’s side, they were cast down here after the Syncrasis ascendence. Its voice is gentle, but furious."
+    },
+    {
+      "roll": 2,
+      "text": "The vaults and hallways surrounding this passage are wet. They’re covered in barnacles, seaweed, and the ruins of broken ships bearing the emblem of the Sea People. If the MIXIS Faction is in play, mention its similarity to the banners they carry. The door opens to reveal a solid wall of water, suspended in place by magic. The hallway is home to thousands of extinct fish, who flow through you, sharing memories of a long forgotten Earth. HELLPIERCERS heal to full HP after sharing a fish memory. Their memories are ones of impossible war, of blind children playing with the weapons of Gods, of half-enlightened warrior kings leading armies of hastily uplifted seabourne kin."
+    },
+    {
+      "roll": 3,
+      "text": "A massive 12-legged, 12-mouthed beast drenched in crimson lies across the corridor, blocking the path. Its multiple mouths twist back into toothy grins. Each mouth contains a small room, entered by crawling past its teeth. Each room contains the soul of a person the PCs have lost. Only two can be retrieved, but they all seem quite content."
+    },
+    {
+      "roll": 4,
+      "text": "A pale, emaciated, and ghostly figure is weeping and lapping water from a crack in the far wall. They wear a faded gold sash around their body, bearing the near-illegible sigil of the House of Ekklesia. In the folds of their robe are baubles and inscrutable treasures from a lost age. They are hesitant to speak, as each word causes their tail to grow toward the hidden exit of the room."
+    },
+    {
+      "roll": 5,
+      "text": "A terrifying visage, a bandage-wrapped skull with a single green-purple eyeball dominates the room. Hot air flows from its nostrils, despite its clear decomposition. Shoulders seen through cracked flooring reveal the figures restraining armor, scored with innumerable names of ancient hellions and the sigils of at least a dozen Archons. This creature will greedily devour the cores of ritually important objects (Faction Leader crowns, Forbidden Arms, HELLPIERCER Spinthers), and grows in strength and prophecy with each one, changing the world and its rules according to an inscrutable design. It will only ever tell you truths, but never welcome ones. Once it has a crown, a sword, and raiment, its bindings will no longer hold it."
+    },
+    {
+      "roll": 6,
+      "text": "An old treasure vault belonging to a faction forgotten by time. Alien sigils and empty boxes litter the room. Under a pile of garbage, the old city plans for Dis can be uncovered. They reveal or imply something strange, troubling, or unsettling."
+    },
+    {
+      "roll": 7,
+      "text": "A lost band of HELLPIERCERS wander this corridor, seemingly unable to see or interact with the players’ squad. The room they are in is drastically different than the one the players see, with a half dozen tall candelabras in a circle surrounding a brazier that refuses to light for the lost band of NPC HELLPIERCERS. The PCs cannot see the other room, but can interact with the objects in it."
+    },
+    {
+      "roll": 8,
+      "text": "The walls of this short hallway recount the deeds of dozens of foot soldiers in Beezlebub’s liberation force. Many names have been scratched away but one remains… one that a member of the party recognizes."
+    },
+    {
+      "roll": 9,
+      "text": "Contact with DIS breaks, the doors slam shut, the lights go out. When the lights return, a new member of the party is present; decide in secret if you remember them or not. The doors open and you are free to move on."
+    },
+    {
+      "roll": 10,
+      "text": "This corridor appears as any other—dank black-blue stonework, inscrutable half-broken statues, tall candelabras cast in the corners. Every single object, down to the individual stones, makes a novel musical tone at the slightest touch. High above their heads, a glass orb containing a hand-sized replica of Fallen Mars will shatter and drop the replica if more than 10 sounds happen at once."
+    },
+    {
+      "roll": 11,
+      "text": "This hallway merges with another somewhere out in the miasma of bythos. A squadron of kitted out, geared up, godling-empowered canines stalk the outer edge of the room, blending seamlessly with the stonework depicting the rise and fall of their spiritual cycle. Their own war of cosmic liberation mirrors your own."
+    },
+    {
+      "roll": 12,
+      "text": "It dawns on you that the walls of this chamber are the enormous bat-like wings of some unthinkably vast creature. Its spine curves up and around the end of the corridor, its blackfurred body blocking any exit. Two spindly arms emerge from the darkness and lay themselves flat on the ground on either side of a small game board, laid on the floor The game is morelles or Nine Men’s Morris. The creature does not speak, and makes no interpretable sign of intelligence beyond responding to player moves. Winning opens the door behind the creature, who allows them to walk through unimpeded. A certain arrangement of pieces opens a special door to a random Vault. Losing will cost someone dearly."
+    },
+    {
+      "roll": 13,
+      "text": "Two chambers side by side are connected by several pathways. Both chambers have a scale model of some unknown star system. In one of the chambers, each world is barren and ruined, with signs of once-great miniature civilizations rotting in the microscopic sands. In the other, the worlds are embroiled in a great battle with each other, with miniscule spaceships raining infinitesimal nuclear weapons on each other."
+    },
+    {
+      "roll": 14,
+      "text": "The genealogy of one of the demonic factions currently in play sprawls out across the walls, ceiling, and floor of this chamber. A skeleton, animated by a geist-split of Beelzebub, is lashed into eternal maintenance of this place by some forgotten necromancer. He cannot leave until his contract is destroyed. Select a miniboss from any faction and use him in a future TACCOM."
+    },
+    {
+      "roll": 15,
+      "text": "The hallway is lined with large tubes that once held a purple-green fluid, now dried and staining the glass tubes. Further inspection reveals the rotted remains of once-human pneuma, trapped within the fractal glass. There is a collector unit with a single vial of stillactive Hyper-LSD at its base."
+    },
+    {
+      "roll": 16,
+      "text": "The chamber is lined with stone eyes, which turn into real eyeballs when approached. The eyes are majority human, but scattered through are demonic eyes, angelic eyes, eyes with spiral patterns or burning crosses in them. In the center of the chamber is a stone orb about six feet across. When approached, it forms into the non-Euclidean, two-dimensional eyeball of the Paracletus’s leader. Through ritual, surgery, or both, it can be implanted into the head of a HELLPIERCER, allowing them to see into the second dimension and observe the Paracletus’s true forms. If the Paracletus faction is not in play, they join the war as an additional faction upon installing the eye."
+    },
+    {
+      "roll": 17,
+      "text": "The remains of a ritual summoning space adorned with the tapestries and ceremonial items of an active demonic faction. The ritual was hastily abandoned and could be completed by the party. Determine three esoteric steps—ring the bell, close the book, dash the candles, or similar—and scatter the elements throughout adjacent chambers, vaults, or corridors. When the ritual is complete, select one of the following and summon them within the sealed circle: an ancient wizard from the first human ascendency, clutching a brick of Babel-Gold; the jealous and vengeful sister of the current faction’s leader; or the torn gold and silver spirit of an Archon full of impotent fury."
+    },
+    {
+      "roll": 18,
+      "text": "This chamber of ice stuns even HELLPIERCERS with a cold shock. A frosty mist impedes easy access, but will yield to the players’ power. The walls of the chamber stretch up impossibly high and are etched with sentient sigils that seem to writhe against comprehension. In the center of the room is a corpse of Saklas, its lion-headed skull almost cycloptic with a strange third eye socket in the center of its crown. Its bones are carved with a record of the 148 Sufferings and representations of Jupiter. An altar seems to grow organically out of these bones, surrounded by braziers of unearthly metal and obsidian obelisks. A heavy dagger, a bloodstone bell, and a golden mask covered in unblinking eyes promise audience with Syzygos."
+    },
+    {
+      "roll": 19,
+      "text": "A desecrated cathedral, once a refuge for Archons surveying the pitiful workings of Hell. On gossamer threads millions of flies are punctured and dangle like beaded curtains down the cave walls. A statue in the center of the cave is decapitated, the remains of long-dried infernal feces encrusted about the stump. One of the HELLPIERCERS feels a disembodied whisper hiss through their armor, speaking to them alone. Pass them a note that says the following: ”Your comrades were slaughtered. The imposters surrounding you are waiting for you to bring them home. They will say anything.”"
+    },
+    {
+      "roll": 20,
+      "text": "Something resembling a gilded theater of a splendored age. Three tiers of extravagant seating face a titanic stage, surrounded by dozens of reliefs celebrating forgotten Gods, Archon achievements in human suffering, and gleefully illustrated legends of demonic torture. Everything is covered with a thick layer of scorched soul-ash, carrying the whispering screams of still-burning souls. The ancient soul-wood of the stage swirls a million faces of pain, and in the center, illuminated by an ethereal light, is a small black crown with a single red jewel embedded in its center. The crown fits whoever wears it; it is a violation of gnosis, but all freedom is violation to someone. It will not be removed easily."
+    }
+  ]
+}

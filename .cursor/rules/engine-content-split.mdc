@@ -1,0 +1,42 @@
+---
+description: vtt-core is the engine; Hellpiercers content lives in @gaem/hellpiercers-content
+alwaysApply: true
+---
+
+# Engine vs content
+
+This repo is **vtt-core** (tactical VTT engine). Hellpiercers IP lives in `@gaem/hellpiercers-content` (`packages/hellpiercers-content`), registered at product boot.
+
+## Dependency matrix
+
+| Package | May depend on `@gaem/hellpiercers-content`? |
+|---------|-----------------------------------------------|
+| `@gaem/shared` | **No** |
+| `@gaem/client` / `@gaem/server` / `@gaem/cf-worker` | **Yes** (product boots) |
+
+Shared must not import the content package. Product packages side-effect-register at boot. Shared/client Vitest use fixture pack; HP suites live in `@gaem/hellpiercers-content`.
+
+## Decisions (locked)
+
+- Content = workspace package today; private npm/git dependency later (same name/exports). **Sync register-once** at boot (not runtime KV packs).
+- Product boots: `@gaem/hellpiercers-content/register` (+ client `./register-client`). Never `@gaem/shared/register-hellpiercers`.
+- Named combat implementations live in the content package and register via `CombatHookContribution.modules` + hooks; shared dispatches with `combatMod(key)`. Client UI helpers use `@gaem/hellpiercers-content/combat-ui`.
+- Engine CI / shared Vitest target: fixture catalogs; content package owns HP tests. Product/e2e registers Hellpiercers.
+- npm scope remains `@gaem/*` until explicitly renamed.
+- Sibling copy `/Users/lindenholt/code/gaem` is historical — **do new work here**.
+- Nested `GameState.campaign` (parent #2) is done. Sheet/pack-version KV migrations remain parent #7 — not required for content-pack A–E completion.
+
+## Plans
+
+- `.cursor/plans/content_engine_split_077e8cba.plan.md` — high-level split areas
+- `.cursor/plans/content_pack_contract_ca112cb6.plan.md` — Tracks A–E (Open B exit done)
+- Close-gaps Phases 0–4 done; Area #1 Open B exit done
+- Remaining: private cutover — `docs/content-package-private-cutover.md`
+- ADRs: `docs/adr/001`–`005`
+
+## When editing
+
+- Prefer registry/hook shapes over new enemy/class/weapon name branches in engine combat framework.
+- Keep server ↔ cf-worker parity (`ws-parity.test.ts`).
+- Assets/maps/rulebook live under `packages/hellpiercers-content/`.
+- Content must not import `@gaem/client` via relative `../../../client` paths — use package exports; colocate panels/globs in content before private cutover.

@@ -1,0 +1,137 @@
+{
+  "id": "paracletus",
+  "name": "PARACLETUS",
+  "tagline": "REMAKE THE STRANGE INTO SOMETHING FAMILIAR",
+  "crown": 5,
+  "description": "A living infection of strange shapes spying on our world. They seek to assimilate their foes in order to compute the Samsaran Sequence.",
+  "qualities": {
+    "force": 2,
+    "subterfuge": 2,
+    "territory": 5,
+    "assets": 2
+  },
+  "uniqueMechanics": [
+    {
+      "name": "Stained Squares",
+      "effect": "Any square may be stained through various effects. Enemies or other factions cannot build on Stained squares."
+    },
+    {
+      "name": "Stainwalk",
+      "effect": "Stainwalk abilities are triggered when that unit occupies a stained square."
+    }
+  ],
+  "startingLocations": [
+    {
+      "name": "Stain Springs",
+      "description": "By fluctuating pressures of stain distribution, the Source Seed has hijacked an undersea lava flow to create a system of Perecletalthermal vents. This area is saturated with more stain than anything else.",
+      "type": "Defensive",
+      "purpose": "Provides healing and reinforcing stain for demons.",
+      "terrain": "A variety of randomly connected pools, enshrouded in a strange haze.",
+      "defenses": "Pit traps, snares, and limited visibility.",
+      "quality": { "subterfuge": 2, "territory": 1 }
+    },
+    {
+      "name": "Ekhinos Field",
+      "description": "A wide caldera dotted with tall stone towers tangling and intertwining, dripping into the crackling air. The concentration of electricity and the arrangement of the towers makes this the perfect calculation center for the Contagion Mind as well as a defensive fence for the Source Seed.",
+      "type": "Logistical",
+      "purpose": "Emits and receives a signal connecting any nearby Paracletus units.",
+      "terrain": "Rough and solid towers, static-heavy air.",
+      "defenses": "Lined with bursting pustules, creeping sentinels, and noise-suppressing static.",
+      "quality": { "force": 1, "territory": 1 }
+    },
+    {
+      "name": "Vandalous Nimbus",
+      "description": "A monstrous pulsating and swirling mass defacing the sky, floating mindlessly with only simple commands from the Contagion Mind. The rain falls in a rhythm derived from the Stygian Paradox Equation.",
+      "type": "Logistical",
+      "purpose": "Drifting and spreading Stain.",
+      "terrain": "Soft, bulbous, cave-pocked outer flesh. Firm and spacious internal tunnels and caverns sparking with electric potential.",
+      "defenses": "High up in the sky, scattered thunderstorms, ever-changing layout.",
+      "quality": { "force": 1, "territory": 2 }
+    },
+    {
+      "name": "Stygian Reef",
+      "description": "Paraclesal flesh and stain shape and harden, crystalizing into a jagged and porous reef where demons can encase their prisoners. Troublesome humans are grown into the jail itself.",
+      "type": "Defensive",
+      "purpose": "Undersea prison where human souls and dangerous demons alike are held for safekeeping.",
+      "terrain": "Rough and indestructible coral, strong elastic fibrous plants.",
+      "defenses": "Indestructible coral, beastly patrols, stinging tendrils",
+      "quality": { "assets": 2, "territory": 1 }
+    }
+  ],
+  "uniqueLocations": [
+    {
+      "name": "The Teethlands",
+      "description": "The terrible maw of a subterranean esophagus, conveying its victims to the Source Seed for processing. The maw is lined with 108 different teeth, each individually connected to the Contagion Mind.",
+      "type": "Destructive",
+      "purpose": "Chew.",
+      "terrain": "Needle-like appendages emerge from the ground, clawing at victims to drag them beneath the earth.",
+      "defenses": "Lashing tongues and fangs, teeth-fed machine gun",
+      "quality": { "force": 1 },
+      "buildTime": 2
+    },
+    {
+      "name": "Brightwater Runs",
+      "description": "By developing a high pressure vein through the earth from the springs, thousands of gallons of stain can be delivered in seconds. The extra stain flow can also serve to ease pressure and heat around the Source Seed.",
+      "type": "Productive",
+      "purpose": "Moving Stain between locations.",
+      "terrain": "Jagged shorelines and rushing rapids",
+      "defenses": "eight-eyed piranha, age-draining snares",
+      "quality": { "territory": 1 },
+      "buildTime": 1
+    },
+    {
+      "name": "Fleshturn Vaults",
+      "description": "With the typhonic triangulation, the Contagion Mind has devised a bladder-and-sealed container to create a space devoid of any earthly familiarities. Within this vault is an unknowable pressure that comforts Paracletus but would attack the senses of any other being.",
+      "type": "Productive",
+      "purpose": "The tempering and maturing of stainflesh.",
+      "terrain": "Winding and tangling paths in the dark.",
+      "defenses": "Nursery Beast, soulseeking eye mines, mass-reduction lancets",
+      "quality": { "territory": 1 },
+      "buildTime": 2
+    }
+  ],
+  "stratcomActions": [
+    {
+      "name": "Scour of Babel",
+      "flavor": "An exertion from the Source Seed will send a wave through the entire Contagion Mind, concentrating into an eye at a place of their choosing. So long as vision is maintained, Paraclesal pollen will saturate the surrounding area to reflect what some believe the true home of the Paracletus looks like.",
+      "description": "Choose a location on the map—you may increase its Eyerot stage by 1. HELLPIERCERS may clear Eyerot with salted weapons.\n\nStage 1: A rotting eye grows somewhere in the shadows. Visitors will hear echoes of sounds that never happened, lights and shapes will tempt from just out of sight. Paracletus Demons can disguise themselves as humans.\n\nStage 2: The eyerot here gains a weirding shield and another Eyerot grows on a connected location. Your speech turns to water, your writing turns to spirals, your signing turns to strangulation. Stain blooms on the ground and dusts the air. A strange song churns in your gut. The shielding can be dispelled by smearing roe on its surface.\n\nStage 3: Visitors' flesh turn to tangled colors and light. Corners and doorways take you to unknown places. Encounters here start with the entire map Stained."
+    },
+    {
+      "name": "Seideonic Call",
+      "flavor": "The swirling ooze from the Seed dissolving into the water creates a new weapon—a dense and pulsating cloud drifting through the skies. It will lay claim on any land it shadows.",
+      "description": "Condense a cloud on any Paracletus controlled location. It has a Speed of 1 and rains stain across any location it inhabits. A location can only have one cloud above it at a time. When you enter TACCOM on a location with a cloud, you may do the following at the beginning of your turn: choose five squares—those squares are Stained until the beginning of your next turn."
+    }
+  ],
+  "upgrades": [
+    {
+      "name": "Living Tide",
+      "flavor": "An evolution of Stain caused by exposure to the Contagion Mind without connecting to it. When it realized this new strain could move, the Mind reached out and seized its new kind.",
+      "ichorCost": 2,
+      "effect": "Stained Squares can now move. They are grouped and move like a Swarm does with a Speed of 4."
+    },
+    {
+      "name": "Extrarterran Evolution",
+      "flavor": "Imbuing alternate terrains with its spawn, the Seed arms some of the meeker demons for war. Previously groundskeepers and scouts, POTAGON and CHALAZAOR are ready for war.",
+      "ichorCost": 3,
+      "effect": "Unlock POTAGON and CHALAZAOR units for deployment."
+    },
+    {
+      "name": "Efficient Building",
+      "flavor": "With a special care and attention to AMBROID, the Contagion Mind have developed a psychic algorithm to make their transformation deployment possible on any terrain.",
+      "ichorCost": 2,
+      "effect": "Latent Pudding can change into a fortification on any square (regardless if it's stained or not)."
+    },
+    {
+      "name": "Storm Mastery",
+      "flavor": "The Paraclesal clouds have developed sky bladders and turbines to streamline any given cloud. Their increased efficiency makes it more manageable for the contagion mind to calculate the movement of multiple clouds in the sky.",
+      "ichorCost": 3,
+      "effect": "You may have up to an additional cloud on a location at once with Seideonic Call."
+    },
+    {
+      "name": "Interatomic Dowsing",
+      "flavor": "Using an advanced analysis technique and the use of AMBROID, the Contagion Mind is able to calculate additional subterranean pathways to siphon stain through the earth.",
+      "ichorCost": 2,
+      "effect": "Stain Geyser draws a 6x6 square instead."
+    }
+  ]
+}

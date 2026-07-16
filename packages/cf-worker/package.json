@@ -1,0 +1,21 @@
+{
+  "name": "@gaem/cf-worker",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "sync-maps": "node scripts/sync-maps.mjs",
+    "sync-maps:local": "node scripts/sync-maps.mjs --local"
+  },
+  "dependencies": {
+    "@gaem/hellpiercers-content": "*",
+    "@gaem/shared": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250410.0",
+    "typescript": "^5.7.3",
+    "wrangler": "^4.12.0"
+  }
+}

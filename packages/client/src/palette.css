@@ -1,0 +1,5 @@
+:root {
+  --font-heading: "Highshade", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --chrome-header-height: 40px;
+}

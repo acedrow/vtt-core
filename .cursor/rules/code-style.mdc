@@ -1,0 +1,14 @@
+---
+description: Minimal diffs, comments, and helpers; Vue/shared conventions
+alwaysApply: true
+---
+
+# Code style
+
+- Smallest correct diff; no unrelated refactors.
+- Comments only for non-obvious business logic; `//` not block comments.
+- Helpers only when reused (DRY); no single-use helpers.
+- Vue: `<script setup lang="ts">`, relative imports with `.js` extension.
+- Prefer existing composables and shared UI (`PanelShell`, `HpBar`, `BoardCell`, …).
+- Design tokens from `packages/client/src/style.css` (`var(--color-*)`).
+- Game logic in `@gaem/shared`; both backends call the same shared functions.

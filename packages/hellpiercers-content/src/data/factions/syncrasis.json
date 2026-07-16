@@ -1,0 +1,179 @@
+{
+  "id": "syncrasis",
+  "name": "SYNCRASIS",
+  "tagline": "CONQUER, DESTROY, RETVRN",
+  "crown": 5,
+  "description": "A faction long thought dead, even the demons of Hell were surprised at its sudden and terrifying revival.",
+  "qualities": {
+    "force": 5,
+    "subterfuge": 2,
+    "territory": 3,
+    "assets": 2
+  },
+  "startingLocations": [
+    {
+      "name": "Oraios's Vengence",
+      "description": "An array of fungal battleships, hovering over the landscape. They release spores and legions of winged Syncrasis like a miasma, granting the faction total aerial dominance in the area.",
+      "type": "Destructive",
+      "purpose": "Force projection. Area Devolution.",
+      "terrain": "Cavernous, mazelike interior.",
+      "defenses": "Technorganic Cannons, Spore-Based Ablative Defense Array, Innumerable Garrison",
+      "quality": { "territory": 1, "force": 2 }
+    },
+    {
+      "name": "Lethian Tunnels",
+      "description": "A dizzying array of tunnels facilitating the large-scale excavation in the area, its walls cut through endless strata of forgotten and forbidden histories.",
+      "type": "Extractive",
+      "purpose": "Moving troops and recovered materials in supernatural darkness.",
+      "terrain": "Layers of lost cities and discarded history, antediluvian landscapes and cracked mantel",
+      "defenses": "Cognition-Annihilating Anti-Mapping Sigils, Spectral Sentries, Lightly Garrisoned Gatehouses",
+      "quality": { "subterfuge": 1, "assets": 1 }
+    },
+    {
+      "name": "The Asphodeal Outposts",
+      "description": "A Thermopylae wrought from an ancient species twisted through biotransmogrification. Held together by rituals carved into their decaying DNA.",
+      "type": "Defensive",
+      "purpose": "A wall between the inner sanctum of the Syncrasis and their outlying territory",
+      "terrain": "Pockmarked Oblivion, Rivers of mangled foes, stone bunker-caves and flat grassland",
+      "defenses": "False-Psi Space Sorcerers, Marauding Legions, Heavy Bunkers and Unassailable Garrisons",
+      "quality": { "force": 2, "territory": 1 }
+    },
+    {
+      "name": "Cyclopean Ergastirion",
+      "description": "A terrible pit carved like a scar through a thousand strata of the Hell-That-Was. Monuments to forgotten gods, the triumphs and failures of a billion years repurposed to the Syncrasian devolution engine.",
+      "type": "Productive",
+      "purpose": "War Machine Production, Weapons Development, Historical Oblivion",
+      "terrain": "Bottomless Pit-Mines, prismatic extremophilic pools, inescapable slopes and canyons",
+      "defenses": "Repurposed Bio-Industrial Engines, Light Garrisons, Baffling ritual-tech from eons long past",
+      "quality": { "force": 1, "assets": 1 }
+    },
+    {
+      "name": "Thera's Temno",
+      "description": "Gargantuan horizon-defying calderas swell to strange fungal peaks vomiting thick, pale clouds of soul-ash, the screaming skulls of a trillion dead lashed into commanding legions for miles around",
+      "type": "Logistical",
+      "purpose": "Command and Control system, Potential resource extraction from opalescent pools of thinking-magma within the volcanos",
+      "terrain": "Ashlands, seas of liquid iron, toxic fumes and uneven red soulstone",
+      "defenses": "Sentient ash, ritual-dominated atmospheric flare system, advance scout troops and a massed army over the horizon",
+      "quality": { "territory": 1 }
+    },
+    {
+      "name": "Perceived 14th Layer Korphe",
+      "description": "Incanted walls cling tight to the sentient magma that once filled this empty vent. Its hollowed innards take on the ambiance of a shattered crown.",
+      "type": "Legendary",
+      "purpose": "Staging ground for an invasion of DIS. Heightened Rite to find, create, or dominate a Syzygosian crown",
+      "terrain": "Unclimbable walls, metamagical reality alteration seals",
+      "defenses": "Entrenched Garrison, Syncrasian War-Wizards",
+      "quality": { "subterfuge": 1 }
+    }
+  ],
+  "uniqueLocations": [
+    {
+      "name": "MT ARARAT",
+      "description": "A thundering volcano spewing molten soul-stuff and a thick blanket of ashen lives into the air. Carries the screams of the lost for miles around.",
+      "type": "Productive",
+      "purpose": "Foundry and soul disposal facility",
+      "terrain": "Craggy rock, blasted obsidian, and smoke-filled caverns",
+      "defenses": "Steep spires, fissures into the void",
+      "quality": { "assets": 1 },
+      "buildTime": 1
+    },
+    {
+      "name": "PELAGOIOS",
+      "description": "A rolling ocean-swamp of boiling sulfuric water. Populated by hyper-aware slave algae that function as the SYNCRASIS's information center",
+      "type": "Logistical",
+      "purpose": "Information control and spawning pits",
+      "terrain": "700 degree waters, floating islands of thinking scum",
+      "defenses": "Megalodosis swarms, body-heat sensitive slaughter geysers",
+      "quality": { "subterfuge": 2 },
+      "buildTime": 3,
+      "requires": "Geographical Rot"
+    },
+    {
+      "name": "THE HIDDEN WORLD",
+      "description": "A secret labyrinth of tunnels and caves, lit by an artificial sun built by infusing the Chicxulub asteroid with the souls of its victims.",
+      "type": "Legendary",
+      "purpose": "Travel between locations, storage, living space",
+      "terrain": "Maze-like corridors, blackened stone, soft clay walls",
+      "defenses": "Hardened Garrison, mystifying layout.",
+      "quality": { "force": 1, "territory": 1 },
+      "buildTime": 2
+    },
+    {
+      "name": "The Garden of Rancorous Edens",
+      "description": "Not just Earth, a million billion worlds once churned with the primordial essence of life. These must be studied, and driven back to cosmic dust.",
+      "type": "Destructive",
+      "purpose": "Apocalypse Research, Experimental Decline Technology",
+      "terrain": "Patchwork Primordia; Hydrothermal Ice Pits, Desert Valleys, Crushing Atmospheric Toxicity, Diamond Rain, Sulphur Plains",
+      "defenses": "Soft Target, Low numbers high lethality guard troops, experimental creations.",
+      "quality": { "assets": 1, "subterfuge": 1 },
+      "buildTime": 3
+    },
+    {
+      "name": "Pseudes-Sophia",
+      "description": "One of our own. A shining glint of red-gold-silver in an oil slick sky. Torn fresh from our womb and birthed in flame.",
+      "type": "Legendary",
+      "purpose": "Olympios Scale Rituals, Key Ritual Component",
+      "terrain": "Freshly Born Planetoid, Rocky Magma Hellscape, Low Gravity",
+      "defenses": "Inner-Circle Generals and their personal honor guard",
+      "quality": { "assets": 1, "subterfuge": 1 },
+      "buildTime": 3
+    }
+  ],
+  "stratcomActions": [
+    {
+      "name": "Devolution",
+      "flavor": "It's deeper, deeper than anyone has ever gone. It's lying below the gargling soup in a place no mind can comprehend. Each of us—even the Beast—are all legions of warring paramecia. All we seek is the peace waiting for us in darkness. Like the good old days.",
+      "description": "Draw a circle roughly 2 Speed in diameter, incorporating at least one location controlled by this faction. Place the Devolve map hazard in this space.\n\nDevolve Map Hazard — Watch your step. A unique map hazard. The land around this space begins to return to a Carboniferous-era geography, with thick, impassable forests and incredibly active tectonic plate activity. For each STRATCOM turn this hazard is present, advance along the track below, activating the effects of each stage in turn. Clearing the hazard immediately ends all effects.\n\nStage 1 — The ground becomes soft, and strange growth begins to block passage. Once, during any TACCOM at this location, at any time during the GMs turn, place up to 10 Obstacle or Uneasy tiles.\n\nStage 2 — Beasts of a forgotten age rise from the cracks in the earth, and undergrowth make movement perilous. In addition to the effects from Stage 1, all Spawner tagged creatures gain 1 Speed, and gain an additional Charge per turn.\n\nStage 3 — All light is blotted out, and all sound is deadened by the unstoppable growth of the putrid forest. The faces of your friends and family mark the wood. Select a location close to this one and mark it. It has all the effects of Stage 1."
+    },
+    {
+      "name": "Soulwounding World Realignment",
+      "flavor": "They will build a knife of the past and thrust it into the heart of the universe. They will tear the future from a blooded ribcage and replace it with a broken clock. The pathlines of destiny rearranged into an inescapable loop; trapped forever in a miserable uroboros of broken fate.",
+      "description": "Choose two locations. Create a hydrothermal sea between them. Passing this requires some form of transport, and should be considered a highly risky environment even then, reducing Speed by half and making the team a target for the Syncrasian fleet. The sea clears up after the next STRATCOM turn.",
+      "crownCost": 3
+    },
+    {
+      "name": "Fleet Deployment",
+      "flavor": "The reptile has been here longer than anyone else. They were here before we were ever formed. They have not spent that time idle. Sentient boneships hover on the horizon, synthetic fungal colonies adapted to firing solution calculations or Nine Degrees of Freedom navigation algos. Fields of thinking teeth and bone harvested for rockets and bullets.",
+      "description": "Unit Cost: 2 Ichor. Select an allied location and spawn an Unerring Legion Of Eternal Stasis Battleship. Grants +1 Force while active.\n\nName this battleship, name its commander, describe its crew. This unit creates an area of control roughly one half Speed across. If any location within this area of control is assaulted and liberated by players, the GM may spend 1 Ichor to begin a reversal ritual that restores the location to its previous state after the following STRATCOM phase. Additionally the Legion provides support troops and equipment to the area it is attached to, increasing the number of enemy units and their aggression while granting the GM the following ability:\n\nInstant Devolution Beam — Once per TACCOM, create a Blast:2 space. The next turn, deal 3 damage to all units within that space and place a Maneater unit with 1 Charge in the center of the Blast space.\n\nThis battleship can be assaulted and destroyed like any other location.",
+      "requires": "Fleet Deployment Orders"
+    }
+  ],
+  "upgrades": [
+    {
+      "name": "Triassic Hebdomian Ritual",
+      "flavor": "Where we cannot force the clock backward, we import the past! Overwrite the future! Howl in glee while the swamp drowns the threads of fate!",
+      "ichorCost": 1,
+      "effect": "Unlock ABIGOR as a deployable unit"
+    },
+    {
+      "name": "Cariniferal Sigil Research",
+      "flavor": "It's staggering. They developed ritual runographia from pre-first principles. Their development is almost as advanced as ours; but they hold tight to flawed axioms that they've certainly intuited the failures of by now. It's not flare or style, more that they seem to worship the trials introduced by their willful ignorance.",
+      "ichorCost": 3,
+      "effect": "Replace Abigor's first attack with the following: Draw three 3x3 boxes on the map. The next time Abigor takes damage, each box deals 8 damage to any players within them and spawns an Obstacle:3 in the center of the box. If a player unit is in the center space, deal 3 damage to them and destroy the Obstacle. Abigor may have 5 active boxes at any one time, and boxes disappear after they inflict damage."
+    },
+    {
+      "name": "Sidiria Lithourgá",
+      "flavor": "Find faith in your mindlessness, find control in your regression. Command your cells to move back through their line, drag them screaming into the past and wear their objections as steel!",
+      "ichorCost": 2,
+      "effect": "Grant the Wall-Strider unit the following ability: When ending your turn adjacent to an Obstacle, you may devour it and gain Armor:1 until the start of this unit's next turn."
+    },
+    {
+      "name": "Sentience Granting Undermind Rite",
+      "flavor": "You imagine us as drooling imbeciles, abandoning our minds to wallow in filth; we would build a world suffused with the song of life. In every stone. In every puddle, a galaxy.",
+      "ichorCost": 2,
+      "effect": "Unlock the Howling Primordia unit for deployment."
+    },
+    {
+      "name": "Anima-Hylic Synthesis Ritual",
+      "flavor": "Reach back far enough and you find a point before Hylic matter could become sentient—when the divide between the spirit and the form was as wide as the world. Adapting Psychic matter to this ancient chasm is no small feat, and its results prove unreliable in all but the most disposable.",
+      "ichorCost": 2,
+      "effect": "Grant the Little Ghosts the following ability: This unit may move through player characters for no additional Speed cost. When they move through a player character, they gain the Swarm tag until killed."
+    },
+    {
+      "name": "Fleet Deployment Orders",
+      "flavor": "Unleash the waves! Untether the sky! Rise from the pit and strike with horn and spit! If they will not go to the dirt willingly, we shall drown them in it!",
+      "ichorCost": 2,
+      "effect": "Gain the Fleet Deployment STRATCOM Action."
+    }
+  ]
+}

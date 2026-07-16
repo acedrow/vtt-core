@@ -1,0 +1,45 @@
+{
+  "name": "@gaem/client",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./content-pack": {
+      "types": "./src/client-content-pack.ts",
+      "import": "./src/client-content-pack.ts",
+      "default": "./src/client-content-pack.ts"
+    },
+    "./composables/*": "./src/composables/*",
+    "./components/*": "./src/components/*",
+    "./assets/*": "./src/assets/*",
+    "./lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "sync-enemy-portraits": "node scripts/sync-dir.mjs ../hellpiercers-content/assets/enemies public/enemies",
+    "sync-tile-assets": "node scripts/sync-dir.mjs ../hellpiercers-content/assets/tiles public/tiles",
+    "sync-assets": "npm run sync-enemy-portraits && npm run sync-tile-assets",
+    "predev": "npm run sync-assets",
+    "prebuild": "npm run sync-assets",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@gaem/hellpiercers-content": "*",
+    "@gaem/shared": "*",
+    "vue": "^3.5.13",
+    "vue-color": "^3.3.3",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.4.11",
+    "happy-dom": "^20.10.6",
+    "typescript": "~5.7.3",
+    "vite": "^6.0.7",
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.3.7"
+  }
+}
