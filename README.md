@@ -2,13 +2,14 @@
 
 Browser-based tactical grid VTT engine (GM/player roles, character sheets, real-time board sync).
 
-Hellpiercers content is still embedded during an in-progress **engine / content-pack split**. See `AGENTS.md` and `.cursor/plans/` for agent guidance and migration tracks.
+Hellpiercers IP is a private git dependency (`@gaem/hellpiercers-content`). See `AGENTS.md`, `docs/content-package-private-cutover.md`, and `.cursor/plans/` for agent guidance.
 
 ## Packages
 
 | Package | Role |
 |---------|------|
-| `@gaem/shared` | Types, map/game logic, combat framework, static data loaders |
+| `@gaem/shared` | Types, map/game logic, combat framework, content-pack registries |
+| `@gaem/hellpiercers-content` | Private git dep — catalogs, combat modules, assets, maps, HP UI |
 | `@gaem/client` | Vue 3 SPA — game board, character sheets, session flow |
 | `@gaem/server` | Local dev backend — Express REST API + WebSocket game room |
 | `@gaem/cf-worker` | Production backend — Cloudflare Worker serving the built client and APIs |
@@ -36,20 +37,20 @@ npm package names remain `@gaem/*` for now.
 
 **APIs** — Player profiles (`/api/player-profiles`) and character sheets (`/api/character-sheets`, with portrait upload) are role-gated via `X-Gaem-Role` and `X-Gaem-Player-Key` headers.
 
-**Maps** — JSON map definitions live in `packages/hellpiercers-content/maps/`. The cf-worker syncs them to KV before deploy. Hellpiercers content registers via `@gaem/hellpiercers-content/register` (see `docs/adr/005-content-package-topology.md`).
+**Maps** — JSON map definitions live in the content package `maps/` (installed under `node_modules/@gaem/hellpiercers-content/maps/`). The cf-worker syncs them to KV before deploy. Product boots register via `@gaem/hellpiercers-content/register` (see `docs/adr/005-content-package-topology.md`).
 
 ## Development
 
 Requires Node 22 (`nvm use`).
 
 ```bash
-npm install
-npm run dev          # shared watch + local server (3001) + client (Vite :5173)
-npm run dev:cf       # shared watch + Vite dev (:5173, HMR) + wrangler dev (:8787)
-npm run deploy:cf    # build and deploy to Cloudflare (main branch via CI)
+npm install          # needs read access to private acedrow/hellpiercers-content
+npm run dev          # shared/content watch + local server (3001) + client (Vite :5173)
+npm run dev:cf       # shared/content watch + Vite dev (:5173, HMR) + wrangler dev (:8787)
+npm run deploy:cf    # build and deploy to Cloudflare
 ```
 
-Before pushing, run the same checks CI does (`.github/workflows/verify.yml`):
+CI uses `bash scripts/ci-install.sh` with secret `CONTENT_GIT_TOKEN` (also set as a Workers Builds build secret; install command `bash scripts/ci-install.sh`). Before pushing, run the same checks CI does (`.github/workflows/verify.yml`):
 
 ```bash
 npm run e2e:setup      # once per machine / after Playwright upgrades

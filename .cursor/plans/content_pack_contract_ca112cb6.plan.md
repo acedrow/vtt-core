@@ -9,7 +9,7 @@ isProject: false
 
 **Repo home:** [`vtt-core`](/Users/lindenholt/code/vtt-core) (this repository). Sibling `/Users/lindenholt/code/gaem` is archival.
 
-**Status:** Tracks A–E strangler landed (`@gaem/hellpiercers-content`, product boots, ADRs 001–005). Close-gaps Phases 0–4 + Area #1 Open B exit **done**. Parent **#2** types untangle **done**. **Remaining:** private remote cutover; parent **#7** stays deferred. See [content-package-private-cutover.md](/Users/lindenholt/code/vtt-core/docs/content-package-private-cutover.md).
+**Status:** Tracks A–E + close-gaps + Open B + parent **#2** + Area **#5** Phase C private git cutover + CI install auth **done** (`acedrow/hellpiercers-content` `#semver:^0.0.5`). Parent **#7** deferred. See [content-package-private-cutover.md](/Users/lindenholt/code/vtt-core/docs/content-package-private-cutover.md).
 
 ## Verdict
 
@@ -182,15 +182,14 @@ In-repo strangler is green. Before replacing the workspace folder with a private
 
 ### Track D — Client contribution registry — **done** (API + AppShell + SFC/glob/theme peel)
 
-### Track E — Product wiring toward private content package — **in-repo package + boots + fixture CI done; private remote cutover open**
-
-Follow-on (mostly complete; remaining slices):
+### Track E — Product wiring toward private content package — **done (Phase C 2026-07-17)**
 
 | Slice | Plan / doc |
 |-------|------------|
 | Close review gaps (Phases 0–4) | [close_content_pack_gaps_250ee351.plan.md](/Users/lindenholt/.cursor/plans/close_content_pack_gaps_250ee351.plan.md) — **done** |
-| Facade retirement + remaining B peel | ADR 002 + Open B remainders above |
-| Private remote cutover | [content-package-private-cutover.md](/Users/lindenholt/code/vtt-core/docs/content-package-private-cutover.md) |
+| Facade retirement + remaining B peel | ADR 002 + Open B — **done** |
+| Topology hardening (Area #5 A–B) | package-root resolution, publish `files` — **done** |
+| Private remote cutover (Phase C) | git dep + workspace deleted + `ci-install.sh` / workflows — **done**; set `CONTENT_GIT_TOKEN` in dashboards |
 
 Historical track plans:
 
@@ -202,7 +201,7 @@ Historical track plans:
 | D Client registry | [track_d_client_registry_85a3763a.plan.md](/Users/lindenholt/.cursor/plans/track_d_client_registry_85a3763a.plan.md) |
 | E Content package wire | [track_e_content_package_wire_a8c3d1e2.plan.md](/Users/lindenholt/.cursor/plans/track_e_content_package_wire_a8c3d1e2.plan.md) |
 
-**Executed:** A → (B ∥ C ∥ D) → E strangler → close-gaps Phases 0–4 → parent #2 types untangle → Area #1 Open B exit. **Next:** private cutover when ready. Parent **#7** separate.
+**Executed:** A → (B ∥ C ∥ D) → E strangler → close-gaps → parent #2 → Open B exit → Area #5 topology + Phase C private git cutover + CI install auth. **Next:** parent **#7** separate; ensure `CONTENT_GIT_TOKEN` is set in dashboards.
 
 ---
 
@@ -241,4 +240,4 @@ flowchart LR
 
 ## Relationship to parent plan
 
-Updates parent area **#1**: five-track split. Parent **#3 Combat pluginization** = Open B remainders (facade retirement + agnosia/provoke/WS peel). Parent **#2 Types** ≈ Track C + [0a64d3ba](/Users/lindenholt/.cursor/plans/shared_types_untangle_0a64d3ba.plan.md) (**done**). Parent **#4 Client** ≈ Track D (**done**). Parent **#5/#6/#8/#9** ≈ Track E in-repo (**done**) + private cutover doc. Parent **#10** legal/grep ≈ cutover acceptance (+ leftover brand strings / facade retirement).
+Updates parent area **#1**: five-track split. Parent **#3 Combat pluginization** = Open B remainders (facade retirement + agnosia/provoke/WS peel) (**done**). Parent **#2 Types** ≈ Track C + [0a64d3ba](/Users/lindenholt/.cursor/plans/shared_types_untangle_0a64d3ba.plan.md) (**done**). Parent **#4 Client** ≈ Track D (**done**). Parent **#5** topology ≈ Track E hardening (**done**) + private cutover Phase C (gated). Parent **#6/#8/#9** ≈ Track E in-repo (**done**) + cutover doc. Parent **#10** legal/grep ≈ cutover acceptance (+ leftover brand strings / facade retirement).

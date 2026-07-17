@@ -14,7 +14,7 @@ Hellpiercers static data lives in `@gaem/shared` today. The engine/content split
 2. **Sync register-once lifecycle** — Registration is synchronous and eager at process/isolate boot. Same `id` + `version` is idempotent (CF Worker HTTP + Durable Object dual entry). A different pack while one is loaded throws. `resetContentPackForTests()` exists only for Vitest.
 3. **Getter stability** — Public getters and bulk array export names (`getEnemyListingByName`, `PLAYER_CLASSES`, …) remain stable during the strangler. Bulk arrays keep identity; loaders clear and refill them.
 4. **Client vs server contribution split** — Server/Worker register catalogs (and later combat/campaign). Client registers the same catalogs at boot plus UI/assets later via a client-only entry so Workers never pull Vue.
-5. **Pack identity** — `id` + `version` are recorded on the registered pack for debug. Persisting them on game/room state is deferred.
+5. **Pack identity** — `id` + `version` are recorded on the registered pack for debug and stamped onto `GameState.contentPack` / `CharacterSheet.contentPack` on normalize and sheet write (parent area #7). Versioned migrators run on load when the stamp id matches (see ADR 003).
 6. **Non-goals** — No runtime downloads, hot-reload packs, or multiple simultaneous packs.
 
 ## Consequences

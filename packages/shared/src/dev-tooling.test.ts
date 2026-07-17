@@ -73,9 +73,12 @@ describe("dev:cf hot-reload wiring", () => {
         scripts: Record<string, string>;
       }
     ).scripts;
-    expect(scripts["sync-tile-assets"]).toContain("scripts/sync-dir.mjs");
+    expect(scripts["sync-tile-assets"]).toContain("scripts/sync-content-assets.mjs");
     expect(scripts["sync-tile-assets"]).not.toContain("rm -rf");
-    expect(scripts["sync-enemy-portraits"]).toContain("scripts/sync-dir.mjs");
+    expect(scripts["sync-enemy-portraits"]).toContain("scripts/sync-content-assets.mjs");
+    expect(read("packages/client/scripts/sync-content-assets.mjs")).toContain(
+      "contentPackageRoot",
+    );
     expect(read("packages/client/scripts/sync-dir.mjs")).toContain("syncMirror");
   });
 

@@ -53,6 +53,108 @@ export function liftLegacyTopLevelIntoData(target: DataBagTarget, key: string): 
   delete target[key];
 }
 
+export function getSheetDataKeys(): readonly string[] {
+  return getCampaignHooks()?.sheetDataKeys ?? [];
+}
+
+export function liftSheetDataKeys(target: DataBagTarget): void {
+  for (const key of getSheetDataKeys()) {
+    liftLegacyTopLevelIntoData(target, key);
+  }
+}
+
+/** Merge body.data with pack sheetDataKeys lifted from body top-level. */
+export function collectSheetDataFromBody(
+  body: Record<string, unknown> | null | undefined,
+  baseData?: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  const data: Record<string, unknown> = { ...(baseData ?? {}) };
+  let has = Object.keys(data).length > 0;
+  if (body?.data != null && typeof body.data === "object" && !Array.isArray(body.data)) {
+    Object.assign(data, body.data as Record<string, unknown>);
+    has = true;
+  }
+  for (const key of getSheetDataKeys()) {
+    if (body?.[key] === undefined) continue;
+    const raw = body[key];
+    data[key] = typeof raw === "string" ? raw.trim() : raw;
+    has = true;
+  }
+  return has ? data : undefined;
+}
+
+/** Apply string values for pack sheetDataKeys from a data bag onto a sheet. */
+export function applySheetDataKeys(
+  sheet: CharacterSheet,
+  data: Record<string, unknown> | undefined,
+): void {
+  if (!data) return;
+  for (const key of getSheetDataKeys()) {
+    if (!(key in data)) continue;
+    const raw = data[key];
+    setPlayerDataString(sheet, key, typeof raw === "string" ? raw.trim() || undefined : undefined);
+  }
+}
+
+/**
+ * Replace sheet.data. Pack sheetDataKeys omitted from nextData are preserved
+ * when clearing (null); when nextData is an object, keys present in it win.
+ */
+export function replaceSheetDataBag(
+  sheet: CharacterSheet,
+  nextData: Record<string, unknown> | null,
+  keyOverrides?: Record<string, string | undefined>,
+): void {
+  const keys = getSheetDataKeys();
+  const preserved: Record<string, string | undefined> = {};
+  for (const key of keys) {
+    preserved[key] = getPlayerDataString(sheet, key);
+  }
+  if (nextData === null) {
+    delete sheet.data;
+    for (const key of keys) {
+      const value = keyOverrides && key in keyOverrides ? keyOverrides[key] : preserved[key];
+      setPlayerDataString(sheet, key, value || undefined);
+    }
+    return;
+  }
+  sheet.data = { ...nextData };
+  for (const key of keys) {
+    if (keyOverrides && key in keyOverrides) {
+      setPlayerDataString(sheet, key, keyOverrides[key] || undefined);
+    } else if (key in nextData) {
+      const raw = nextData[key];
+      setPlayerDataString(sheet, key, typeof raw === "string" ? raw.trim() || undefined : undefined);
+    } else {
+      setPlayerDataString(sheet, key, preserved[key]);
+    }
+  }
+}
+
+/** Extract sheetDataKey updates from a patch body for validation/apply. */
+export function sheetDataKeyUpdatesFromBody(
+  body: Record<string, unknown>,
+): Record<string, string> | undefined {
+  const updates: Record<string, string> = {};
+  let has = false;
+  for (const key of getSheetDataKeys()) {
+    if (body[key] !== undefined) {
+      updates[key] = typeof body[key] === "string" ? (body[key] as string).trim() : "";
+      has = true;
+    } else if (
+      body.data != null &&
+      typeof body.data === "object" &&
+      !Array.isArray(body.data) &&
+      (body.data as Record<string, unknown>)[key] !== undefined
+    ) {
+      const raw = (body.data as Record<string, unknown>)[key];
+      updates[key] = typeof raw === "string" ? raw.trim() : "";
+      has = true;
+    }
+  }
+  return has ? updates : undefined;
+}
+
 export type PlayerClassPocketDimension = {
   gridSize: string;
   perspectiveOptions?: string[];

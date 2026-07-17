@@ -10,7 +10,7 @@
     "sync-maps:local": "node scripts/sync-maps.mjs --local"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "*",
+    "@gaem/hellpiercers-content": "github:acedrow/hellpiercers-content#semver:^0.0.6",
     "@gaem/shared": "*"
   },
   "devDependencies": {

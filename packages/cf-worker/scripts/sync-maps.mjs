@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-import { readdir, readFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
+import { readdir } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { spawnSync } from "node:child_process";
 
-const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "../..");
-const mapsDir = join(root, "hellpiercers-content", "maps");
+import { contentPackageRoot } from "../../../scripts/content-package-root.mjs";
+
+const cfWorkerRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+const mapsDir = join(contentPackageRoot(), "maps");
 const local = process.argv.includes("--local");
 
 async function main() {
@@ -28,7 +30,7 @@ async function main() {
 
     console.log(`Syncing ${file} -> ${key}${local ? " (local)" : ""}`);
     const result = spawnSync("npx", ["wrangler", ...args], {
-      cwd: join(root, "cf-worker"),
+      cwd: cfWorkerRoot,
       stdio: "inherit",
     });
     if (result.status !== 0) process.exit(result.status ?? 1);

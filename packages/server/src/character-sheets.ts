@@ -1,10 +1,16 @@
-import { getPlayerDataString, liftLegacyTopLevelIntoData, setPlayerDataString } from "@gaem/shared";
-
-const YADATHAN_TOWER_DATA_KEY = "yadathanTower";
 import { randomUUID } from "node:crypto";
 
 import type { CharacterSheet, ConsoleActor } from "@gaem/shared";
-import { logSheetFieldChanges, validateCharacterSheetRefs } from "@gaem/shared";
+import {
+  applySheetDataKeys,
+  collectSheetDataFromBody,
+  ensureCharacterSheet,
+  logSheetFieldChanges,
+  replaceSheetDataBag,
+  sheetDataKeyUpdatesFromBody,
+  stampContentPackMeta,
+  validateCharacterSheetRefs,
+} from "@gaem/shared";
 import type { Request, Response } from "express";
 
 import type { AuthContext } from "./auth.js";
@@ -49,8 +55,20 @@ function deletePortrait(portraitKey: string | null): void {
   if (portraitKey) portraits.delete(portraitKey);
 }
 
+function loadSheet(sheet: CharacterSheet): CharacterSheet | { error: string; status: number } {
+  const ensured = ensureCharacterSheet(sheet);
+  if (!ensured.ok) return { error: ensured.error, status: 409 };
+  return ensured.sheet;
+}
+
 export function listSheetsHandler(_auth: AuthContext, res: Response): void {
-  res.json({ sheets: [...characterSheets.values()] });
+  const sheets: CharacterSheet[] = [];
+  for (const sheet of characterSheets.values()) {
+    const loaded = loadSheet(sheet);
+    if ("error" in loaded) continue;
+    sheets.push(loaded);
+  }
+  res.json({ sheets });
 }
 
 export function createSheetHandler(
@@ -60,17 +78,13 @@ export function createSheetHandler(
   hasProfile: (id: string) => boolean,
   constructedIds: readonly string[] = [],
 ): void {
-  const player = typeof req.body?.player === "string" ? req.body.player.trim() : "";
-  const name = typeof req.body?.name === "string" ? req.body.name.trim() : "";
-  const className = typeof req.body?.class === "string" ? req.body.class.trim() : "";
-  const armor = typeof req.body?.armor === "string" ? req.body.armor.trim() : "";
-  const weapon = typeof req.body?.weapon === "string" ? req.body.weapon.trim() : "";
-  const yadathanTower =
-    typeof req.body?.yadathanTower === "string" ? req.body.yadathanTower.trim() : undefined;
-  const data =
-    req.body?.data != null && typeof req.body.data === "object" && !Array.isArray(req.body.data)
-      ? (req.body.data as Record<string, unknown>)
-      : undefined;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const player = typeof body.player === "string" ? body.player.trim() : "";
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const className = typeof body.class === "string" ? body.class.trim() : "";
+  const armor = typeof body.armor === "string" ? body.armor.trim() : "";
+  const weapon = typeof body.weapon === "string" ? body.weapon.trim() : "";
+  const data = collectSheetDataFromBody(body);
 
   if (!player || !name || !className || !armor || !weapon) {
     res.status(400).json({ error: "player, name, class, armor, and weapon are required" });
@@ -86,7 +100,7 @@ export function createSheetHandler(
   }
 
   const refError = validateCharacterSheetRefs(
-    { class: className, armor, weapon, data: yadathanTower ? { yadathanTower } : data },
+    { class: className, armor, weapon, data },
     constructedIds,
   );
   if (refError) {
@@ -107,9 +121,8 @@ export function createSheetHandler(
     createdAt: now,
     updatedAt: now,
   };
-  const towerFromData =
-    data && typeof data.yadathanTower === "string" ? data.yadathanTower.trim() : undefined;
-  setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, yadathanTower || towerFromData || undefined);
+  applySheetDataKeys(sheet, data);
+  stampContentPackMeta(sheet);
   characterSheets.set(sheet.id, sheet);
   res.status(201).json({ sheet });
 }
@@ -124,8 +137,12 @@ export function getSheetHandler(auth: AuthContext, id: string, res: Response): v
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  liftLegacyTopLevelIntoData(sheet, YADATHAN_TOWER_DATA_KEY);
-  res.json({ sheet });
+  const loaded = loadSheet(sheet);
+  if ("error" in loaded) {
+    res.status(loaded.status).json({ error: loaded.error });
+    return;
+  }
+  res.json({ sheet: loaded });
 }
 
 export function patchSheetHandler(
@@ -155,7 +172,12 @@ export function patchSheetHandler(
     return;
   }
 
-  liftLegacyTopLevelIntoData(sheet, YADATHAN_TOWER_DATA_KEY);
+  const loaded = loadSheet(sheet);
+  if ("error" in loaded) {
+    res.status(loaded.status).json({ error: loaded.error });
+    return;
+  }
+
   const prev = {
     name: sheet.name,
     class: sheet.class,
@@ -169,12 +191,14 @@ export function patchSheetHandler(
     tags: sheet.tags,
   };
 
-  if (req.body?.player !== undefined) {
+  const body = (req.body ?? {}) as Record<string, unknown>;
+
+  if (body.player !== undefined) {
     if (!authHasGmCapabilities(auth)) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }
-    const player = typeof req.body.player === "string" ? req.body.player.trim() : "";
+    const player = typeof body.player === "string" ? body.player.trim() : "";
     if (!player || !hasProfile(player)) {
       res.status(400).json({ error: "Invalid player" });
       return;
@@ -182,8 +206,8 @@ export function patchSheetHandler(
     sheet.player = player;
   }
 
-  if (req.body?.name !== undefined) {
-    const name = typeof req.body.name === "string" ? req.body.name.trim() : "";
+  if (body.name !== undefined) {
+    const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!name) {
       res.status(400).json({ error: "Invalid name" });
       return;
@@ -201,40 +225,30 @@ export function patchSheetHandler(
     weapon2?: string;
     data?: Record<string, unknown>;
   } = {};
-  let towerUpdate: string | undefined;
-  if (req.body?.class !== undefined) {
-    refFields.class = typeof req.body.class === "string" ? req.body.class.trim() : "";
+  if (body.class !== undefined) {
+    refFields.class = typeof body.class === "string" ? body.class.trim() : "";
   }
-  if (req.body?.armor !== undefined) {
-    refFields.armor = typeof req.body.armor === "string" ? req.body.armor.trim() : "";
+  if (body.armor !== undefined) {
+    refFields.armor = typeof body.armor === "string" ? body.armor.trim() : "";
   }
-  if (req.body?.weapon !== undefined) {
-    refFields.weapon = typeof req.body.weapon === "string" ? req.body.weapon.trim() : "";
+  if (body.weapon !== undefined) {
+    refFields.weapon = typeof body.weapon === "string" ? body.weapon.trim() : "";
   }
-  if (req.body?.equipment !== undefined) {
-    refFields.equipment = typeof req.body.equipment === "string" ? req.body.equipment.trim() : "";
+  if (body.equipment !== undefined) {
+    refFields.equipment = typeof body.equipment === "string" ? body.equipment.trim() : "";
   }
-  if (req.body?.gear !== undefined) {
-    refFields.gear = typeof req.body.gear === "string" ? req.body.gear.trim() : "";
+  if (body.gear !== undefined) {
+    refFields.gear = typeof body.gear === "string" ? body.gear.trim() : "";
   }
-  if (req.body?.gearArmor !== undefined) {
-    refFields.gearArmor = typeof req.body.gearArmor === "string" ? req.body.gearArmor.trim() : "";
+  if (body.gearArmor !== undefined) {
+    refFields.gearArmor = typeof body.gearArmor === "string" ? body.gearArmor.trim() : "";
   }
-  if (req.body?.weapon2 !== undefined) {
-    refFields.weapon2 = typeof req.body.weapon2 === "string" ? req.body.weapon2.trim() : "";
+  if (body.weapon2 !== undefined) {
+    refFields.weapon2 = typeof body.weapon2 === "string" ? body.weapon2.trim() : "";
   }
-  if (req.body?.yadathanTower !== undefined) {
-    towerUpdate = typeof req.body.yadathanTower === "string" ? req.body.yadathanTower.trim() : "";
-    refFields.data = { [YADATHAN_TOWER_DATA_KEY]: towerUpdate };
-  } else if (
-    req.body?.data != null &&
-    typeof req.body.data === "object" &&
-    !Array.isArray(req.body.data) &&
-    (req.body.data as Record<string, unknown>).yadathanTower !== undefined
-  ) {
-    const raw = (req.body.data as Record<string, unknown>).yadathanTower;
-    towerUpdate = typeof raw === "string" ? raw.trim() : "";
-    refFields.data = { [YADATHAN_TOWER_DATA_KEY]: towerUpdate };
+  const keyUpdates = sheetDataKeyUpdatesFromBody(body);
+  if (keyUpdates) {
+    refFields.data = { ...keyUpdates };
   }
 
   const constructedIds = opts?.constructedIds ?? [];
@@ -260,37 +274,27 @@ export function patchSheetHandler(
   if (refFields.gear !== undefined) sheet.gear = refFields.gear || undefined;
   if (refFields.gearArmor !== undefined) sheet.gearArmor = refFields.gearArmor || undefined;
   if (refFields.weapon2 !== undefined) sheet.weapon2 = refFields.weapon2 || undefined;
-  if (towerUpdate !== undefined) {
-    setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, towerUpdate || undefined);
+  if (keyUpdates) {
+    applySheetDataKeys(sheet, keyUpdates);
   }
 
-  if (req.body?.data !== undefined) {
-    if (req.body.data === null) {
-      const tower = getPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY);
-      delete sheet.data;
-      if (tower) setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, tower);
-    } else if (typeof req.body.data === "object" && !Array.isArray(req.body.data)) {
-      const nextData = { ...(req.body.data as Record<string, unknown>) };
-      const towerFromData =
-        typeof nextData.yadathanTower === "string" ? nextData.yadathanTower.trim() : undefined;
-      sheet.data = nextData;
-      if (towerUpdate === undefined && towerFromData !== undefined) {
-        setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, towerFromData || undefined);
-      } else if (towerUpdate !== undefined) {
-        setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, towerUpdate || undefined);
-      }
+  if (body.data !== undefined) {
+    if (body.data === null) {
+      replaceSheetDataBag(sheet, null, keyUpdates);
+    } else if (typeof body.data === "object" && !Array.isArray(body.data)) {
+      replaceSheetDataBag(sheet, body.data as Record<string, unknown>, keyUpdates);
     } else {
       res.status(400).json({ error: "Invalid data" });
       return;
     }
   }
 
-  if (req.body?.tags !== undefined) {
-    if (!Array.isArray(req.body.tags)) {
+  if (body.tags !== undefined) {
+    if (!Array.isArray(body.tags)) {
       res.status(400).json({ error: "Invalid tags" });
       return;
     }
-    const tags = req.body.tags
+    const tags = body.tags
       .filter((t: unknown): t is string => typeof t === "string")
       .map((t: string) => t.trim())
       .filter(Boolean);
@@ -298,6 +302,7 @@ export function patchSheetHandler(
   }
 
   sheet.updatedAt = new Date().toISOString();
+  stampContentPackMeta(sheet);
   characterSheets.set(sheet.id, sheet);
   if (opts) {
     const label = sheet.name || "Character";
@@ -388,6 +393,7 @@ export function putPortraitHandler(
   deletePortrait(sheet.portraitKey);
   sheet.portraitKey = newKey;
   sheet.updatedAt = new Date().toISOString();
+  stampContentPackMeta(sheet);
   characterSheets.set(sheet.id, sheet);
   res.json({ sheet });
 }

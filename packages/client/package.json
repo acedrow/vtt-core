@@ -15,8 +15,8 @@
     "./lib/*": "./src/lib/*"
   },
   "scripts": {
-    "sync-enemy-portraits": "node scripts/sync-dir.mjs ../hellpiercers-content/assets/enemies public/enemies",
-    "sync-tile-assets": "node scripts/sync-dir.mjs ../hellpiercers-content/assets/tiles public/tiles",
+    "sync-enemy-portraits": "node scripts/sync-content-assets.mjs enemies",
+    "sync-tile-assets": "node scripts/sync-content-assets.mjs tiles",
     "sync-assets": "npm run sync-enemy-portraits && npm run sync-tile-assets",
     "predev": "npm run sync-assets",
     "prebuild": "npm run sync-assets",
@@ -27,7 +27,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "*",
+    "@gaem/hellpiercers-content": "github:acedrow/hellpiercers-content#semver:^0.0.6",
     "@gaem/shared": "*",
     "vue": "^3.5.13",
     "vue-color": "^3.3.3",

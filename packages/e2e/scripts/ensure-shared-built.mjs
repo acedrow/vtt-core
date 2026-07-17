@@ -6,6 +6,8 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { contentPackageRoot } from "../../../scripts/content-package-root.mjs";
+
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
 function newestMtimeMs(dir) {
@@ -27,7 +29,7 @@ function needsBuild(pkgDir, distEntry) {
 }
 
 const sharedDir = join(rootDir, "packages/shared");
-const contentDir = join(rootDir, "packages/hellpiercers-content");
+const contentDir = contentPackageRoot();
 const sharedNeeds = needsBuild(sharedDir, join(sharedDir, "dist/index.js"));
 const contentNeeds = needsBuild(contentDir, join(contentDir, "dist/register.js"));
 
@@ -48,7 +50,7 @@ if (sharedNeeds) {
 
 if (contentNeeds || sharedNeeds) {
   console.log("[e2e] building @gaem/hellpiercers-content…");
-  const result = spawnSync("npm", ["run", "build", "-w", "@gaem/hellpiercers-content"], {
+  const result = spawnSync("npm", ["run", "build:content"], {
     cwd: rootDir,
     stdio: "inherit",
     shell: process.platform === "win32",

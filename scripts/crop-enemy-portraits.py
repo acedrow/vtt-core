@@ -9,7 +9,8 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DIR = ROOT / "packages/assets/enemies"
+# Prefer an explicit path (enemy-portraits-crop.mjs passes content package assets/).
+DEFAULT_DIR = ROOT / "node_modules/@gaem/hellpiercers-content/assets/enemies"
 
 
 def content_bbox(im: Image.Image, black_thresh: int = 24) -> tuple[int, int, int, int] | None:
@@ -55,7 +56,7 @@ def main() -> None:
         "paths",
         nargs="*",
         type=Path,
-        help="PNG files or directories (default: packages/assets/enemies)",
+        help="PNG files or directories (default: content package assets/enemies)",
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()

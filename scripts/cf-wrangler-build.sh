@@ -7,5 +7,7 @@ set -euo pipefail
 if [ "${WRANGLER_COMMAND:-}" = "dev" ]; then
   echo "[cf dev] client served by Vite dev server; skipping build"
 else
-  npm run build -w @gaem/shared && npm run build -w @gaem/hellpiercers-content && npm run build -w @gaem/client
+  npm run build -w @gaem/shared && npm run build:content && npm run build -w @gaem/client
+  # Keep MAP_KV in sync on every deploy path (bare wrangler deploy / Workers Builds).
+  npm run sync-maps -w @gaem/cf-worker
 fi

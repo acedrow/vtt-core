@@ -27,16 +27,16 @@
       "@gaem/client/content-pack": ["./src/client-content-pack.ts"],
       "@gaem/client/*": ["./src/*"],
       "@gaem/hellpiercers-content/tiles": [
-        "../hellpiercers-content/src/client/tiles/index.ts"
+        "../../node_modules/@gaem/hellpiercers-content/src/client/tiles/index.ts"
       ],
       "@gaem/hellpiercers-content/combat-ui": [
-        "../hellpiercers-content/src/combat-ui.ts"
+        "../../node_modules/@gaem/hellpiercers-content/src/combat-ui.ts"
       ],
       "@gaem/hellpiercers-content/register": [
-        "../hellpiercers-content/src/register.ts"
+        "../../node_modules/@gaem/hellpiercers-content/src/register.ts"
       ],
       "@gaem/hellpiercers-content/register-client": [
-        "../hellpiercers-content/src/register-client.ts"
+        "../../node_modules/@gaem/hellpiercers-content/src/register-client.ts"
       ]
     }
   },
@@ -44,13 +44,13 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "../hellpiercers-content/src/client/**/*.ts",
-    "../hellpiercers-content/src/client/**/*.vue",
-    "../hellpiercers-content/src/register-client.ts",
-    "../hellpiercers-content/src/combat-ui.ts",
-    "../hellpiercers-content/src/combat/**/*.ts"
+    "../../node_modules/@gaem/hellpiercers-content/src/client/**/*.ts",
+    "../../node_modules/@gaem/hellpiercers-content/src/client/**/*.vue",
+    "../../node_modules/@gaem/hellpiercers-content/src/register-client.ts",
+    "../../node_modules/@gaem/hellpiercers-content/src/combat-ui.ts",
+    "../../node_modules/@gaem/hellpiercers-content/src/combat/**/*.ts"
   ],
   "exclude": [
-    "../hellpiercers-content/src/**/*.test.ts"
+    "../../node_modules/@gaem/hellpiercers-content/src/**/*.test.ts"
   ]
 }

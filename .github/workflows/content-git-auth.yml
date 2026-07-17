@@ -1,0 +1,33 @@
+# Dry-run: prove private content fetch works with CONTENT_GIT_TOKEN.
+# Full verify is in verify.yml.
+name: Content git auth
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/ci-install.sh"
+      - "package-lock.json"
+      - "packages/*/package.json"
+      - ".github/workflows/content-git-auth.yml"
+
+jobs:
+  npm-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install (private content git dep)
+        run: bash scripts/ci-install.sh
+        env:
+          CONTENT_GIT_TOKEN: ${{ secrets.CONTENT_GIT_TOKEN }}
+          REQUIRE_CONTENT_GIT_TOKEN: "1"
+
+      - name: Resolve content package
+        run: node scripts/content-package-root.mjs

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Engine vs content
 
-This repo is **vtt-core** (tactical VTT engine). Hellpiercers IP lives in `@gaem/hellpiercers-content` (`packages/hellpiercers-content`), registered at product boot.
+This repo is **vtt-core** (tactical VTT engine). Hellpiercers IP lives in private git package `@gaem/hellpiercers-content` (`acedrow/hellpiercers-content`), installed to `node_modules`, registered at product boot.
 
 ## Dependency matrix
 
@@ -18,25 +18,25 @@ Shared must not import the content package. Product packages side-effect-registe
 
 ## Decisions (locked)
 
-- Content = workspace package today; private npm/git dependency later (same name/exports). **Sync register-once** at boot (not runtime KV packs).
+- Content = private git dep (`#semver:^0.0.6`). **Sync register-once** at boot (not runtime KV packs).
 - Product boots: `@gaem/hellpiercers-content/register` (+ client `./register-client`). Never `@gaem/shared/register-hellpiercers`.
 - Named combat implementations live in the content package and register via `CombatHookContribution.modules` + hooks; shared dispatches with `combatMod(key)`. Client UI helpers use `@gaem/hellpiercers-content/combat-ui`.
-- Engine CI / shared Vitest target: fixture catalogs; content package owns HP tests. Product/e2e registers Hellpiercers.
+- Engine CI / shared Vitest target: fixture catalogs; content repo owns HP tests. Product/e2e registers Hellpiercers.
 - npm scope remains `@gaem/*` until explicitly renamed.
-- Sibling copy `/Users/lindenholt/code/gaem` is historical — **do new work here**.
-- Nested `GameState.campaign` (parent #2) is done. Sheet/pack-version KV migrations remain parent #7 — not required for content-pack A–E completion.
+- Sibling copy `/Users/lindenholt/code/gaem` is historical — **do new work here**. Content edits: `/Users/lindenholt/code/hellpiercers-content`.
+- Nested `GameState.campaign` (parent #2) is done. Sheet/pack-version KV stamps + migrators (parent #7) are done in engine; content must ship `sheetDataKeys` (`@gaem/hellpiercers-content` ≥0.0.6).
 
 ## Plans
 
 - `.cursor/plans/content_engine_split_077e8cba.plan.md` — high-level split areas
 - `.cursor/plans/content_pack_contract_ca112cb6.plan.md` — Tracks A–E (Open B exit done)
 - Close-gaps Phases 0–4 done; Area #1 Open B exit done
-- Remaining: private cutover — `docs/content-package-private-cutover.md`
+- Private cutover + Phase 6 deploy/sync contract done — `docs/content-package-private-cutover.md`, `docs/content-package-build-contract.md` (ops: set `CONTENT_GIT_TOKEN` in dashboards)
 - ADRs: `docs/adr/001`–`005`
 
 ## When editing
 
 - Prefer registry/hook shapes over new enemy/class/weapon name branches in engine combat framework.
 - Keep server ↔ cf-worker parity (`ws-parity.test.ts`).
-- Assets/maps/rulebook live under `packages/hellpiercers-content/`.
-- Content must not import `@gaem/client` via relative `../../../client` paths — use package exports; colocate panels/globs in content before private cutover.
+- Assets/maps/rulebook live in the content git repo (installed under `node_modules/@gaem/hellpiercers-content/`).
+- Content must not import `@gaem/client` via relative paths — use `@gaem/client` package exports.

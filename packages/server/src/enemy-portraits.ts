@@ -1,11 +1,14 @@
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 
 import type { Request, Response } from "express";
 
-const root = join(fileURLToPath(new URL(".", import.meta.url)), "../..");
-const portraitsDir = join(root, "assets/enemies/paracletus");
+const require = createRequire(import.meta.url);
+const portraitsDir = join(
+  dirname(require.resolve("@gaem/hellpiercers-content/package.json")),
+  "assets/enemies/paracletus"
+);
 
 export const enemyPortraits = new Map<string, { body: Buffer; contentType: string }>();
 

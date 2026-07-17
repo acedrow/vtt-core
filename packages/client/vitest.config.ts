@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -6,10 +7,22 @@ import { defineConfig } from "vitest/config";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const clientSrc = path.resolve(here, "src");
-const contentSrc = path.resolve(here, "../hellpiercers-content/src");
+const require = createRequire(import.meta.url);
+const contentSrc = path.join(
+  path.dirname(require.resolve("@gaem/hellpiercers-content/package.json")),
+  "src",
+);
 
 export default defineConfig({
   plugins: [vue()],
+  optimizeDeps: {
+    exclude: [
+      "@gaem/hellpiercers-content/register",
+      "@gaem/hellpiercers-content/register-client",
+      "@gaem/hellpiercers-content/tiles",
+      "@gaem/hellpiercers-content/combat-ui",
+    ],
+  },
   resolve: {
     alias: [
       {

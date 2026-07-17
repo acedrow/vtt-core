@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 
 import type { GameMap, GameMapSummary } from "@gaem/shared";
 import {
@@ -14,6 +14,8 @@ import type { Request, Response } from "express";
 
 import type { AuthContext } from "./auth.js";
 import { authHasGmCapabilities } from "./auth.js";
+
+const require = createRequire(import.meta.url);
 
 const MAP_ID_RE = /^[a-z0-9-]+$/;
 
@@ -121,5 +123,5 @@ export function deleteMapHandler(
 }
 
 export function mapsDirPath(): string {
-  return join(fileURLToPath(new URL(".", import.meta.url)), "../../hellpiercers-content/maps");
+  return join(dirname(require.resolve("@gaem/hellpiercers-content/package.json")), "maps");
 }

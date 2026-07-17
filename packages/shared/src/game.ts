@@ -22,6 +22,7 @@ import {
 } from "./campaign-hooks.js";
 import { ensureCampaignBag, liftLegacyCampaignFields } from "./campaign-state.js";
 import { applyLoadoutToPlayer, getClassMaxHp, getArmorSpeed } from "./player-data.js";
+import { ensureGameStateContentPack } from "./sheet-persistence.js";
 import { coordKey, createInitialStateFromMap, isFootprintInBounds, isInBounds, isWalkable, tileAt } from "./map.js";
 import { isOrthogonallyAdjacent } from "./patterns.js";
 import {
@@ -1417,6 +1418,10 @@ export function normalizeGameState(state: GameState, map?: GameMap): GameState {
   normalizePlayers(state.players);
   normalizeEnemies(state.enemies);
   reconcileSwarmHp(state, snapshotSwarmGroups(state));
+  const packResult = ensureGameStateContentPack(state);
+  if (!packResult.ok) {
+    throw new Error(packResult.error);
+  }
   return state;
 }
 

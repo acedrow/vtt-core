@@ -1,8 +1,15 @@
-import { getPlayerDataString, liftLegacyTopLevelIntoData, setPlayerDataString } from "@gaem/shared";
-
-const YADATHAN_TOWER_DATA_KEY = "yadathanTower";
 import type { CharacterSheet } from "@gaem/shared";
-import { actorForAuth, logSheetFieldChanges, validateCharacterSheetRefs } from "@gaem/shared";
+import {
+  actorForAuth,
+  applySheetDataKeys,
+  collectSheetDataFromBody,
+  ensureCharacterSheet,
+  logSheetFieldChanges,
+  replaceSheetDataBag,
+  sheetDataKeyUpdatesFromBody,
+  stampContentPackMeta,
+  validateCharacterSheetRefs,
+} from "@gaem/shared";
 
 import type { AuthContext } from "./auth.js";
 import { authHasGmCapabilities, canAccessSheet, canCreateForPlayer, canEditSheet } from "./auth.js";
@@ -11,17 +18,70 @@ import type { Env } from "./env.js";
 import { getPlayerProfile } from "./player-profiles.js";
 
 const PREFIX = "character-sheet:";
+const INDEX_KEY = "character-sheet-index";
 
 function key(id: string): string {
   return `${PREFIX}${id}`;
 }
 
-export async function listCharacterSheets(env: Env): Promise<CharacterSheet[]> {
-  const { keys } = await env.PLAYER_KV.list({ prefix: PREFIX });
-  const sheets = await Promise.all(
-    keys.map(({ name }) => env.PLAYER_KV.get<CharacterSheet>(name, "json"))
+async function readSheetIds(env: Env): Promise<string[]> {
+  const raw = await env.PLAYER_KV.get<string[]>(INDEX_KEY, "json");
+  return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === "string") : [];
+}
+
+async function writeSheetIds(env: Env, ids: string[]): Promise<void> {
+  await env.PLAYER_KV.put(INDEX_KEY, JSON.stringify(ids));
+}
+
+async function addSheetId(env: Env, id: string): Promise<void> {
+  const ids = await readSheetIds(env);
+  if (ids.includes(id)) return;
+  await writeSheetIds(env, [...ids, id]);
+}
+
+async function removeSheetId(env: Env, id: string): Promise<void> {
+  const ids = await readSheetIds(env);
+  if (!ids.includes(id)) return;
+  await writeSheetIds(
+    env,
+    ids.filter((existingId) => existingId !== id),
   );
-  return sheets.filter((s): s is CharacterSheet => !!s);
+}
+
+async function listSheetsFromPrefix(env: Env): Promise<CharacterSheet[]> {
+  const sheets: CharacterSheet[] = [];
+  let cursor: string | undefined;
+  do {
+    const page = await env.PLAYER_KV.list({ prefix: PREFIX, cursor });
+    const batch = await Promise.all(
+      page.keys.map(({ name }) => env.PLAYER_KV.get<CharacterSheet>(name, "json")),
+    );
+    sheets.push(...batch.filter((s): s is CharacterSheet => !!s));
+    cursor = page.list_complete ? undefined : page.cursor;
+  } while (cursor);
+  return sheets;
+}
+
+async function syncSheetIndex(env: Env, sheets: CharacterSheet[]): Promise<void> {
+  await writeSheetIds(
+    env,
+    sheets.map((sheet) => sheet.id),
+  );
+}
+
+export async function listCharacterSheets(env: Env): Promise<CharacterSheet[]> {
+  const ids = await readSheetIds(env);
+  if (ids.length > 0) {
+    const sheets = await Promise.all(ids.map((id) => getCharacterSheet(env, id)));
+    const indexed = sheets.filter((s): s is CharacterSheet => !!s);
+    if (indexed.length > 0) return indexed;
+  }
+
+  const listed = await listSheetsFromPrefix(env);
+  if (listed.length > 0) {
+    await syncSheetIndex(env, listed);
+  }
+  return listed;
 }
 
 export async function getCharacterSheet(
@@ -36,10 +96,12 @@ export async function saveCharacterSheet(
   sheet: CharacterSheet
 ): Promise<void> {
   await env.PLAYER_KV.put(key(sheet.id), JSON.stringify(sheet));
+  await addSheetId(env, sheet.id);
 }
 
 export async function deleteCharacterSheet(env: Env, id: string): Promise<void> {
   await env.PLAYER_KV.delete(key(id));
+  await removeSheetId(env, id);
 }
 
 export async function deletePortrait(env: Env, portraitKey: string | null): Promise<void> {
@@ -70,23 +132,37 @@ async function getConstructedBaseUpgrades(env: Env): Promise<string[]> {
   return data.constructedBaseUpgrades ?? [];
 }
 
+async function loadAndPersistSheet(
+  env: Env,
+  sheet: CharacterSheet,
+): Promise<{ ok: true; sheet: CharacterSheet } | { ok: false; error: string; status: number }> {
+  const ensured = ensureCharacterSheet(sheet);
+  if (!ensured.ok) return { ok: false, error: ensured.error, status: 409 };
+  if (ensured.dirty) {
+    await saveCharacterSheet(env, ensured.sheet);
+  }
+  return { ok: true, sheet: ensured.sheet };
+}
+
 type CreateBody = {
   player?: unknown;
   name?: unknown;
   class?: unknown;
   armor?: unknown;
   weapon?: unknown;
-  yadathanTower?: unknown;
   data?: unknown;
+  [key: string]: unknown;
 };
 
 export async function handleListCharacterSheets(
   env: Env,
   _auth: AuthContext
 ): Promise<Response> {
-  const sheets = await listCharacterSheets(env);
-  for (const sheet of sheets) {
-    liftLegacyTopLevelIntoData(sheet, YADATHAN_TOWER_DATA_KEY);
+  const raw = await listCharacterSheets(env);
+  const sheets: CharacterSheet[] = [];
+  for (const sheet of raw) {
+    const loaded = await loadAndPersistSheet(env, sheet);
+    if (loaded.ok) sheets.push(loaded.sheet);
   }
   return Response.json({ sheets });
 }
@@ -102,12 +178,7 @@ export async function handleCreateCharacterSheet(
   const className = typeof body?.class === "string" ? body.class.trim() : "";
   const armor = typeof body?.armor === "string" ? body.armor.trim() : "";
   const weapon = typeof body?.weapon === "string" ? body.weapon.trim() : "";
-  const yadathanTower =
-    typeof body?.yadathanTower === "string" ? body.yadathanTower.trim() : undefined;
-  const data =
-    body?.data != null && typeof body.data === "object" && !Array.isArray(body.data)
-      ? (body.data as Record<string, unknown>)
-      : undefined;
+  const data = collectSheetDataFromBody(body ?? undefined);
 
   if (!player || !name || !className || !armor || !weapon) {
     return Response.json(
@@ -131,7 +202,7 @@ export async function handleCreateCharacterSheet(
       class: className,
       armor,
       weapon,
-      data: yadathanTower ? { yadathanTower } : data,
+      data,
     },
     constructedIds,
   );
@@ -152,9 +223,8 @@ export async function handleCreateCharacterSheet(
     createdAt: now,
     updatedAt: now,
   };
-  const towerFromData =
-    data && typeof data.yadathanTower === "string" ? data.yadathanTower.trim() : undefined;
-  setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, yadathanTower || towerFromData || undefined);
+  applySheetDataKeys(sheet, data);
+  stampContentPackMeta(sheet);
   await saveCharacterSheet(env, sheet);
   return Response.json({ sheet }, { status: 201 });
 }
@@ -171,8 +241,11 @@ export async function handleGetCharacterSheet(
   if (!canAccessSheet(auth, sheet)) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
-  liftLegacyTopLevelIntoData(sheet, YADATHAN_TOWER_DATA_KEY);
-  return Response.json({ sheet });
+  const loaded = await loadAndPersistSheet(env, sheet);
+  if (!loaded.ok) {
+    return Response.json({ error: loaded.error }, { status: loaded.status });
+  }
+  return Response.json({ sheet: loaded.sheet });
 }
 
 type PatchBody = {
@@ -184,10 +257,10 @@ type PatchBody = {
   gear?: unknown;
   gearArmor?: unknown;
   weapon2?: unknown;
-  yadathanTower?: unknown;
   tags?: unknown;
   player?: unknown;
   data?: unknown;
+  [key: string]: unknown;
 };
 
 export async function handlePatchCharacterSheet(
@@ -207,7 +280,11 @@ export async function handlePatchCharacterSheet(
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  liftLegacyTopLevelIntoData(sheet, YADATHAN_TOWER_DATA_KEY);
+  const loaded = await loadAndPersistSheet(env, sheet);
+  if (!loaded.ok) {
+    return Response.json({ error: loaded.error }, { status: loaded.status });
+  }
+
   const prev = {
     name: sheet.name,
     class: sheet.class,
@@ -259,7 +336,6 @@ export async function handlePatchCharacterSheet(
     weapon2?: string;
     data?: Record<string, unknown>;
   } = {};
-  let towerUpdate: string | undefined;
   if (body.class !== undefined) {
     refFields.class = typeof body.class === "string" ? body.class.trim() : "";
   }
@@ -281,18 +357,9 @@ export async function handlePatchCharacterSheet(
   if (body.weapon2 !== undefined) {
     refFields.weapon2 = typeof body.weapon2 === "string" ? body.weapon2.trim() : "";
   }
-  if (body.yadathanTower !== undefined) {
-    towerUpdate = typeof body.yadathanTower === "string" ? body.yadathanTower.trim() : "";
-    refFields.data = { [YADATHAN_TOWER_DATA_KEY]: towerUpdate };
-  } else if (
-    body.data != null &&
-    typeof body.data === "object" &&
-    !Array.isArray(body.data) &&
-    (body.data as Record<string, unknown>).yadathanTower !== undefined
-  ) {
-    const raw = (body.data as Record<string, unknown>).yadathanTower;
-    towerUpdate = typeof raw === "string" ? raw.trim() : "";
-    refFields.data = { [YADATHAN_TOWER_DATA_KEY]: towerUpdate };
+  const keyUpdates = sheetDataKeyUpdatesFromBody(body);
+  if (keyUpdates) {
+    refFields.data = { ...keyUpdates };
   }
 
   const constructedIds = await getConstructedBaseUpgrades(env);
@@ -317,25 +384,15 @@ export async function handlePatchCharacterSheet(
   if (refFields.gear !== undefined) sheet.gear = refFields.gear || undefined;
   if (refFields.gearArmor !== undefined) sheet.gearArmor = refFields.gearArmor || undefined;
   if (refFields.weapon2 !== undefined) sheet.weapon2 = refFields.weapon2 || undefined;
-  if (towerUpdate !== undefined) {
-    setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, towerUpdate || undefined);
+  if (keyUpdates) {
+    applySheetDataKeys(sheet, keyUpdates);
   }
 
   if (body.data !== undefined) {
     if (body.data === null) {
-      const tower = getPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY);
-      delete sheet.data;
-      if (tower) setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, tower);
+      replaceSheetDataBag(sheet, null, keyUpdates);
     } else if (typeof body.data === "object" && !Array.isArray(body.data)) {
-      const nextData = { ...(body.data as Record<string, unknown>) };
-      const towerFromData =
-        typeof nextData.yadathanTower === "string" ? nextData.yadathanTower.trim() : undefined;
-      sheet.data = nextData;
-      if (towerUpdate === undefined && towerFromData !== undefined) {
-        setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, towerFromData || undefined);
-      } else if (towerUpdate !== undefined) {
-        setPlayerDataString(sheet, YADATHAN_TOWER_DATA_KEY, towerUpdate || undefined);
-      }
+      replaceSheetDataBag(sheet, body.data as Record<string, unknown>, keyUpdates);
     } else {
       return Response.json({ error: "Invalid data" }, { status: 400 });
     }
@@ -353,6 +410,7 @@ export async function handlePatchCharacterSheet(
   }
 
   sheet.updatedAt = new Date().toISOString();
+  stampContentPackMeta(sheet);
   await saveCharacterSheet(env, sheet);
 
   const roomId = env.GAME_ROOM.idFromName("default");
@@ -457,6 +515,7 @@ export async function handlePutPortrait(
 
   sheet.portraitKey = newKey;
   sheet.updatedAt = new Date().toISOString();
+  stampContentPackMeta(sheet);
   await saveCharacterSheet(env, sheet);
 
   return Response.json({ sheet });

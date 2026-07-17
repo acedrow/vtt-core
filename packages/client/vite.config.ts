@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,10 +12,27 @@ const cfDev = !!process.env.VITE_CF_DEV;
 const workerTarget = "http://localhost:8787";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const clientSrc = path.resolve(here, "src");
-const contentSrc = path.resolve(here, "../hellpiercers-content/src");
+const require = createRequire(import.meta.url);
+const contentSrc = path.join(
+  path.dirname(require.resolve("@gaem/hellpiercers-content/package.json")),
+  "src",
+);
+
+const contentExports = [
+  "@gaem/hellpiercers-content/register",
+  "@gaem/hellpiercers-content/register-client",
+  "@gaem/hellpiercers-content/tiles",
+  "@gaem/hellpiercers-content/combat-ui",
+] as const;
 
 export default defineConfig({
   plugins: [vue()],
+  // Content lives in node_modules after private cutover. Prebundling it
+  // duplicates @gaem/client/content-pack so register-client never hits the
+  // app's registry ("Client content pack is not registered").
+  optimizeDeps: {
+    exclude: [...contentExports],
+  },
   resolve: {
     alias: [
       {
@@ -45,6 +63,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    fs: {
+      allow: [here, path.dirname(contentSrc)],
+    },
     proxy: cfDev
       ? {
           "/api": { target: workerTarget, changeOrigin: true },

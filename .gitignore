@@ -19,6 +19,7 @@ packages/e2e/.playwright-browsers/
 HELLPIERCERS v1.02.pdf
 scripts/rulebook/.venv/
 scripts/rulebook/out/
-packages/hellpiercers-content/rulebook/.venv/
-packages/hellpiercers-content/rulebook/out/
 tmp/
+# Synced from @gaem/hellpiercers-content via client predev/prebuild
+packages/client/public/tiles/
+packages/client/public/enemies/

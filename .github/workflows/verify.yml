@@ -1,0 +1,71 @@
+name: Verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install (private content git dep)
+        run: bash scripts/ci-install.sh
+        env:
+          CONTENT_GIT_TOKEN: ${{ secrets.CONTENT_GIT_TOKEN }}
+
+      # Build first: the client imports @gaem/shared from dist/, and the
+      # type-aware lint rules on the backends resolve types from dist/ too.
+      - run: npm run build
+      - run: npm run lint
+      - run: npm run test
+
+  e2e:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install (private content git dep)
+        run: bash scripts/ci-install.sh
+        env:
+          CONTENT_GIT_TOKEN: ${{ secrets.CONTENT_GIT_TOKEN }}
+
+      - run: npm run build
+
+      - uses: actions/cache@v4
+        with:
+          path: packages/e2e/.playwright-browsers
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: E2E setup (env + Chromium)
+        run: npm run e2e:setup
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/packages/e2e/.playwright-browsers
+
+      - run: npm run test:e2e
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/packages/e2e/.playwright-browsers
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: packages/e2e/playwright-report/
+          retention-days: 7

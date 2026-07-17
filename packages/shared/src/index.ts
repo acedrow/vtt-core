@@ -17,6 +17,8 @@ export * from "./campaign-registry.js";
 export * from "./campaign-state.js";
 export * from "./campaign-hooks.js";
 export * from "./player-data.js";
+export * from "./sheet-persistence.js";
+export type { ContentPackMeta } from "./content-pack-state.js";
 export * from "./enemy-data.js";
 export * from "./faction-data.js";
 export * from "./gm-stratcom-actions-data.js";

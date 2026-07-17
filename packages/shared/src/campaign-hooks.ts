@@ -1,5 +1,6 @@
 import type {
   BaseCampaignAction,
+  CharacterSheet,
   FactionCampaignAction,
   FactionState,
   FactionStates,
@@ -19,10 +20,15 @@ import type { BaseUpgradeCost } from "./base-upgrades-data.js";
 import type { CharacterSheetLoadoutFields } from "./base-upgrades-unlocks.js";
 import type { EnemyListing } from "./enemy-data.js";
 import type { FactionId } from "./faction-data.js";
-import { assertContentPackRegistered } from "./content-pack-state.js";
+import {
+  assertContentPackRegistered,
+  type ContentPackMeta,
+} from "./content-pack-state.js";
 
 export type CampaignHookContribution = {
   ensure: (state: GameState) => void;
+  /** Pack-owned sheet `data` keys also accepted as REST body top-level fields. */
+  sheetDataKeys?: readonly string[];
   validateSheetLoadoutExtras?: (
     fields: CharacterSheetLoadoutFields,
     existing?: CharacterSheetLoadoutFields,
@@ -31,6 +37,8 @@ export type CampaignHookContribution = {
     player: Player,
     loadout: { armor: string; data?: Record<string, unknown> },
   ) => void;
+  /** Migrate/backfill pack-owned sheet data when pack version changes. */
+  ensureSheet?: (sheet: CharacterSheet, from: ContentPackMeta | null) => void;
   defaultPartyResources: () => PartyResources;
   ensureCampaignState: (state: GameState) => void;
   canAffordCost: (resources: PartyResources, cost: BaseUpgradeCost) => boolean;

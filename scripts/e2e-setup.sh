@@ -17,7 +17,12 @@ if [[ ! -f "$ROOT/.env.e2e" ]]; then
 fi
 
 cd "$ROOT"
-npm run playwright:install -w @gaem/e2e
+if [[ "${CI:-}" == "true" ]]; then
+  # GitHub Actions / Linux CI need OS libraries for headless Chromium.
+  (cd packages/e2e && PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_BROWSERS_PATH" npx playwright install --with-deps chromium)
+else
+  npm run playwright:install -w @gaem/e2e
+fi
 
 echo "Playwright Chromium ready at $PLAYWRIGHT_BROWSERS_PATH"
 echo "Run e2e with: npm run test:e2e  (client :5174, API :3002 — safe alongside dev:cf)"

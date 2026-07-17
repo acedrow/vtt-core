@@ -335,6 +335,11 @@ export type LegacyCampaignGameStateFields = {
   factionStates?: FactionStates;
 };
 
+export type ContentPackStamp = {
+  id: string;
+  version: string;
+};
+
 export type GameState = {
   mapId: string;
   mapName: string;
@@ -354,6 +359,8 @@ export type GameState = {
   damageEvents?: DamageEvent[];
   silentHpEnemyIds?: string[];
   campaign?: CampaignRuntimeState;
+  /** Pack that last wrote this room state; stamped on normalize/save. */
+  contentPack?: ContentPackStamp;
 };
 
 /**
@@ -391,6 +398,8 @@ export type CharacterSheet = {
   weapon2?: string;
   tags?: string[];
   data?: Record<string, unknown>;
+  /** Pack that last wrote this sheet; stamped on create/patch. */
+  contentPack?: ContentPackStamp;
   createdAt: string;
   updatedAt: string;
 };

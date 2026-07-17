@@ -9,7 +9,7 @@ isProject: false
 
 **Repo home:** [`vtt-core`](/Users/lindenholt/code/vtt-core) (this repository). Historical monolith copy: `/Users/lindenholt/code/gaem` — do not continue structural work there.
 
-**Status:** Tracks A–E strangler + close-gaps Phases 0–4 + Area #1 Open B exit landed (`packages/hellpiercers-content`, product boots, client peel, fixture-default engine CI, ADRs 001–005, facade retirement). Parent **#2** types untangle **done**. **Remaining on content-pack spine:** private remote cutover. Parent **#7** (sheet/pack-version persistence) stays separate. Authoritative track status + cutover notes: [content_pack_contract_ca112cb6.plan.md](content_pack_contract_ca112cb6.plan.md).
+**Status:** Tracks A–E + close-gaps + Open B + parent **#2** + Area **#5** (topology + Phase C private git cutover + CI install auth) **done**. Content is `git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.5`; workspace folder removed. Parent **#7** stays separate. See [content_pack_contract_ca112cb6.plan.md](content_pack_contract_ca112cb6.plan.md) + [content-package-private-cutover.md](../docs/content-package-private-cutover.md).
 
 ## Target shape
 
@@ -95,11 +95,13 @@ Named modules + hooks in content; shared uses `combatMod` / generic confirm / pr
 
 Engine ships board shell + panel host; pack contributes panels/themes/globs/branding via `register-client`. Landing hero + favicon are pack-driven (`ClientContribution.branding`); thin `bundledTile*` passthroughs and Highshade shell typography remain in client (intentional).
 
-### 5. Repo topology, packaging, and private dependency mechanics
-How content is published/consumed: git submodule vs private npm (GitHub Packages) vs `file:` during migration; versioning; lockfile strategy; whether product lives in engine repo or a third thin repo. Ensure Workers Builds / wrangler alias story still works when content is a private dependency. **Peer graph:** content peerDepends on `@gaem/client` for Vue panels — keep or invert before remote split. See cutover doc.
+### 5. Repo topology, packaging, and private dependency mechanics — **done (Phase C 2026-07-17)**
 
-### 6. Deploy, secrets, and maps/assets pipeline
-Keep CF Worker + DO + KV + R2 in engine/product. Map sync / asset sync already read content-package paths. Content package build outputs (JSON bundle, static assets copy) need a clear contract for private install.
+Private git dep `acedrow/hellpiercers-content` `#semver:^0.0.5`; workspace copy deleted; `build:content` / Vite `optimizeDeps.exclude`; peers documented in content README (not npm peers — arborist). CI: `scripts/ci-install.sh` + repo secret `CONTENT_GIT_TOKEN`; Workers Builds uses the same secret as a build secret and install command `bash scripts/ci-install.sh`.
+
+### 6. Deploy, secrets, and maps/assets pipeline — **done (Phase 6, 2026-07-17)**
+
+CF Worker + DO + KV + R2 stay in engine/product. Map/asset sync read content-package paths. Build/sync contract: [content-package-build-contract.md](../docs/content-package-build-contract.md). CI: `ci-install.sh` + `CONTENT_GIT_TOKEN`; `cf-wrangler-build.sh` runs `sync-maps` on deploy. Ops: set `CONTENT_GIT_TOKEN` in dashboards.
 
 ### 7. Auth, sheets, and persistence boundaries
 Keep password/HMAC auth in engine. Plan sheet validation against pack catalogs; migration of existing KV sheet shapes; what happens if pack version changes under live state. **Deferred** from A–E completion.
@@ -116,7 +118,7 @@ Phased cut without a big-bang freeze:
 2. ~~Extract named combat modules behind hooks~~ **implementations in content; facades interim**
 3. ~~Peel `data/` + assets + rulebook into content package~~ **done (in-repo)**
 4. ~~Engine CI on fixture pack; client UI peel~~ **done**
-5. Finish Open B peel → private remote cutover; then #2 / #7 as separate work
+5. ~~Finish Open B peel~~ **done**; ~~topology hardening + private remote cutover (#5)~~ **done**; Workers Builds/CI private-git auth wired via `scripts/ci-install.sh` + `CONTENT_GIT_TOKEN`; #7 separate
 
 ### 10. Legal / IP / open-source posture
 Even if not open-sourcing immediately: ensure engine tree has no HP catalogs, art, or rulebook tooling; facade filenames/`ContentCombatKey` allowed until retirement; watch leftover brand strings (e.g. `rule-text.ts`). Content repo stays private; license headers and README boundaries. Grep acceptance: [content-package-private-cutover.md](../docs/content-package-private-cutover.md).
@@ -134,7 +136,6 @@ Even if not open-sourcing immediately: ensure engine tree has no HP catalogs, ar
 
 ## Suggested next work
 
-1. **Private content cutover** when ready ([content-package-private-cutover.md](../docs/content-package-private-cutover.md)) — peerDep/`./tiles`/`./combat-ui`/Workers Builds auth.
-2. Parent **#7 persistence** remains separate from content-pack A–E completion.
+1. Parent **#7 persistence** remains separate.
 
-Area #1 Open B exit completed 2026-07-16. Parent #2 completed 2026-07-16 ([shared_types_untangle_0a64d3ba](/Users/lindenholt/.cursor/plans/shared_types_untangle_0a64d3ba.plan.md)).
+Area #1 Open B exit completed 2026-07-16. Parent #2 completed 2026-07-16. Parent #5 topology + Phase C private cutover completed 2026-07-17. Parent #6 deploy/secrets/maps-assets pipeline completed 2026-07-17.

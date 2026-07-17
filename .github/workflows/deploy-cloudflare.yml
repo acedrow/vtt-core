@@ -1,0 +1,33 @@
+name: Deploy Cloudflare Worker
+
+# Primary cloud deploy is Workers Builds (install: bash scripts/ci-install.sh).
+# This workflow is for optional manual deploys from GitHub Actions.
+# Maps sync runs inside wrangler [build] via scripts/cf-wrangler-build.sh.
+# Secrets: CONTENT_GIT_TOKEN, CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+# Runtime: wrangler secret put GM_PASSWORD PLAYER_PASSWORD AUTH_SECRET [RANDOM_ORG_API_KEY].
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install (private content git dep)
+        run: bash scripts/ci-install.sh
+        env:
+          CONTENT_GIT_TOKEN: ${{ secrets.CONTENT_GIT_TOKEN }}
+
+      - name: Build and deploy
+        run: npm run deploy:cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
