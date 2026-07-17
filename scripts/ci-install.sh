@@ -52,6 +52,15 @@ PY
   git config --global --add "url.${AUTH_BASE}.insteadOf" "git+https://github.com/"
   git config --global --add "url.${AUTH_BASE}.insteadOf" "git@github.com:"
   echo "[ci-install] configured git HTTPS auth for github.com private deps"
+
+  # Fail fast with an actionable message if the token cannot read the content repo.
+  if ! GIT_TERMINAL_PROMPT=0 git ls-remote "https://x-access-token:${TOKEN}@github.com/acedrow/hellpiercers-content.git" HEAD >/dev/null 2>&1; then
+    echo "[ci-install] CONTENT_GIT_TOKEN cannot read acedrow/hellpiercers-content (git ls-remote failed)." >&2
+    echo "Use a PAT (classic: repo scope, or fine-grained: Contents Read on hellpiercers-content) and update the CONTENT_GIT_TOKEN secret in GitHub Actions + Workers Builds." >&2
+    echo "See docs/content-package-private-cutover.md" >&2
+    exit 1
+  fi
+  echo "[ci-install] CONTENT_GIT_TOKEN can read acedrow/hellpiercers-content"
 elif [[ "${REQUIRE_CONTENT_GIT_TOKEN:-}" == "1" || "${CI:-}" == "true" ]]; then
   echo "[ci-install] CONTENT_GIT_TOKEN is required in CI / Workers Builds" >&2
   echo "Create a read-only PAT for acedrow/hellpiercers-content and set secret CONTENT_GIT_TOKEN." >&2
