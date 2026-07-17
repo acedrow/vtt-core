@@ -27,7 +27,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "github:acedrow/hellpiercers-content#semver:^0.0.6",
+    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.6",
     "@gaem/shared": "*",
     "vue": "^3.5.13",
     "vue-color": "^3.3.3",

@@ -9,7 +9,7 @@
 | Product home | Stays in the engine repo (`client` / `server` / `cf-worker` boots) |
 | Content home | Private git repo `acedrow/hellpiercers-content` |
 | Publish mechanism | Private **git** dependency with **semver tags** (not GitHub Packages, not submodule) |
-| Dep spec (product) | `git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.6` (HTTPS; SSH needs host-key setup) |
+| Dep spec (product) | `git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.6` (HTTPS only — do not use `github:` shorthand; it often locks to `git+ssh` and breaks CI) |
 | Local sibling dry-run | `file:../../../hellpiercers-content` from `packages/{client,server,cf-worker}` |
 | Path resolution | `scripts/content-package-root.mjs` + `require.resolve("@gaem/hellpiercers-content/package.json")` |
 | Build content | `npm run build:content` → `scripts/build-content.mjs` (engine TypeScript) |

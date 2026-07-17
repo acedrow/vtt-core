@@ -12,7 +12,23 @@ cd "$ROOT"
 
 TOKEN="${CONTENT_GIT_TOKEN:-${GITHUB_TOKEN:-}}"
 if [[ -n "$TOKEN" ]]; then
-  # package.json uses git+https; package-lock may resolve to git+ssh.
+  # Prefer rewriting lockfile SSH resolves to HTTPS so npm never invokes ssh://.
+  if [[ -f package-lock.json ]]; then
+    python3 - <<'PY'
+from pathlib import Path
+p = Path("package-lock.json")
+text = p.read_text()
+rewritten = (
+    text.replace("git+ssh://git@github.com/", "git+https://github.com/")
+    .replace("ssh://git@github.com/", "https://github.com/")
+)
+if rewritten != text:
+    p.write_text(rewritten)
+    print("[ci-install] rewrote package-lock.json github SSH URLs to HTTPS")
+PY
+  fi
+
+  # package.json / lock should use git+https; insteadOf covers residual SSH forms.
   git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
   git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
   git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "git+ssh://git@github.com/"
