@@ -28,11 +28,15 @@ if rewritten != text:
 PY
   fi
 
-  # package.json / lock should use git+https; insteadOf covers residual SSH forms.
-  git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
-  git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
-  git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "git+ssh://git@github.com/"
-  git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "git@github.com:"
+  # Use --add: each url.<base>.insteadOf without --add overwrites the previous
+  # value for that same base, which left only git@github.com: and broke ssh://.
+  AUTH_BASE="https://x-access-token:${TOKEN}@github.com/"
+  git config --global --unset-all "url.${AUTH_BASE}.insteadOf" 2>/dev/null || true
+  git config --global --add "url.${AUTH_BASE}.insteadOf" "https://github.com/"
+  git config --global --add "url.${AUTH_BASE}.insteadOf" "ssh://git@github.com/"
+  git config --global --add "url.${AUTH_BASE}.insteadOf" "git+ssh://git@github.com/"
+  git config --global --add "url.${AUTH_BASE}.insteadOf" "git+https://github.com/"
+  git config --global --add "url.${AUTH_BASE}.insteadOf" "git@github.com:"
   echo "[ci-install] configured git HTTPS auth for github.com private deps"
 elif [[ "${REQUIRE_CONTENT_GIT_TOKEN:-}" == "1" || "${CI:-}" == "true" ]]; then
   echo "[ci-install] CONTENT_GIT_TOKEN is required in CI / Workers Builds" >&2
