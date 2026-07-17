@@ -12,24 +12,38 @@ cd "$ROOT"
 
 TOKEN="${CONTENT_GIT_TOKEN:-${GITHUB_TOKEN:-}}"
 if [[ -n "$TOKEN" ]]; then
-  # Prefer rewriting lockfile SSH resolves to HTTPS so npm never invokes ssh://.
+  # Rewrite lockfile github git URLs to authenticated HTTPS so npm/pacote never
+  # needs SSH (and does not depend solely on git insteadOf matching).
   if [[ -f package-lock.json ]]; then
-    python3 - <<'PY'
+    CONTENT_GIT_TOKEN="$TOKEN" python3 - <<'PY'
+import os
 from pathlib import Path
+
+token = os.environ["CONTENT_GIT_TOKEN"]
+auth = f"https://x-access-token:{token}@github.com/"
 p = Path("package-lock.json")
 text = p.read_text()
 rewritten = (
-    text.replace("git+ssh://git@github.com/", "git+https://github.com/")
-    .replace("ssh://git@github.com/", "https://github.com/")
+    text.replace("git+ssh://git@github.com/", f"git+{auth}")
+    .replace("ssh://git@github.com/", auth)
+    .replace("git+https://github.com/", f"git+{auth}")
+    .replace("https://github.com/", auth)
+)
+# Avoid double-prefix if script is re-run
+rewritten = rewritten.replace(
+    f"git+https://x-access-token:{token}@github.com/https://x-access-token:{token}@github.com/",
+    f"git+https://x-access-token:{token}@github.com/",
 )
 if rewritten != text:
     p.write_text(rewritten)
-    print("[ci-install] rewrote package-lock.json github SSH URLs to HTTPS")
+    print("[ci-install] injected CONTENT_GIT_TOKEN into package-lock.json github URLs")
+else:
+    print("[ci-install] package-lock.json github URLs already authenticated or absent")
 PY
   fi
 
-  # Use --add: each url.<base>.insteadOf without --add overwrites the previous
-  # value for that same base, which left only git@github.com: and broke ssh://.
+  # Also register insteadOf for any non-lockfile git fetches (npm may still probe).
+  # Use --add: without it, later insteadOf values overwrite earlier ones.
   AUTH_BASE="https://x-access-token:${TOKEN}@github.com/"
   git config --global --unset-all "url.${AUTH_BASE}.insteadOf" 2>/dev/null || true
   git config --global --add "url.${AUTH_BASE}.insteadOf" "https://github.com/"
