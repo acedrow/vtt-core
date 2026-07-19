@@ -42,7 +42,7 @@ HP behavioral Vitest suites run in the **content repo**, not engine `npm test`.
 
 ## Private-git CI auth (Phase 6A)
 
-**Chosen mechanism:** HTTPS token via secret `CONTENT_GIT_TOKEN` + [`scripts/ci-install.sh`](../scripts/ci-install.sh). The script (1) rewrites any `git+ssh` / `ssh://` resolves in `package-lock.json` to HTTPS, then (2) registers multiple `url.<auth>.insteadOf` entries with `git config --global --add` (without `--add`, later insteadOf values overwrite earlier ones and `ssh://` breaks). Product deps must use `git+https://…#semver:^…` (not `github:`).
+**Chosen mechanism:** HTTPS token via secret `CONTENT_GIT_TOKEN` + [`scripts/ci-install.sh`](../scripts/ci-install.sh). The script (1) clears `actions/checkout`’s `http.https://github.com/.extraheader` (workflow `GITHUB_TOKEN`, which cannot read other private repos) and replaces it with `CONTENT_GIT_TOKEN`, (2) rewrites any `git+ssh` / `ssh://` resolves in `package-lock.json` to authenticated HTTPS, then (3) registers `url.<auth>.insteadOf` with `git config --global --add`. Product deps must use `git+https://…#semver:^…` (not `github:`).
 
 ### 1. Create a token
 
