@@ -44,6 +44,24 @@ binding = "PORTRAIT_R2"
 bucket_name = "vtt-core-portraits"
 preview_bucket_name = "vtt-core-portraits-preview"
 
+# Room-state cutover from worker `gaem` (see docs/adr/008-package-rename.md).
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["GameRoom"]
+
+[[migrations]]
+tag = "v2"
+  [[migrations.renamed_classes]]
+  from = "GameRoom"
+  to = "GameRoomEmptyDiscard"
+
+[[migrations]]
+tag = "v3"
+  [[migrations.transferred_classes]]
+  from = "GameRoom"
+  from_script = "gaem"
+  to = "GameRoom"
+
+[[migrations]]
+tag = "v4"
+deleted_classes = ["GameRoomEmptyDiscard"]

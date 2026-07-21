@@ -21,8 +21,14 @@ The engine GitHub repo is `acedrow/vtt-core`, but npm packages, HTTP auth header
 
 1. Create R2 buckets `vtt-core-portraits` and `vtt-core-portraits-preview`; copy objects from the previous portrait buckets.
 2. Deploy worker `vtt-core` (new worker name); re-apply secrets; update Workers Builds active worker / routes/DNS.
-3. Retire the previous worker after cutover.
-4. Ensure `CONTENT_GIT_TOKEN` still works with the renamed content package installs.
+3. **GameRoom DO transfer from `gaem` (done 2026-07-21)** — empty `vtt-core` `GameRoom` from first deploy blocked a direct transfer, so:
+   - `v2` rename `GameRoom` → `GameRoomEmptyDiscard`
+   - `v3` `transferred_classes` from script `gaem` / class `GameRoom` → `GameRoom`
+   - `v4` `deleted_classes` `GameRoomEmptyDiscard`
+4. Retire the previous worker after cutover.
+5. Ensure `CONTENT_GIT_TOKEN` still works with the renamed content package installs.
+
+Workers Builds (no separate install command): `SKIP_DEPENDENCY_INSTALL=true`, build `bash scripts/ci-install.sh`, deploy `npx wrangler deploy -c packages/cf-worker/wrangler.toml`.
 
 ## Consequences
 
