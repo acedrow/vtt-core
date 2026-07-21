@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getArmorByName, getClassByName, getEffectById, getEquipmentByName, getGearByName, getTerrainTypeById, getWeaponByName } from "@gaem/shared";
+import { getArmorByName, getClassByName, getEffectById, getEquipmentByName, getGearByName, getTerrainTypeById, getWeaponByName } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";

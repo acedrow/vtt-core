@@ -11,4 +11,4 @@ export {
   type BundledTileOverlay,
   type BundledTileOverlaySet,
   type TileOverlayGalleryEntry,
-} from "@gaem/hellpiercers-content/tiles";
+} from "@vtt-core/hellpiercers-content/tiles";

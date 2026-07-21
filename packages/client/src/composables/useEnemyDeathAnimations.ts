@@ -1,5 +1,5 @@
-import type { GameState } from "@gaem/shared";
-import { getEnemyMaxHp } from "@gaem/shared";
+import type { GameState } from "@vtt-core/shared";
+import { getEnemyMaxHp } from "@vtt-core/shared";
 import type { Ref } from "vue";
 import { onUnmounted, readonly, ref, watch } from "vue";
 

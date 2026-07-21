@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { PatternDirection, PatternModifierValues } from "@gaem/shared";
-import { PATTERN_MODIFIERS, TARGETING_PATTERNS } from "@gaem/shared";
+import type { PatternDirection, PatternModifierValues } from "@vtt-core/shared";
+import { PATTERN_MODIFIERS, TARGETING_PATTERNS } from "@vtt-core/shared";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { usePatternSelection } from "../composables/usePatternSelection.js";

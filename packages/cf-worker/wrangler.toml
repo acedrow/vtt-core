@@ -1,21 +1,21 @@
-name = "gaem"
+name = "vtt-core"
 main = "src/index.ts"
 compatibility_date = "2025-04-01"
 
 # Workers Builds restores dependency caches without gitignored dist/ output.
-# Alias to source so wrangler bundles @gaem/shared directly; [build] still
+# Alias to source so wrangler bundles @vtt-core/shared directly; [build] still
 # compiles shared first so typecheck runs before deploy.
 [alias]
-"@gaem/shared" = "../shared/src/index.ts"
+"@vtt-core/shared" = "../shared/src/index.ts"
 # Resolve via node_modules so private git/file installs work (workspace symlink today).
-"@gaem/hellpiercers-content/register" = "../../node_modules/@gaem/hellpiercers-content/src/register.ts"
+"@vtt-core/hellpiercers-content/register" = "../../node_modules/@vtt-core/hellpiercers-content/src/register.ts"
 
 [build]
 command = "bash scripts/cf-wrangler-build.sh"
 cwd = "../.."
 # watch_dir is relative to this config file (not build.cwd). Client is served by
 # Vite HMR in dev:cf, so we only watch worker + aliased shared/content source.
-watch_dir = ["src", "../shared/src", "../../node_modules/@gaem/hellpiercers-content/src"]
+watch_dir = ["src", "../shared/src", "../../node_modules/@vtt-core/hellpiercers-content/src"]
 
 [assets]
 directory = "../client/dist"
@@ -38,8 +38,8 @@ preview_id = "1261597feb9c46bdb1c56c46fb6420a2"
 
 [[r2_buckets]]
 binding = "PORTRAIT_R2"
-bucket_name = "gaem-portraits"
-preview_bucket_name = "gaem-portraits-preview"
+bucket_name = "vtt-core-portraits"
+preview_bucket_name = "vtt-core-portraits-preview"
 
 [[migrations]]
 tag = "v1"

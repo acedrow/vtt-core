@@ -5,7 +5,7 @@ import type {
   PlayerEquipment,
   PlayerGear,
   PlayerWeapon,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { ref } from "vue";
 
 import PlayerItemDetail from "./PlayerItemDetail.vue";

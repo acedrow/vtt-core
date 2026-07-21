@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { PhaseAction } from "@gaem/shared";
-import { canResetPhase, canRewindPhase, formatTurnHolder } from "@gaem/shared";
+import type { PhaseAction } from "@vtt-core/shared";
+import { canResetPhase, canRewindPhase, formatTurnHolder } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useGameState } from "../composables/useGameState.js";

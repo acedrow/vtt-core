@@ -1,4 +1,4 @@
-import type { CharacterSheet, Player } from "@gaem/shared";
+import type { CharacterSheet, Player } from "@vtt-core/shared";
 import type { Ref } from "vue";
 import { computed, onUnmounted, ref, watch } from "vue";
 

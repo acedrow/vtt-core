@@ -1,7 +1,7 @@
-import type { GaemRole } from "./types.js";
+import type { VttRole } from "./types.js";
 
 export type AuthCapabilities = {
-  role: GaemRole;
+  role: VttRole;
   gmPermissions?: boolean;
 };
 

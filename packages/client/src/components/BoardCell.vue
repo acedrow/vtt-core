@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { EffectStacks, Enemy, MapTile, Player, TileColorTint } from "@gaem/shared";
-import { getEnemyMaxHp, getEnemyScale, getPlayerMaxHp, isFortificationEnemy, formatTileEffectTooltipLabel, primaryTerrainTypeForIcon, terrainTypeDisplayName, tileEffectShowsStackCount } from "@gaem/shared";
+import type { EffectStacks, Enemy, MapTile, Player, TileColorTint } from "@vtt-core/shared";
+import { getEnemyMaxHp, getEnemyScale, getPlayerMaxHp, isFortificationEnemy, formatTileEffectTooltipLabel, primaryTerrainTypeForIcon, terrainTypeDisplayName, tileEffectShowsStackCount } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { tileImageLayerStyle } from "../lib/tileColorTint.js";

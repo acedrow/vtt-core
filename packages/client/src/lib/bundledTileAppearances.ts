@@ -12,4 +12,4 @@ export {
   type BundledTileAppearance,
   type BundledTileSet,
   type TileAppearanceGalleryEntry,
-} from "@gaem/hellpiercers-content/tiles";
+} from "@vtt-core/hellpiercers-content/tiles";

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { BrandStripCandidate } from "@gaem/shared";
+import type { BrandStripCandidate } from "@vtt-core/shared";
 
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useGameState } from "../composables/useGameState.js";

@@ -1,4 +1,4 @@
-import type { TileColorTint } from "@gaem/shared";
+import type { TileColorTint } from "@vtt-core/shared";
 import type { CSSProperties } from "vue";
 
 function tintColorWithOpacity(color: string, opacity: number): string {

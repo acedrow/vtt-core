@@ -1,6 +1,6 @@
-import { getPlayerTower, getSeedAt, isYadathanArmorName } from "@gaem/hellpiercers-content/combat-ui";
-import type { ActionTier, Player } from "@gaem/shared";
-import { canCommitHasteForTier, canSpendActionTier, canUseActionTier, createDefaultActionBudget, getArmorByName, getArmorSpeed, getClassActiveTier, getHeavenBurningLevel, getSabaothChargesRemaining, getWeaponAttackSpec, hasSabaothBombSelected, hasteStacks, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, isKushielArmorName, canUseAssistedLaunch, assistedLaunchAnchors, previewPlayerAttack, classGrantsSecondWeapon, classGrantsDualGear, aegisFlyingRemaining, playerAegisStacks, hasAssistedAscensionGear } from "@gaem/shared";
+import { getPlayerTower, getSeedAt, isYadathanArmorName } from "@vtt-core/hellpiercers-content/combat-ui";
+import type { ActionTier, Player } from "@vtt-core/shared";
+import { canCommitHasteForTier, canSpendActionTier, canUseActionTier, createDefaultActionBudget, getArmorByName, getArmorSpeed, getClassActiveTier, getHeavenBurningLevel, getSabaothChargesRemaining, getWeaponAttackSpec, hasSabaothBombSelected, hasteStacks, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, isKushielArmorName, canUseAssistedLaunch, assistedLaunchAnchors, previewPlayerAttack, classGrantsSecondWeapon, classGrantsDualGear, aegisFlyingRemaining, playerAegisStacks, hasAssistedAscensionGear } from "@vtt-core/shared";
 import { computed, ref } from "vue";
 
 import { useGameState } from "./useGameState.js";
@@ -311,7 +311,7 @@ export function useCombatActions(playerId?: () => string | null) {
     send({ type: "restorePlayerActionTier", playerId: id, tier });
   }
 
-  function sendPlayerAction(action: import("@gaem/shared").PlayerAction) {
+  function sendPlayerAction(action: import("@vtt-core/shared").PlayerAction) {
     send({ type: "playerAction", action });
   }
 
@@ -335,7 +335,7 @@ export function useCombatActions(playerId?: () => string | null) {
     reversalTowerAnchorAllyIds.value = [];
   }
 
-  function attackPreview(direction: import("@gaem/shared").PatternDirection) {
+  function attackPreview(direction: import("@vtt-core/shared").PatternDirection) {
     const s = gameState.value;
     const id = activePlayerId.value;
     if (!s || !id) return [];

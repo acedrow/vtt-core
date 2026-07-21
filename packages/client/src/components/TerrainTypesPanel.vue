@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TERRAIN_TYPE_ENTRIES } from "@gaem/shared";
+import { TERRAIN_TYPE_ENTRIES } from "@vtt-core/shared";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useExpandableSet } from "../composables/useExpandableSet.js";

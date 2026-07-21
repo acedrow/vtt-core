@@ -1,1 +1,1 @@
-export { useGorgenautAgnosiaPlacement } from "@gaem/hellpiercers-content/combat-board-placement";
+export { useGorgenautAgnosiaPlacement } from "@vtt-core/hellpiercers-content/combat-board-placement";

@@ -1,5 +1,5 @@
 import { hasGmCapabilities } from "./auth-capabilities.js";
-import type { Enemy, GameMap, GameState, GaemRole, PhaseAction, Player, TerrainObject, TurnHolder } from "./types.js";
+import type { Enemy, GameMap, GameState, VttRole, PhaseAction, Player, TerrainObject, TurnHolder } from "./types.js";
 import { playerLabel } from "./console.js";
 import { createDefaultActionBudget, createDefaultCombatState } from "./combat/types.js";
 import { tickRoundCountdowns, tickUnitEndOfTurn, tickUnitStartOfTurn } from "./combat/effects.js";
@@ -358,7 +358,7 @@ export function finishGmTurnIfPlayersRemain(state: GameState): string | null {
 }
 
 export type PhaseActionContext = {
-  role: GaemRole;
+  role: VttRole;
   playerId: string | null;
   gmPermissions?: boolean;
 };
@@ -1203,7 +1203,7 @@ export function setPlayerHp(
 }
 
 export function canSetPlayerHp(
-  role: GaemRole | null | undefined,
+  role: VttRole | null | undefined,
   socketPlayerId: string | null | undefined,
   targetPlayerId: string,
   gmPermissions?: boolean,

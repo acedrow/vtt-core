@@ -1,5 +1,5 @@
 {
-  "name": "@gaem/e2e",
+  "name": "@vtt-core/e2e",
   "private": true,
   "license": "MIT",
   "type": "module",

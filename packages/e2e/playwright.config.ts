@@ -53,7 +53,7 @@ export default defineConfig({
   webServer: {
     // ensure-shared-built skips tsc --force when dist is fresh so e2e does not
     // race `dev:cf`'s shared watch writing the same packages/shared/dist/.
-    command: `node packages/e2e/scripts/ensure-shared-built.mjs && concurrently -n server,client -c blue,green "npm run dev -w @gaem/server" "VITE_API_BASE=${apiBaseUrl} VITE_WS_URL=${wsUrl} npm run dev -w @gaem/client -- --port ${clientPort} --strictPort"`,
+    command: `node packages/e2e/scripts/ensure-shared-built.mjs && concurrently -n server,client -c blue,green "npm run dev -w @vtt-core/server" "VITE_API_BASE=${apiBaseUrl} VITE_WS_URL=${wsUrl} npm run dev -w @vtt-core/client -- --port ${clientPort} --strictPort"`,
     cwd: rootDir,
     url: clientUrl,
     // Dedicated e2e ports — never reuse a leftover Vite/Express from a prior run.

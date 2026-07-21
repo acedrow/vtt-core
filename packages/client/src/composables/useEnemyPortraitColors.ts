@@ -1,4 +1,4 @@
-import { getPortraitBgExcludeHues } from "@gaem/shared";
+import { getPortraitBgExcludeHues } from "@vtt-core/shared";
 import { ref } from "vue";
 
 const FALLBACK = "var(--color-surface-raised)";

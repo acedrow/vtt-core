@@ -1,4 +1,4 @@
-import type { BoardCoord, PatternDirection, PatternModifierValues } from "@gaem/shared";
+import type { BoardCoord, PatternDirection, PatternModifierValues } from "@vtt-core/shared";
 import {
   canExtendArc,
   clampModifierSize,
@@ -9,7 +9,7 @@ import {
   getPatternById,
   hasBlobHole,
   nextPatternDirection,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 const selectedPatternId = ref<string | null>(null);

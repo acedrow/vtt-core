@@ -5,7 +5,7 @@ import {
   isOptionUnlocked,
   type CampaignFeature,
   type UnlockCategory,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useGameState } from "./useGameState.js";

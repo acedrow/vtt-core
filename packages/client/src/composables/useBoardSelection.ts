@@ -1,5 +1,5 @@
-import { swarmGroupForEnemy } from "@gaem/hellpiercers-content/combat-ui";
-import type { GameState } from "@gaem/shared";
+import { swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
+import type { GameState } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 import { readPersistedUi } from "./uiPersist.js";

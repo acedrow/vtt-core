@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { isYadathanArmorName } from "@gaem/hellpiercers-content/combat-ui";
+import { isYadathanArmorName } from "@vtt-core/hellpiercers-content/combat-ui";
 import { computed } from "vue";
 
-import { getEffectSummary, getArmorByName, KUSHIEL_ARMOR_NAME } from "@gaem/shared";
+import { getEffectSummary, getArmorByName, KUSHIEL_ARMOR_NAME } from "@vtt-core/shared";
 
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useCombatActions } from "../composables/useCombatActions.js";

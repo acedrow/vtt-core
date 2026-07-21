@@ -1,4 +1,4 @@
-import type { MapPingSurface, ServerMessage } from "@gaem/shared";
+import type { MapPingSurface, ServerMessage } from "@vtt-core/shared";
 import { computed, ref } from "vue";
 
 import { useGameState } from "./useGameState.js";

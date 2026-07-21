@@ -1,4 +1,4 @@
 export {
   useStainGeyserPlacement,
   useGorgenautAgnosiaPlacement,
-} from "@gaem/hellpiercers-content/combat-board-placement";
+} from "@vtt-core/hellpiercers-content/combat-board-placement";

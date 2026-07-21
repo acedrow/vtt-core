@@ -1,5 +1,5 @@
 {
-  "name": "@gaem/server",
+  "name": "@vtt-core/server",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
@@ -10,8 +10,8 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.7",
-    "@gaem/shared": "*",
+    "@vtt-core/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.8",
+    "@vtt-core/shared": "*",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "ws": "^8.18.0"

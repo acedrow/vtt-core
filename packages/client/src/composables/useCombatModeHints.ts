@@ -1,11 +1,11 @@
-import type { Player } from "@gaem/shared";
+import type { Player } from "@vtt-core/shared";
 import {
   isRangeTargetAttack,
   isRangedPatternAttack,
   rangeTargetMax,
   resolveCombatAttackSpec,
   usesAnchoredPatternPlacement,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { computed, type Ref } from "vue";
 
 import { useBoardActionMode } from "./useBoardActionMode.js";

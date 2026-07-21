@@ -1,4 +1,4 @@
-import type { ClientMessage, ServerMessage } from "@gaem/shared";
+import type { ClientMessage, ServerMessage } from "@vtt-core/shared";
 import type { Ref } from "vue";
 
 import { appendConsoleEntry, setConsoleEntries } from "./useGameConsole.js";

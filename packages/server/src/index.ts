@@ -1,4 +1,4 @@
-import "@gaem/hellpiercers-content/register";
+import "@vtt-core/hellpiercers-content/register";
 import "dotenv/config";
 
 import { randomUUID } from "node:crypto";
@@ -8,10 +8,10 @@ import type {
   ClientMessage,
   ConsoleActor,
   ConsoleLogEntry,
-  GaemRole,
+  VttRole,
   GameState,
   ServerMessage,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import {
   addEnemy,
   applyEnemyMove,
@@ -62,7 +62,7 @@ import {
   validateResetToStartingState,
   validateActivateMap,
   verifyAuthToken,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import express from "express";
 import { WebSocketServer, type WebSocket } from "ws";
 
@@ -129,7 +129,7 @@ app.use((_, res, next) => {
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Gaem-Role, X-Gaem-Player-Key"
+    "Content-Type, Authorization, X-Vtt-Role, X-Vtt-Player-Key"
   );
   next();
 });
@@ -293,7 +293,7 @@ function resolveSheetForJoin(
 }
 
 function canSyncPlayerSheet(
-  role: GaemRole | null | undefined,
+  role: VttRole | null | undefined,
   playerKey: string | null | undefined,
   characterSheetId: string
 ): boolean {
@@ -449,7 +449,7 @@ const socketSheet = new Map<WebSocket, string | null>();
 const socketProfile = new Map<WebSocket, string | null>();
 const socketGmPermissions = new Map<WebSocket, boolean>();
 /** socket -> role after join */
-const socketRole = new Map<WebSocket, GaemRole | null>();
+const socketRole = new Map<WebSocket, VttRole | null>();
 /** sockets currently holding an active map ping */
 const socketMapPingActive = new Map<WebSocket, true>();
 
@@ -498,7 +498,7 @@ function broadcastState(): void {
   delete gameState.silentHpEnemyIds;
 }
 
-function actorForAuth(auth: { role: GaemRole; playerKey: string | null }): ConsoleActor {
+function actorForAuth(auth: { role: VttRole; playerKey: string | null }): ConsoleActor {
   if (auth.role === "gm") return { name: "GM", role: "gm" };
   const profile = auth.playerKey ? playerProfiles.get(auth.playerKey) : undefined;
   return { name: profile?.name ?? "Player", role: "player" };

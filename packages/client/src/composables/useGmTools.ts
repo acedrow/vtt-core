@@ -9,7 +9,7 @@ import {
   type TileColorTint,
   type TileImageRotation,
   type TilePaintPreset,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 import {

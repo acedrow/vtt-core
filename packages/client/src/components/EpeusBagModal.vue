@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { PLAYER_GEAR } from "@gaem/shared";
+import { PLAYER_GEAR } from "@vtt-core/shared";
 
 import { useCampaignUnlocks } from "../composables/useCampaignUnlocks.js";
 import { useCombatActions } from "../composables/useCombatActions.js";

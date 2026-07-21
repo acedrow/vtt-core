@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { RuleTermTooltip, RuleTextLink } from "@gaem/shared";
-import { factionHasEnemyListings, getEnemyFactionId } from "@gaem/shared";
+import type { RuleTermTooltip, RuleTextLink } from "@vtt-core/shared";
+import { factionHasEnemyListings, getEnemyFactionId } from "@vtt-core/shared";
 import { nextTick, ref } from "vue";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TileColorTint } from "@gaem/shared";
+import type { TileColorTint } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 import { SketchPicker, tinycolor } from "vue-color";
 import "vue-color/style.css";

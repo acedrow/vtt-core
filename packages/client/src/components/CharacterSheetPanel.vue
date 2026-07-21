@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { isHylicAnnihilationCorridor, isHylicRejectionField, isThoughtGuidingRedirectionCircuits, isTransientForceProjection, YADATHAN_ARMOR_NAME } from "@gaem/hellpiercers-content/combat-ui";
-import type { CharacterSheet, PlayerProfile } from "@gaem/shared";
-import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, SABAOTH_MAX_CHARGES } from "@gaem/shared";
+import { isHylicAnnihilationCorridor, isHylicRejectionField, isThoughtGuidingRedirectionCircuits, isTransientForceProjection, YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
+import type { CharacterSheet, PlayerProfile } from "@vtt-core/shared";
+import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, SABAOTH_MAX_CHARGES } from "@vtt-core/shared";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 
 import AbilityBlock from "./AbilityBlock.vue";

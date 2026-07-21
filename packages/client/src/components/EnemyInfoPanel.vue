@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { getEffectiveEnemyHp, getEffectiveEnemyMaxHp, getSwarmMemberHp, getSwarmMaxHp, getSwarmMovementRemaining, getYadathanTowerDef, isTowerEnemy, swarmGroupForEnemy } from "@gaem/hellpiercers-content/combat-ui";
-import { getEnemyBossActionBudget, getEnemyListingByName, getEnemyScale, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@gaem/shared";
+import { getEffectiveEnemyHp, getEffectiveEnemyMaxHp, getSwarmMemberHp, getSwarmMaxHp, getSwarmMovementRemaining, getYadathanTowerDef, isTowerEnemy, swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
+import { getEnemyBossActionBudget, getEnemyListingByName, getEnemyScale, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";

@@ -12,11 +12,11 @@ export type ThemeId = string;
 
 export type ThemeOption = ClientThemeOption;
 
-const LEGACY_STORAGE_KEY = "gaem-theme";
+const LEGACY_STORAGE_KEY = "vtt-core-theme";
 
 function themeKey(role: "gm" | "player" | null, playerId: string | null): string | null {
-  if (role === "gm") return "gaem-theme:gm";
-  if (role === "player" && playerId) return `gaem-theme:player:${playerId}`;
+  if (role === "gm") return "vtt-core-theme:gm";
+  if (role === "player" && playerId) return `vtt-core-theme:player:${playerId}`;
   return null;
 }
 

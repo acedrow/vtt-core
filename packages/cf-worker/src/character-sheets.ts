@@ -1,4 +1,4 @@
-import type { CharacterSheet } from "@gaem/shared";
+import type { CharacterSheet } from "@vtt-core/shared";
 import {
   actorForAuth,
   applySheetDataKeys,
@@ -9,7 +9,7 @@ import {
   sheetDataKeyUpdatesFromBody,
   stampContentPackMeta,
   validateCharacterSheetRefs,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 
 import type { AuthContext } from "./auth.js";
 import { authHasGmCapabilities, canAccessSheet, canCreateForPlayer, canEditSheet } from "./auth.js";

@@ -1,4 +1,4 @@
-import { factionHasEnemyListings } from "@gaem/shared";
+import { factionHasEnemyListings } from "@vtt-core/shared";
 
 export type EngineDataCategory =
   | "armor"

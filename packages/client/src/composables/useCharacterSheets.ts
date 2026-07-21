@@ -1,4 +1,4 @@
-import type { CharacterSheet } from "@gaem/shared";
+import type { CharacterSheet } from "@vtt-core/shared";
 import { ref, watch } from "vue";
 
 import { useApi } from "./useApi.js";

@@ -2,14 +2,14 @@ import { readdir, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
-import type { GameMap, GameMapSummary } from "@gaem/shared";
+import type { GameMap, GameMapSummary } from "@vtt-core/shared";
 import {
   BOARD_HEIGHT,
   BOARD_WIDTH,
   createBlankGameMap,
   parseGameMap,
   toMapSummary,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import type { Request, Response } from "express";
 
 import type { AuthContext } from "./auth.js";
@@ -123,5 +123,5 @@ export function deleteMapHandler(
 }
 
 export function mapsDirPath(): string {
-  return join(dirname(require.resolve("@gaem/hellpiercers-content/package.json")), "maps");
+  return join(dirname(require.resolve("@vtt-core/hellpiercers-content/package.json")), "maps");
 }

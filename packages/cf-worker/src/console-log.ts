@@ -1,5 +1,5 @@
-import type { ConsoleActor, ConsoleLogEntry } from "@gaem/shared";
-import { trimConsoleEntries } from "@gaem/shared";
+import type { ConsoleActor, ConsoleLogEntry } from "@vtt-core/shared";
+import { trimConsoleEntries } from "@vtt-core/shared";
 
 import type { Env } from "./env.js";
 

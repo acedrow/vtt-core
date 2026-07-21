@@ -1,4 +1,4 @@
-import { getReconTable, type ReconTableId } from "@gaem/shared";
+import { getReconTable, type ReconTableId } from "@vtt-core/shared";
 import { ref } from "vue";
 
 import { readPersistedUi } from "./uiPersist.js";

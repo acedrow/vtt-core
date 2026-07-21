@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
-import { nextPatternDirection } from "@gaem/shared";
-import type { PatternDirection } from "@gaem/shared";
+import { nextPatternDirection } from "@vtt-core/shared";
+import type { PatternDirection } from "@vtt-core/shared";
 
 import { clearActiveTool } from "./useGmTools.js";
 

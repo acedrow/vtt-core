@@ -1,4 +1,4 @@
-import { registerContentPack, createFixtureContentPack } from "@gaem/shared";
+import { registerContentPack, createFixtureContentPack } from "@vtt-core/shared";
 import { vi } from "vitest";
 
 import { registerClientContentPack } from "../client-content-pack.js";

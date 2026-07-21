@@ -1,7 +1,7 @@
-import type { GaemRole, PlayerProfile } from "@gaem/shared";
+import type { VttRole, PlayerProfile } from "@vtt-core/shared";
 import { computed, ref } from "vue";
 
-const STORAGE_KEY = "gaem-session";
+const STORAGE_KEY = "vtt-core-session";
 
 type StoredPlayerProfile = {
   id: string;
@@ -10,7 +10,7 @@ type StoredPlayerProfile = {
 };
 
 type StoredSession = {
-  role: GaemRole;
+  role: VttRole;
   playerProfile: StoredPlayerProfile | null;
   token: string;
 };
@@ -29,7 +29,7 @@ function loadStored(): StoredSession | null {
 }
 
 const stored = loadStored();
-const role = ref<GaemRole | null>(stored?.role ?? null);
+const role = ref<VttRole | null>(stored?.role ?? null);
 const playerProfile = ref<StoredPlayerProfile | null>(stored?.playerProfile ?? null);
 const token = ref<string | null>(stored?.token ?? null);
 
@@ -55,7 +55,7 @@ export function useSession() {
     () => role.value === "gm" || playerProfile.value?.gmPermissions === true,
   );
 
-  function startSession(r: GaemRole, profile: PlayerProfile | null, authToken: string) {
+  function startSession(r: VttRole, profile: PlayerProfile | null, authToken: string) {
     role.value = r;
     playerProfile.value =
       r === "player" && profile
@@ -78,12 +78,12 @@ export function useSession() {
 
   function apiHeaders(): Record<string, string> {
     if (!role.value) return {};
-    const headers: Record<string, string> = { "X-Gaem-Role": role.value };
+    const headers: Record<string, string> = { "X-Vtt-Role": role.value };
     if (token.value) {
       headers["Authorization"] = `Bearer ${token.value}`;
     }
     if (role.value === "player" && playerProfile.value) {
-      headers["X-Gaem-Player-Key"] = playerProfile.value.id;
+      headers["X-Vtt-Player-Key"] = playerProfile.value.id;
     }
     return headers;
   }

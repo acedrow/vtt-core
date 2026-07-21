@@ -20,9 +20,9 @@ describe("dev:cf hot-reload wiring", () => {
       src.indexOf('= "dev" ]; then'),
       src.indexOf("else"),
     );
-    expect(devBranch).not.toContain("@gaem/client");
+    expect(devBranch).not.toContain("@vtt-core/client");
     // deploy path (else branch) still builds the client
-    expect(src.slice(src.indexOf("else"))).toContain("build -w @gaem/client");
+    expect(src.slice(src.indexOf("else"))).toContain("build -w @vtt-core/client");
   });
 
   it("wrangler watch_dir is relative to wrangler.toml (not build.cwd)", () => {
@@ -45,8 +45,8 @@ describe("dev:cf hot-reload wiring", () => {
       JSON.parse(read("package.json")) as { scripts: Record<string, string> }
     ).scripts["dev:cf"]!;
     expect(devCf).toContain("VITE_CF_DEV=1");
-    expect(devCf).toContain("npm run dev -w @gaem/client");
-    expect(devCf).toContain("npm run dev -w @gaem/cf-worker");
+    expect(devCf).toContain("npm run dev -w @vtt-core/client");
+    expect(devCf).toContain("npm run dev -w @vtt-core/cf-worker");
   });
 
   it("vite proxies /api and /ws to the worker when VITE_CF_DEV is set", () => {
@@ -86,7 +86,7 @@ describe("dev:cf hot-reload wiring", () => {
     const config = read("packages/e2e/playwright.config.ts");
     expect(config).toContain("ensure-shared-built.mjs");
     expect(config).not.toMatch(
-      /webServer:[\s\S]*command:\s*`npm run build -w @gaem\/shared/,
+      /webServer:[\s\S]*command:\s*`npm run build -w @vtt-core\/shared/,
     );
   });
 

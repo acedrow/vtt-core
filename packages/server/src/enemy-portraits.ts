@@ -8,7 +8,7 @@ const SET_SLUG_RE = /^[a-z0-9-]+$/;
 
 const require = createRequire(import.meta.url);
 const enemiesRoot = join(
-  dirname(require.resolve("@gaem/hellpiercers-content/package.json")),
+  dirname(require.resolve("@vtt-core/hellpiercers-content/package.json")),
   "assets/enemies"
 );
 

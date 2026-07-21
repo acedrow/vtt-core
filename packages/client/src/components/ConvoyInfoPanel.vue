@@ -3,7 +3,7 @@ import {
   getConvoyTypeInfo,
   getFactionById,
   type OverworldConvoy,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useGameState } from "../composables/useGameState.js";

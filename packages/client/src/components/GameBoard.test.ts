@@ -1,4 +1,4 @@
-import type { GameState, MapTile } from "@gaem/shared";
+import type { GameState, MapTile } from "@vtt-core/shared";
 import { mount, flushPromises } from "@vue/test-utils";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 

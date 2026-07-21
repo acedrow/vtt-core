@@ -1,5 +1,5 @@
 // Engine Vitest defaults to the fixture mini-pack (no Hellpiercers IP).
-// HP behavioral suites live under @gaem/hellpiercers-content.
+// HP behavioral suites live under @vtt-core/hellpiercers-content.
 import { registerContentPack } from "../content-pack.js";
 import { createFixtureContentPack } from "../fixture-content-pack.js";
 

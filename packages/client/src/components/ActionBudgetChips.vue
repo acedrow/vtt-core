@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { actionTierLabel, actionTierTooltip, type ActionTier } from "@gaem/shared";
+import { actionTierLabel, actionTierTooltip, type ActionTier } from "@vtt-core/shared";
 import { ref } from "vue";
 
 import ModalDialog from "./ModalDialog.vue";

@@ -1,4 +1,4 @@
-import type { EnemyAttackSpec } from "@gaem/shared";
+import type { EnemyAttackSpec } from "@vtt-core/shared";
 import type { ComputedRef, InjectionKey, Ref } from "vue";
 
 export type CombatBoardSwarmChipTarget = { kind: "player"; id: string; label: string };

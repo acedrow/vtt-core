@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { parseRuleText } from "@gaem/shared";
+import { parseRuleText } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import RuleTerm from "./RuleTerm.vue";

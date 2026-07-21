@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Rebuild @gaem/shared (+ content) only when dist is missing or older than src.
+// Rebuild @vtt-core/shared (+ content) only when dist is missing or older than src.
 // Avoids racing `tsc --watch` under `dev:cf` when e2e starts its stack.
 import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, statSync } from "node:fs";
@@ -34,13 +34,13 @@ const sharedNeeds = needsBuild(sharedDir, join(sharedDir, "dist/index.js"));
 const contentNeeds = needsBuild(contentDir, join(contentDir, "dist/register.js"));
 
 if (!sharedNeeds && !contentNeeds) {
-  console.log("[e2e] @gaem/shared + content dist up to date — skipping rebuild");
+  console.log("[e2e] @vtt-core/shared + content dist up to date — skipping rebuild");
   process.exit(0);
 }
 
 if (sharedNeeds) {
-  console.log("[e2e] building @gaem/shared…");
-  const result = spawnSync("npm", ["run", "build", "-w", "@gaem/shared"], {
+  console.log("[e2e] building @vtt-core/shared…");
+  const result = spawnSync("npm", ["run", "build", "-w", "@vtt-core/shared"], {
     cwd: rootDir,
     stdio: "inherit",
     shell: process.platform === "win32",
@@ -49,7 +49,7 @@ if (sharedNeeds) {
 }
 
 if (contentNeeds || sharedNeeds) {
-  console.log("[e2e] building @gaem/hellpiercers-content…");
+  console.log("[e2e] building @vtt-core/hellpiercers-content…");
   const result = spawnSync("npm", ["run", "build:content"], {
     cwd: rootDir,
     stdio: "inherit",

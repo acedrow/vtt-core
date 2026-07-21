@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { kataptyNeedsTargetPick } from "@gaem/hellpiercers-content/combat-ui";
-import type { PhaseAction } from "@gaem/shared";
-import { isPlayerDowned, isSandboxMode, remainingPlayerIds, roundPhaseLabel, turnHolderLabel } from "@gaem/shared";
+import { kataptyNeedsTargetPick } from "@vtt-core/hellpiercers-content/combat-ui";
+import type { PhaseAction } from "@vtt-core/shared";
+import { isPlayerDowned, isSandboxMode, remainingPlayerIds, roundPhaseLabel, turnHolderLabel } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getEffectById } from "@gaem/shared";
+import { getEffectById } from "@vtt-core/shared";
 import { computed } from "vue";
 
 const props = withDefaults(

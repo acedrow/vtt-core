@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { getSwarmMovementRemaining, isTowerEnemy, swarmGroupForEnemy } from "@gaem/hellpiercers-content/combat-ui";
-import { getEnemyListingByName, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@gaem/shared";
+import { getSwarmMovementRemaining, isTowerEnemy, swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
+import { getEnemyListingByName, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";

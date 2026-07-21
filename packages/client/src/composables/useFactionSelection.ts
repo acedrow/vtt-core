@@ -1,4 +1,4 @@
-import { getFactionById, type FactionId } from "@gaem/shared";
+import { getFactionById, type FactionId } from "@vtt-core/shared";
 import { ref } from "vue";
 
 import { readPersistedUi } from "./uiPersist.js";

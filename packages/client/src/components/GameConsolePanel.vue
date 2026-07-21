@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CONSOLE_MSG_CONNECTED, CONSOLE_MSG_DISCONNECTED } from "@gaem/shared";
+import { CONSOLE_MSG_CONNECTED, CONSOLE_MSG_DISCONNECTED } from "@vtt-core/shared";
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 
 import { useApi } from "../composables/useApi.js";

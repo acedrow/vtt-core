@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UNIT_EFFECTS } from "@gaem/shared";
+import { UNIT_EFFECTS } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import {

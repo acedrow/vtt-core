@@ -24,19 +24,19 @@
     "types": [],
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "paths": {
-      "@gaem/client/content-pack": ["./src/client-content-pack.ts"],
-      "@gaem/client/*": ["./src/*"],
-      "@gaem/hellpiercers-content/tiles": [
-        "../../node_modules/@gaem/hellpiercers-content/src/client/tiles/index.ts"
+      "@vtt-core/client/content-pack": ["./src/client-content-pack.ts"],
+      "@vtt-core/client/*": ["./src/*"],
+      "@vtt-core/hellpiercers-content/tiles": [
+        "../../node_modules/@vtt-core/hellpiercers-content/src/client/tiles/index.ts"
       ],
-      "@gaem/hellpiercers-content/combat-ui": [
-        "../../node_modules/@gaem/hellpiercers-content/src/combat-ui.ts"
+      "@vtt-core/hellpiercers-content/combat-ui": [
+        "../../node_modules/@vtt-core/hellpiercers-content/src/combat-ui.ts"
       ],
-      "@gaem/hellpiercers-content/register": [
-        "../../node_modules/@gaem/hellpiercers-content/src/register.ts"
+      "@vtt-core/hellpiercers-content/register": [
+        "../../node_modules/@vtt-core/hellpiercers-content/src/register.ts"
       ],
-      "@gaem/hellpiercers-content/register-client": [
-        "../../node_modules/@gaem/hellpiercers-content/src/register-client.ts"
+      "@vtt-core/hellpiercers-content/register-client": [
+        "../../node_modules/@vtt-core/hellpiercers-content/src/register-client.ts"
       ]
     }
   },
@@ -44,13 +44,13 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "../../node_modules/@gaem/hellpiercers-content/src/client/**/*.ts",
-    "../../node_modules/@gaem/hellpiercers-content/src/client/**/*.vue",
-    "../../node_modules/@gaem/hellpiercers-content/src/register-client.ts",
-    "../../node_modules/@gaem/hellpiercers-content/src/combat-ui.ts",
-    "../../node_modules/@gaem/hellpiercers-content/src/combat/**/*.ts"
+    "../../node_modules/@vtt-core/hellpiercers-content/src/client/**/*.ts",
+    "../../node_modules/@vtt-core/hellpiercers-content/src/client/**/*.vue",
+    "../../node_modules/@vtt-core/hellpiercers-content/src/register-client.ts",
+    "../../node_modules/@vtt-core/hellpiercers-content/src/combat-ui.ts",
+    "../../node_modules/@vtt-core/hellpiercers-content/src/combat/**/*.ts"
   ],
   "exclude": [
-    "../../node_modules/@gaem/hellpiercers-content/src/**/*.test.ts"
+    "../../node_modules/@vtt-core/hellpiercers-content/src/**/*.test.ts"
   ]
 }

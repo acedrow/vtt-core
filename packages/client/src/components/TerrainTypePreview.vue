@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TerrainType } from "@gaem/shared";
+import type { TerrainType } from "@vtt-core/shared";
 
 import TerrainTypeIcon from "./TerrainTypeIcon.vue";
 

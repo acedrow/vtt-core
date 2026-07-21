@@ -1,4 +1,4 @@
-import type { MapTile } from "@gaem/shared";
+import type { MapTile } from "@vtt-core/shared";
 import { describe, expect, it } from "vitest";
 
 import {

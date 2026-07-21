@@ -1,4 +1,4 @@
-import type { FactionId } from "@gaem/shared";
+import type { FactionId } from "@vtt-core/shared";
 import { ref } from "vue";
 
 import {

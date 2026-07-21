@@ -1,5 +1,5 @@
-import type { EnemyListing, GameMap, GameMapSummary, PlayerProfile, TilePaintPreset } from "@gaem/shared";
-import { getEnemyListingByName, getEnemyPortraitUrl } from "@gaem/shared";
+import type { EnemyListing, GameMap, GameMapSummary, PlayerProfile, TilePaintPreset } from "@vtt-core/shared";
+import { getEnemyListingByName, getEnemyPortraitUrl } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import {

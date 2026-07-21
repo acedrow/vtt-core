@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TILE_EFFECTS } from "@gaem/shared";
+import { TILE_EFFECTS } from "@vtt-core/shared";
 import { computed, ref } from "vue";
 
 import { useGameState } from "../composables/useGameState.js";

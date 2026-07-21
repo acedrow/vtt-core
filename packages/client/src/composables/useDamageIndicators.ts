@@ -1,6 +1,6 @@
-import { swarmCanonicalDisplayId, swarmGroupForEnemy } from "@gaem/hellpiercers-content/combat-ui";
-import type { GameState } from "@gaem/shared";
-import { getEnemyMaxHp, getPlayerMaxHp } from "@gaem/shared";
+import { swarmCanonicalDisplayId, swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
+import type { GameState } from "@vtt-core/shared";
+import { getEnemyMaxHp, getPlayerMaxHp } from "@vtt-core/shared";
 import type { Ref } from "vue";
 import { onUnmounted, ref, watch } from "vue";
 

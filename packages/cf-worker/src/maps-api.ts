@@ -3,7 +3,7 @@ import {
   BOARD_WIDTH,
   createBlankGameMap,
   toMapSummary,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 
 import type { AuthContext } from "./auth.js";
 import { authHasGmCapabilities } from "./auth.js";

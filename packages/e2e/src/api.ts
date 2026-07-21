@@ -2,7 +2,7 @@ import type { APIRequestContext } from "@playwright/test";
 
 import { E2E_ENV } from "./env.js";
 
-export type GaemRole = "gm" | "player";
+export type VttRole = "gm" | "player";
 
 export type PlayerProfile = {
   id: string;
@@ -15,20 +15,20 @@ export type CharacterSheet = {
   player: string;
 };
 
-function authHeaders(role: GaemRole, token: string, playerKey?: string): Record<string, string> {
+function authHeaders(role: VttRole, token: string, playerKey?: string): Record<string, string> {
   const headers: Record<string, string> = {
-    "X-Gaem-Role": role,
+    "X-Vtt-Role": role,
     Authorization: `Bearer ${token}`,
   };
   if (role === "player" && playerKey) {
-    headers["X-Gaem-Player-Key"] = playerKey;
+    headers["X-Vtt-Player-Key"] = playerKey;
   }
   return headers;
 }
 
 export async function login(
   request: APIRequestContext,
-  role: GaemRole,
+  role: VttRole,
   password: string,
 ): Promise<string> {
   const res = await request.post(`${E2E_ENV.apiBaseUrl}/api/login`, {

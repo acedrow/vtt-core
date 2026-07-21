@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getReconTable } from "@gaem/shared";
+import { getReconTable } from "@vtt-core/shared";
 import { computed, nextTick, ref, watch } from "vue";
 
 import { useApi } from "../composables/useApi.js";

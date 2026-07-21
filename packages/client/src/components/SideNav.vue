@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { YADATHAN_ARMOR_NAME } from "@gaem/hellpiercers-content/combat-ui";
-import type { CharacterSheet, FactionId, GameMapSummary, PlayerProfile, ReconTableId } from "@gaem/shared";
-import { BOARD_HEIGHT, BOARD_WIDTH, FACTIONS, getFactionById, listEnemyFactionIds, listReconTables } from "@gaem/shared";
+import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
+import type { CharacterSheet, FactionId, GameMapSummary, PlayerProfile, ReconTableId } from "@vtt-core/shared";
+import { BOARD_HEIGHT, BOARD_WIDTH, FACTIONS, getFactionById, listEnemyFactionIds, listReconTables } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 import { useApi } from "../composables/useApi.js";

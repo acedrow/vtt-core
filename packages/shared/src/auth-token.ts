@@ -1,9 +1,9 @@
-import type { GaemRole } from "./types.js";
+import type { VttRole } from "./types.js";
 
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 type TokenPayload = {
-  role: GaemRole;
+  role: VttRole;
   exp: number;
 };
 
@@ -45,7 +45,7 @@ export function constantTimeEqual(a: string, b: string): boolean {
 }
 
 export async function createAuthToken(
-  role: GaemRole,
+  role: VttRole,
   secret: string,
   ttlMs: number = DEFAULT_TTL_MS,
 ): Promise<string> {
@@ -58,7 +58,7 @@ export async function createAuthToken(
 export async function verifyAuthToken(
   token: string,
   secret: string,
-): Promise<{ role: GaemRole } | null> {
+): Promise<{ role: VttRole } | null> {
   const parts = token.split(".");
   if (parts.length !== 2) return null;
   const [encoded, signature] = parts;

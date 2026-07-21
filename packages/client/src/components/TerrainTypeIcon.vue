@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { terrainTypeIcon, type TerrainType } from "@gaem/shared";
+import { terrainTypeIcon, type TerrainType } from "@vtt-core/shared";
 import { computed } from "vue";
 
 const props = withDefaults(

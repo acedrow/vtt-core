@@ -5,7 +5,7 @@ import type {
   PlayerEquipment,
   PlayerGear,
   PlayerWeapon,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useCampaignUnlocks } from "../composables/useCampaignUnlocks.js";

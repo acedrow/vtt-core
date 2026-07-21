@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 
-import { formatDiceRollMessage } from "@gaem/shared";
+import { formatDiceRollMessage } from "@vtt-core/shared";
 
 const RANDOM_ORG_URL = "https://api.random.org/json-rpc/4/invoke";
 

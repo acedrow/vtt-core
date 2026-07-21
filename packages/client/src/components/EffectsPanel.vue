@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TILE_EFFECTS, UNIT_EFFECTS, WEAPON_EFFECTS, type RuleEffect } from "@gaem/shared";
+import { TILE_EFFECTS, UNIT_EFFECTS, WEAPON_EFFECTS, type RuleEffect } from "@vtt-core/shared";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useExpandableSet } from "../composables/useExpandableSet.js";

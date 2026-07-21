@@ -1,5 +1,5 @@
 {
-  "name": "@gaem/client",
+  "name": "@vtt-core/client",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
@@ -28,8 +28,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.7",
-    "@gaem/shared": "*",
+    "@vtt-core/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.8",
+    "@vtt-core/shared": "*",
     "vue": "^3.5.13",
     "vue-color": "^3.3.3",
     "vue-router": "^4.6.4"

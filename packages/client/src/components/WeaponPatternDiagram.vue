@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { WeaponAttackSpec, WeaponBombPattern, WeaponPatternLevel } from "@gaem/shared";
-import { attackSpecHasDiagram, buildPatternGrid } from "@gaem/shared";
+import type { WeaponAttackSpec, WeaponBombPattern, WeaponPatternLevel } from "@vtt-core/shared";
+import { attackSpecHasDiagram, buildPatternGrid } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 import RuleText from "./RuleText.vue";

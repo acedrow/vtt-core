@@ -1,4 +1,4 @@
-import type { PlayerProfile } from "@gaem/shared";
+import type { PlayerProfile } from "@vtt-core/shared";
 
 import type { Env } from "./env.js";
 

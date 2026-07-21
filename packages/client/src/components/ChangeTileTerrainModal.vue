@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TERRAIN_TYPES, terrainTypeDisplayName, tileAt, type TerrainType } from "@gaem/shared";
+import { TERRAIN_TYPES, terrainTypeDisplayName, tileAt, type TerrainType } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 import { useGameState } from "../composables/useGameState.js";

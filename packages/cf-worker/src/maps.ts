@@ -1,5 +1,5 @@
-import type { GameMap, GameMapSummary } from "@gaem/shared";
-import { parseGameMap, toMapSummary } from "@gaem/shared";
+import type { GameMap, GameMapSummary } from "@vtt-core/shared";
+import { parseGameMap, toMapSummary } from "@vtt-core/shared";
 
 import type { Env } from "./env.js";
 

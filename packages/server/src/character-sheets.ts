@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { CharacterSheet, ConsoleActor } from "@gaem/shared";
+import type { CharacterSheet, ConsoleActor } from "@vtt-core/shared";
 import {
   applySheetDataKeys,
   collectSheetDataFromBody,
@@ -10,7 +10,7 @@ import {
   sheetDataKeyUpdatesFromBody,
   stampContentPackMeta,
   validateCharacterSheetRefs,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import type { Request, Response } from "express";
 
 import type { AuthContext } from "./auth.js";

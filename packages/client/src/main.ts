@@ -1,5 +1,5 @@
-import "@gaem/hellpiercers-content/register";
-import "@gaem/hellpiercers-content/register-client";
+import "@vtt-core/hellpiercers-content/register";
+import "@vtt-core/hellpiercers-content/register-client";
 
 import { createApp } from "vue";
 import App from "./App.vue";

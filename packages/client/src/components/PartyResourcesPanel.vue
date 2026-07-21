@@ -4,7 +4,7 @@ import {
   getPartyResourceLabel,
   listPartyResourceKeys,
   type PartyResourceKey,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";

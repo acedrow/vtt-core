@@ -1,4 +1,4 @@
-import "@gaem/hellpiercers-content/register";
+import "@vtt-core/hellpiercers-content/register";
 
 import { handleGetEnemyPortrait } from "./enemy-portraits.js";
 import type { Env } from "./env.js";
@@ -13,7 +13,7 @@ import {
   handlePutPortrait,
   listCharacterSheets,
 } from "./character-sheets.js";
-import { constantTimeEqual, createAuthToken } from "@gaem/shared";
+import { constantTimeEqual, createAuthToken } from "@vtt-core/shared";
 
 import { verifyAuth, authHasGmCapabilities } from "./auth.js";
 import {

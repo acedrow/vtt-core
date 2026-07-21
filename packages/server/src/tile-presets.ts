@@ -1,5 +1,5 @@
-import type { TilePaintPreset } from "@gaem/shared";
-import { parseTilePaintPreset } from "@gaem/shared";
+import type { TilePaintPreset } from "@vtt-core/shared";
+import { parseTilePaintPreset } from "@vtt-core/shared";
 import type { Response } from "express";
 
 import type { AuthContext } from "./auth.js";

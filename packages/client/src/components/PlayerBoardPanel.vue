@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getPlayerMaxHp } from "@gaem/shared";
+import { getPlayerMaxHp } from "@vtt-core/shared";
 import { computed } from "vue";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";

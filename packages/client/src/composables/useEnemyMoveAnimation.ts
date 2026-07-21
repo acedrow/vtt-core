@@ -1,4 +1,4 @@
-import type { GameState } from "@gaem/shared";
+import type { GameState } from "@vtt-core/shared";
 import type { Ref } from "vue";
 import { computed, readonly, ref } from "vue";
 

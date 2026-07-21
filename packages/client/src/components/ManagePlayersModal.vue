@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CharacterSheet, PlayerProfile } from "@gaem/shared";
+import type { CharacterSheet, PlayerProfile } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
 import { useApi } from "../composables/useApi.js";

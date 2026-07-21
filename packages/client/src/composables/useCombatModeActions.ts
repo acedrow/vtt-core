@@ -1,6 +1,6 @@
-import { isHeavenBurningWeaponName } from "@gaem/shared";
-import type { StructuredArmorAction } from "@gaem/shared";
-import { isRangeTargetAttack, isSabaothWeaponName, isWarhookWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@gaem/shared";
+import { isHeavenBurningWeaponName } from "@vtt-core/shared";
+import type { StructuredArmorAction } from "@vtt-core/shared";
+import { isRangeTargetAttack, isSabaothWeaponName, isWarhookWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
 import { computed, ref, type Ref } from "vue";
 
 import { useBoardActionMode, type BoardActionMode } from "./useBoardActionMode.js";

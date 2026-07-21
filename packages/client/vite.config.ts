@@ -13,23 +13,23 @@ const workerTarget = "http://localhost:8787";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const clientSrc = path.resolve(here, "src");
 const require = createRequire(import.meta.url);
-const contentSrc = path.join(
-  path.dirname(require.resolve("@gaem/hellpiercers-content/package.json")),
-  "src",
+const contentRoot = path.dirname(
+  require.resolve("@vtt-core/hellpiercers-content/package.json"),
 );
+const contentSrc = path.join(contentRoot, "src");
 
 const contentExports = [
-  "@gaem/hellpiercers-content/register",
-  "@gaem/hellpiercers-content/register-client",
-  "@gaem/hellpiercers-content/tiles",
-  "@gaem/hellpiercers-content/combat-ui",
-  "@gaem/hellpiercers-content/combat-board-placement",
+  "@vtt-core/hellpiercers-content/register",
+  "@vtt-core/hellpiercers-content/register-client",
+  "@vtt-core/hellpiercers-content/tiles",
+  "@vtt-core/hellpiercers-content/combat-ui",
+  "@vtt-core/hellpiercers-content/combat-board-placement",
 ] as const;
 
 export default defineConfig({
   plugins: [vue()],
   // Content lives in node_modules after private cutover. Prebundling it
-  // duplicates @gaem/client/content-pack so register-client never hits the
+  // duplicates @vtt-core/client/content-pack so register-client never hits the
   // app's registry ("Client content pack is not registered").
   optimizeDeps: {
     exclude: [...contentExports],
@@ -37,31 +37,31 @@ export default defineConfig({
   resolve: {
     alias: [
       {
-        find: "@gaem/hellpiercers-content/register",
+        find: "@vtt-core/hellpiercers-content/register",
         replacement: path.join(contentSrc, "register.ts"),
       },
       {
-        find: "@gaem/hellpiercers-content/register-client",
+        find: "@vtt-core/hellpiercers-content/register-client",
         replacement: path.join(contentSrc, "register-client.ts"),
       },
       {
-        find: "@gaem/hellpiercers-content/tiles",
+        find: "@vtt-core/hellpiercers-content/tiles",
         replacement: path.join(contentSrc, "client/tiles/index.ts"),
       },
       {
-        find: "@gaem/hellpiercers-content/combat-ui",
+        find: "@vtt-core/hellpiercers-content/combat-ui",
         replacement: path.join(contentSrc, "combat-ui.ts"),
       },
       {
-        find: "@gaem/hellpiercers-content/combat-board-placement",
+        find: "@vtt-core/hellpiercers-content/combat-board-placement",
         replacement: path.join(contentSrc, "client/combat-board-placement.ts"),
       },
       {
-        find: "@gaem/client/content-pack",
+        find: "@vtt-core/client/content-pack",
         replacement: path.join(clientSrc, "client-content-pack.ts"),
       },
       {
-        find: /^@gaem\/client\/(.+)/,
+        find: /^@vtt-core\/client\/(.+)/,
         replacement: path.join(clientSrc, "$1"),
       },
     ],
@@ -69,7 +69,8 @@ export default defineConfig({
   server: {
     port: 5173,
     fs: {
-      allow: [here, path.dirname(contentSrc)],
+      // file: sibling checkouts resolve outside packages/client
+      allow: [here, contentRoot],
     },
     proxy: cfDev
       ? {

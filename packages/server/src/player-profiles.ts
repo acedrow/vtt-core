@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { PlayerProfile } from "@gaem/shared";
+import type { PlayerProfile } from "@vtt-core/shared";
 import type { Request, Response } from "express";
 
 import { characterSheets } from "./character-sheets.js";

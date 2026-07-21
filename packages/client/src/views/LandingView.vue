@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { GaemRole, PlayerProfile } from "@gaem/shared";
+import type { VttRole, PlayerProfile } from "@vtt-core/shared";
 import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 
@@ -18,7 +18,7 @@ const { startSession, token } = useSession();
 const { apiFetch } = useApi();
 
 const password = ref("");
-const joinLoading = ref<GaemRole | null>(null);
+const joinLoading = ref<VttRole | null>(null);
 const joinError = ref<string | null>(null);
 
 const showProfileModal = ref(false);
@@ -34,7 +34,7 @@ const selectedProfile = computed(() => {
   return profiles.value.find((p) => p.id === selectedProfileId.value) ?? null;
 });
 
-async function login(role: GaemRole, loginPassword: string): Promise<string | null> {
+async function login(role: VttRole, loginPassword: string): Promise<string | null> {
   const res = await apiFetch("/api/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

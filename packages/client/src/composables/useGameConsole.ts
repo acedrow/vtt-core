@@ -1,4 +1,4 @@
-import type { ConsoleLogEntry } from "@gaem/shared";
+import type { ConsoleLogEntry } from "@vtt-core/shared";
 import { ref } from "vue";
 
 import { readPersistedUi } from "./uiPersist.js";

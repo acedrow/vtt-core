@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TERRAIN_TYPES, TILE_EFFECTS, terrainTypeDisplayName } from "@gaem/shared";
+import { TERRAIN_TYPES, TILE_EFFECTS, terrainTypeDisplayName } from "@vtt-core/shared";
 import { ref } from "vue";
 
 import {

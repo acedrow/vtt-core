@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { YADATHAN_ARMOR_NAME } from "@gaem/hellpiercers-content/combat-ui";
-import type { PlayerArmor, PlayerClass, PlayerEquipment, PlayerGear, PlayerWeapon, UnlockCategory } from "@gaem/shared";
-import { PLAYER_ARMOR, PLAYER_CLASSES, PLAYER_EQUIPMENT, PLAYER_GEAR, PLAYER_WEAPONS } from "@gaem/shared";
+import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
+import type { PlayerArmor, PlayerClass, PlayerEquipment, PlayerGear, PlayerWeapon, UnlockCategory } from "@vtt-core/shared";
+import { PLAYER_ARMOR, PLAYER_CLASSES, PLAYER_EQUIPMENT, PLAYER_GEAR, PLAYER_WEAPONS } from "@vtt-core/shared";
 import { computed, ref } from "vue";
 
 import { useBoardSelection } from "../composables/useBoardSelection.js";

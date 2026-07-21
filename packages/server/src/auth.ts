@@ -1,17 +1,17 @@
-import type { GaemRole } from "@gaem/shared";
-import { hasGmCapabilities } from "@gaem/shared";
+import type { VttRole } from "@vtt-core/shared";
+import { hasGmCapabilities } from "@vtt-core/shared";
 import type { Request, Response } from "express";
 
 import { profileGmPermissions } from "./player-profiles.js";
 
 declare module "express-serve-static-core" {
   interface Request {
-    authRole?: GaemRole;
+    authRole?: VttRole;
   }
 }
 
 export type AuthContext = {
-  role: GaemRole;
+  role: VttRole;
   playerKey: string | null;
 };
 
@@ -22,11 +22,11 @@ export function parseAuth(req: Request, res: Response): AuthContext | null {
     return null;
   }
   const playerKey =
-    typeof req.headers["x-gaem-player-key"] === "string"
-      ? req.headers["x-gaem-player-key"]
+    typeof req.headers["x-vtt-player-key"] === "string"
+      ? req.headers["x-vtt-player-key"]
       : null;
   if (role === "player" && !playerKey) {
-    res.status(401).json({ error: "X-Gaem-Player-Key required for player role" });
+    res.status(401).json({ error: "X-Vtt-Player-Key required for player role" });
     return null;
   }
   return { role, playerKey };

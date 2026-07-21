@@ -1,5 +1,5 @@
 import { watch, type Ref } from "vue";
-import type { FactionId, GaemRole, ReconTableId, TerrainType, TileColorTint, TileImageRotation } from "@gaem/shared";
+import type { FactionId, VttRole, ReconTableId, TerrainType, TileColorTint, TileImageRotation } from "@vtt-core/shared";
 import {
   DEFAULT_OBSTACLE_HP,
   getFactionById,
@@ -7,7 +7,7 @@ import {
   TERRAIN_TYPES,
   TILE_IMAGE_ROTATIONS,
   parseTileColorTint,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 
 import type { BoardSelection } from "./useBoardSelection.js";
 import { isMainSectionTab } from "../client-content-pack.js";
@@ -16,7 +16,7 @@ import type { RightPanelTab } from "./useGameConsole.js";
 import type { MainSectionTab } from "./useMainSectionTab.js";
 import { useSession } from "./useSession.js";
 
-const LEGACY_STORAGE_KEY = "gaem-ui";
+const LEGACY_STORAGE_KEY = "vtt-core-ui";
 
 const RIGHT_PANEL_TABS = new Set<RightPanelTab>(["console", "info", "turnOrder", "settings"]);
 
@@ -379,9 +379,9 @@ function parsePersistedUi(raw: string): PersistedUi {
   }
 }
 
-function uiStorageKey(role: GaemRole | null, playerId: string | null): string | null {
-  if (role === "gm") return "gaem-ui:gm";
-  if (role === "player" && playerId) return `gaem-ui:player:${playerId}`;
+function uiStorageKey(role: VttRole | null, playerId: string | null): string | null {
+  if (role === "gm") return "vtt-core-ui:gm";
+  if (role === "player" && playerId) return `vtt-core-ui:player:${playerId}`;
   return null;
 }
 
@@ -391,7 +391,7 @@ function readFromStorage(key: string | null): PersistedUi {
   if (!key) return { ...DEFAULT_UI };
   try {
     let raw = localStorage.getItem(key);
-    if (!raw && key === "gaem-ui:gm") {
+    if (!raw && key === "vtt-core-ui:gm") {
       const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
       if (legacy) {
         localStorage.setItem(key, legacy);

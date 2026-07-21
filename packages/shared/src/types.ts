@@ -376,7 +376,7 @@ export type PlayerProfile = {
   data: Record<string, unknown>;
 };
 
-export type GaemRole = "gm" | "player";
+export type VttRole = "gm" | "player";
 
 export type { ConsoleActor, ConsoleLogEntry } from "./console.js";
 

@@ -1,4 +1,4 @@
-import type { CharacterSheet } from "@gaem/shared";
+import type { CharacterSheet } from "@vtt-core/shared";
 import {
   abilityTextToPlain,
   listEnemyListings,
@@ -9,7 +9,7 @@ import {
   PLAYER_WEAPONS,
   RULE_EFFECTS,
   TERRAIN_TYPE_ENTRIES,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 
 import type { DataFocusKind } from "../composables/useInfoDataSelection.js";
 

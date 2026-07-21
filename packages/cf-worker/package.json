@@ -1,5 +1,5 @@
 {
-  "name": "@gaem/cf-worker",
+  "name": "@vtt-core/cf-worker",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
@@ -11,8 +11,8 @@
     "sync-maps:local": "node scripts/sync-maps.mjs --local"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.7",
-    "@gaem/shared": "*"
+    "@vtt-core/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.8",
+    "@vtt-core/shared": "*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250410.0",

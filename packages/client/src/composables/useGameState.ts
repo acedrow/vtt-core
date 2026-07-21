@@ -1,4 +1,4 @@
-import type { ClientMessage, GameState } from "@gaem/shared";
+import type { ClientMessage, GameState } from "@vtt-core/shared";
 import { ref } from "vue";
 
 const gameState = ref<GameState | null>(null);

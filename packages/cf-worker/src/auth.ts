@@ -1,11 +1,11 @@
-import type { CharacterSheet, GaemRole } from "@gaem/shared";
-import { hasGmCapabilities, verifyAuthToken } from "@gaem/shared";
+import type { CharacterSheet, VttRole } from "@vtt-core/shared";
+import { hasGmCapabilities, verifyAuthToken } from "@vtt-core/shared";
 
 import type { Env } from "./env.js";
 import { getPlayerProfile } from "./player-profiles.js";
 
 export type AuthContext = {
-  role: GaemRole;
+  role: VttRole;
   playerKey: string | null;
 };
 
@@ -25,9 +25,9 @@ export async function verifyAuth(
   if (!payload) {
     return Response.json({ error: "Authentication required" }, { status: 401 });
   }
-  const playerKey = request.headers.get("X-Gaem-Player-Key");
+  const playerKey = request.headers.get("X-Vtt-Player-Key");
   if (payload.role === "player" && requirePlayerKey && !playerKey) {
-    return Response.json({ error: "X-Gaem-Player-Key required for player role" }, { status: 401 });
+    return Response.json({ error: "X-Vtt-Player-Key required for player role" }, { status: 401 });
   }
   return { role: payload.role, playerKey };
 }

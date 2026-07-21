@@ -11,4 +11,4 @@ export {
   type BundledTileFeature,
   type BundledTileFeatureSet,
   type TileFeatureGalleryEntry,
-} from "@gaem/hellpiercers-content/tiles";
+} from "@vtt-core/hellpiercers-content/tiles";

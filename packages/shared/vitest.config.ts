@@ -8,7 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // One shared module graph for registerContentPack Maps.
-      "@gaem/shared": path.join(here, "src/index.ts"),
+      "@vtt-core/shared": path.join(here, "src/index.ts"),
     },
   },
   test: {

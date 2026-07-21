@@ -1,4 +1,4 @@
-import { actorForAuth, formatDiceRollMessage } from "@gaem/shared";
+import { actorForAuth, formatDiceRollMessage } from "@vtt-core/shared";
 
 import type { AuthContext } from "./auth.js";
 import { logConsole } from "./console-log.js";

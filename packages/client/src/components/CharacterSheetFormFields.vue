@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { YADATHAN_ARMOR_NAME } from "@gaem/hellpiercers-content/combat-ui";
+import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
 import { computed } from "vue";
 
-import { PLAYER_ARMOR, PLAYER_CLASSES, PLAYER_WEAPONS } from "@gaem/shared";
+import { PLAYER_ARMOR, PLAYER_CLASSES, PLAYER_WEAPONS } from "@vtt-core/shared";
 
 import { useCampaignUnlocks } from "../composables/useCampaignUnlocks.js";
 import { getClientCombatBoard } from "../client-content-pack.js";

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { AbilityText } from "@gaem/shared";
-import { isStructuredAbility, parseAbilityNameBody } from "@gaem/shared";
+import type { AbilityText } from "@vtt-core/shared";
+import { isStructuredAbility, parseAbilityNameBody } from "@vtt-core/shared";
 import { computed } from "vue";
 
 

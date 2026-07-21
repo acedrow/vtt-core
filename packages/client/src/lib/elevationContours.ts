@@ -1,5 +1,5 @@
-import type { MapTile } from "@gaem/shared";
-import { tileAt } from "@gaem/shared";
+import type { MapTile } from "@vtt-core/shared";
+import { tileAt } from "@vtt-core/shared";
 
 export type ElevationContourEdges = { east: boolean; south: boolean };
 

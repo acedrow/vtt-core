@@ -1,5 +1,5 @@
-import "@gaem/hellpiercers-content/register";
-import type { ClientMessage, ConsoleActor, ConsoleLogEntry, GaemRole, GameState, ServerMessage } from "@gaem/shared";
+import "@vtt-core/hellpiercers-content/register";
+import type { ClientMessage, ConsoleActor, ConsoleLogEntry, VttRole, GameState, ServerMessage } from "@vtt-core/shared";
 import {
   addEnemy,
   applyEnemyMove,
@@ -48,7 +48,7 @@ import {
   validateFactionCampaignAction,
   validateActivateMap,
   verifyAuthToken,
-} from "@gaem/shared";
+} from "@vtt-core/shared";
 
 import type { Env } from "./env.js";
 import { appendConsole, loadConsoleEntries } from "./console-log.js";
@@ -59,7 +59,7 @@ import { getPlayerProfile, savePlayerProfile } from "./player-profiles.js";
 type Attachment = {
   characterSheetId: string | null;
   playerKey: string | null;
-  role: GaemRole | null;
+  role: VttRole | null;
   gmPermissions?: boolean;
 };
 
@@ -112,7 +112,7 @@ async function resolveSheetForJoin(
 
 async function canSyncPlayerSheet(
   env: Env,
-  role: GaemRole | null | undefined,
+  role: VttRole | null | undefined,
   playerKey: string | null | undefined,
   characterSheetId: string
 ): Promise<boolean> {

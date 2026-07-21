@@ -17,8 +17,8 @@ const DEFAULT_SETTINGS: PlayerSettings = {
 };
 
 function settingsKey(role: "gm" | "player" | null, playerId: string | null): string | null {
-  if (role === "gm") return "gaem-settings:gm";
-  if (role === "player" && playerId) return `gaem-settings:player:${playerId}`;
+  if (role === "gm") return "vtt-core-settings:gm";
+  if (role === "player" && playerId) return `vtt-core-settings:player:${playerId}`;
   return null;
 }
 

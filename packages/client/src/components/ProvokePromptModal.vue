@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProvokeTrigger } from "@gaem/shared";
+import type { ProvokeTrigger } from "@vtt-core/shared";
 
 import ModalDialog from "./ModalDialog.vue";
 
