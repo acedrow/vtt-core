@@ -11,4 +11,4 @@ alwaysApply: true
 - Vue: `<script setup lang="ts">`, relative imports with `.js` extension.
 - Prefer existing composables and shared UI (`PanelShell`, `HpBar`, `BoardCell`, …).
 - Design tokens from `packages/client/src/style.css` (`var(--color-*)`).
-- Game logic in `@gaem/shared`; both backends call the same shared functions.
+- Game logic in `@vtt-core/shared`; both backends call the same shared functions.

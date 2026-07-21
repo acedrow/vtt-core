@@ -2,19 +2,28 @@
 
 Browser-based tactical grid VTT engine (GM/player roles, character sheets, real-time board sync).
 
-Hellpiercers IP is a private git dependency (`@gaem/hellpiercers-content`). See `AGENTS.md`, `docs/content-package-private-cutover.md`, and `.cursor/plans/` for agent guidance.
+Hellpiercers IP is a private git dependency (`@vtt-core/hellpiercers-content`). See `AGENTS.md`, `docs/content-package-private-cutover.md`, and `.cursor/plans/` for agent guidance.
+
+## IP / licensing
+
+| Tree | License |
+|------|---------|
+| This engine repo (`vtt-core`, `@vtt-core/shared`, product shells) | [MIT](LICENSE) |
+| `@vtt-core/hellpiercers-content` (catalogs, art, maps, rulebook, HP UI) | Proprietary — private; not licensed for redistribution |
+
+Product packages (`client` / `server` / `cf-worker`) may depend on and register the content pack at boot. `@vtt-core/shared` must not import or ship Hellpiercers catalogs, art, or rulebook. See [ADR 007](docs/adr/007-ip-and-licensing.md).
 
 ## Packages
 
 | Package | Role |
 |---------|------|
-| `@gaem/shared` | Types, map/game logic, combat framework, content-pack registries |
-| `@gaem/hellpiercers-content` | Private git dep — catalogs, combat modules, assets, maps, HP UI |
-| `@gaem/client` | Vue 3 SPA — game board, character sheets, session flow |
-| `@gaem/server` | Local dev backend — Express REST API + WebSocket game room |
-| `@gaem/cf-worker` | Production backend — Cloudflare Worker serving the built client and APIs |
+| `@vtt-core/shared` | Types, map/game logic, combat framework, content-pack registries |
+| `@vtt-core/hellpiercers-content` | Private git dep — catalogs, combat modules, assets, maps, HP UI |
+| `@vtt-core/client` | Vue 3 SPA — game board, character sheets, session flow |
+| `@vtt-core/server` | Local dev backend — Express REST API + WebSocket game room |
+| `@vtt-core/cf-worker` | Production backend — Cloudflare Worker serving the built client and APIs |
 
-npm package names remain `@gaem/*` for now.
+npm package names remain `@vtt-core/*` for now.
 
 ## Architecture
 
@@ -30,14 +39,14 @@ npm package names remain `@gaem/*` for now.
                                           │  KV → profiles & maps        │
                                           │  R2 → character portraits    │
                                           └──────────────────────────────┘
-                          both use @gaem/shared for game rules & types
+                          both use @vtt-core/shared for game rules & types
 ```
 
-**Game sync** — Clients connect over WebSocket at `/ws`. The server broadcasts `GameState` (map tiles, player positions) after joins and moves. Shared validation (`validateMove`, `applyMove`, etc.) lives in `@gaem/shared`.
+**Game sync** — Clients connect over WebSocket at `/ws`. The server broadcasts `GameState` (map tiles, player positions) after joins and moves. Shared validation (`validateMove`, `applyMove`, etc.) lives in `@vtt-core/shared`.
 
-**APIs** — Player profiles (`/api/player-profiles`) and character sheets (`/api/character-sheets`, with portrait upload) are role-gated via `X-Gaem-Role` and `X-Gaem-Player-Key` headers.
+**APIs** — Player profiles (`/api/player-profiles`) and character sheets (`/api/character-sheets`, with portrait upload) are role-gated via `X-Vtt-Role` and `X-Vtt-Player-Key` headers.
 
-**Maps** — JSON map definitions live in the content package `maps/` (installed under `node_modules/@gaem/hellpiercers-content/maps/`). The cf-worker syncs them to KV before deploy. Product boots register via `@gaem/hellpiercers-content/register` (see `docs/adr/005-content-package-topology.md`).
+**Maps** — JSON map definitions live in the content package `maps/` (installed under `node_modules/@vtt-core/hellpiercers-content/maps/`). The cf-worker syncs them to KV before deploy. Product boots register via `@vtt-core/hellpiercers-content/register` (see `docs/adr/005-content-package-topology.md`).
 
 ## Development
 

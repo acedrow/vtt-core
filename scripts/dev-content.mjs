@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Watch-build installed @gaem/hellpiercers-content with the engine's TypeScript.
+// Watch-build installed @vtt-core/hellpiercers-content with the engine's TypeScript.
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";

@@ -32,6 +32,6 @@ Also still content-owned: stainwalk kind maps, class/weapon/equipment plugins, c
 
 ## Consequences
 
-- Product boot stays `@gaem/hellpiercers-content/register`; combat registers inside `registerHellpiercersContent()` (see ADR 005).
+- Product boot stays `@vtt-core/hellpiercers-content/register`; combat registers inside `registerHellpiercersContent()` (see ADR 005).
 - Fixture packs without `combat` leave combat Maps empty after reset/register.
 - Follow-on combat migrations register new handlers on the same contribution shape.

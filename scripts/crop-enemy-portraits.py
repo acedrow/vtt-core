@@ -10,7 +10,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 # Prefer an explicit path (enemy-portraits-crop.mjs passes content package assets/).
-DEFAULT_DIR = ROOT / "node_modules/@gaem/hellpiercers-content/assets/enemies"
+DEFAULT_DIR = ROOT / "node_modules/@vtt-core/hellpiercers-content/assets/enemies"
 
 
 def content_bbox(im: Image.Image, black_thresh: int = 24) -> tuple[int, int, int, int] | None:

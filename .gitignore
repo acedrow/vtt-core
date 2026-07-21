@@ -20,6 +20,6 @@ HELLPIERCERS v1.02.pdf
 scripts/rulebook/.venv/
 scripts/rulebook/out/
 tmp/
-# Synced from @gaem/hellpiercers-content via client predev/prebuild
+# Synced from @vtt-core/hellpiercers-content via client predev/prebuild
 packages/client/public/tiles/
 packages/client/public/enemies/

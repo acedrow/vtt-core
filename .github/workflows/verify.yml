@@ -23,7 +23,7 @@ jobs:
         env:
           CONTENT_GIT_TOKEN: ${{ secrets.CONTENT_GIT_TOKEN }}
 
-      # Build first: the client imports @gaem/shared from dist/, and the
+      # Build first: the client imports @vtt-core/shared from dist/, and the
       # type-aware lint rules on the backends resolve types from dist/ too.
       - run: npm run build
       - run: npm run lint

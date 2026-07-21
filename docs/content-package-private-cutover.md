@@ -1,6 +1,6 @@
 # Private content package cutover
 
-**Status (2026-07-17):** Phase C **done**. Phase 6A CI auth **done** (`scripts/ci-install.sh` + `CONTENT_GIT_TOKEN` set in GitHub Actions and Workers Builds). `@gaem/hellpiercers-content` is a private git dependency (`acedrow/hellpiercers-content` @ `semver:^0.0.6`). In-tree `packages/hellpiercers-content` removed. Local checkout of the content repo: `/Users/lindenholt/code/hellpiercers-content`.
+**Status (2026-07-17):** Phase C **done**. Phase 6A CI auth **done** (`scripts/ci-install.sh` + `CONTENT_GIT_TOKEN` set in GitHub Actions and Workers Builds). `@vtt-core/hellpiercers-content` is a private git dependency (`acedrow/hellpiercers-content` @ `semver:^0.0.6`). In-tree `packages/hellpiercers-content` removed. Local checkout of the content repo: `/Users/lindenholt/code/hellpiercers-content`.
 
 ## Locked topology decisions
 
@@ -9,13 +9,13 @@
 | Product home | Stays in the engine repo (`client` / `server` / `cf-worker` boots) |
 | Content home | Private git repo `acedrow/hellpiercers-content` |
 | Publish mechanism | Private **git** dependency with **semver tags** (not GitHub Packages, not submodule) |
-| Dep spec (product) | `git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.6` (HTTPS only — do not use `github:` shorthand; it often locks to `git+ssh` and breaks CI) |
+| Dep spec (product) | `git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.8` (HTTPS only — do not use `github:` shorthand; it often locks to `git+ssh` and breaks CI) |
 | Local sibling dry-run | `file:../../../hellpiercers-content` from `packages/{client,server,cf-worker}` |
-| Path resolution | `scripts/content-package-root.mjs` + `require.resolve("@gaem/hellpiercers-content/package.json")` |
+| Path resolution | `scripts/content-package-root.mjs` + `require.resolve("@vtt-core/hellpiercers-content/package.json")` |
 | Build content | `npm run build:content` → `scripts/build-content.mjs` (engine TypeScript) |
-| Wrangler register alias | `../../node_modules/@gaem/hellpiercers-content/src/register.ts` |
-| Vite | `optimizeDeps.exclude` content exports so `register-client` shares `@gaem/client/content-pack` (no dual registry) |
-| Peers | Not declared on content (npm arborist cannot resolve private workspace peers during git prep). Expected: `@gaem/shared`, `@gaem/client`, `vue` — see content README |
+| Wrangler register alias | `../../node_modules/@vtt-core/hellpiercers-content/src/register.ts` |
+| Vite | `optimizeDeps.exclude` content exports so `register-client` shares `@vtt-core/client/content-pack` (no dual registry) |
+| Peers | Not declared on content (npm arborist cannot resolve private workspace peers during git prep). Expected: `@vtt-core/shared`, `@vtt-core/client`, `vue` — see content README |
 | Build / sync contract | [content-package-build-contract.md](content-package-build-contract.md) |
 | CI install | `bash scripts/ci-install.sh` + secret `CONTENT_GIT_TOKEN` |
 
@@ -23,11 +23,11 @@
 
 | Export | Used by |
 |--------|---------|
-| `@gaem/hellpiercers-content/package.json` | Package-root resolution for maps/assets/scripts |
-| `@gaem/hellpiercers-content/register` | Express, CF Worker, DO, client; built `dist/` in exports; wrangler aliases **source** |
-| `@gaem/hellpiercers-content/register-client` | Vue client only; source TS |
-| `@gaem/hellpiercers-content/tiles` | Client tile globs/labels; source TS |
-| `@gaem/hellpiercers-content/combat-ui` | Client combat UI helpers; source TS |
+| `@vtt-core/hellpiercers-content/package.json` | Package-root resolution for maps/assets/scripts |
+| `@vtt-core/hellpiercers-content/register` | Express, CF Worker, DO, client; built `dist/` in exports; wrangler aliases **source** |
+| `@vtt-core/hellpiercers-content/register-client` | Vue client only; source TS |
+| `@vtt-core/hellpiercers-content/tiles` | Client tile globs/labels; source TS |
+| `@vtt-core/hellpiercers-content/combat-ui` | Client combat UI helpers; source TS |
 
 ## Engine scripts
 
@@ -38,7 +38,17 @@
 | `npm run rulebook` / `rulebook:setup` | Resolve content package root, then rulebook tooling |
 | `bash scripts/ci-install.sh` | Auth + `npm ci` for private content (needs `CONTENT_GIT_TOKEN` in CI) |
 
-HP behavioral Vitest suites run in the **content repo**, not engine `npm test`.
+HP behavioral Vitest suites run in the **content repo**, not engine `npm test`. See [ADR 006](adr/006-testing-strategy.md).
+
+### Content-repo CI (reciprocal auth)
+
+Content [`.github/workflows/verify.yml`](https://github.com/acedrow/hellpiercers-content/blob/main/.github/workflows/verify.yml) checks out `acedrow/vtt-core`, runs `npm run link:shared` (builds `packages/shared` only), then `build` + `test`. It does **not** install the engine monorepo (avoids needing `CONTENT_GIT_TOKEN` inside content CI).
+
+1. On `acedrow/hellpiercers-content`: **Settings → Secrets → Actions**
+2. Add `ENGINE_GIT_TOKEN` = fine-grained PAT with **Contents: Read** on `acedrow/vtt-core`
+3. Optional: set workflow env `ENGINE_REF` (default `main`) to pin an engine branch/tag
+
+Local content develop: sibling `../vtt-core` (or `VTT_CORE_PATH`) + `npm run link:shared`.
 
 ## Private-git CI auth (Phase 6A)
 
@@ -88,20 +98,26 @@ Local installs usually use SSH agent or a logged-in `gh` credential helper. Sibl
 
 ## Grep acceptance (engine tree)
 
-**Allowed:** fixture/test neutral names; product boots; installed content under `node_modules/@gaem/hellpiercers-content`.
+**Allowed:** fixture/test neutral names; product boots; installed content under `node_modules/@vtt-core/hellpiercers-content`; interim combat module key names in shared; Highshade in client.
 
 ```bash
 find packages/shared/src/data -type f ! -name '.DS_Store' 2>/dev/null | wc -l   # 0
-! rg -q '@gaem/hellpiercers-content' packages/shared/package.json
+! rg -q '@vtt-core/hellpiercers-content' packages/shared/package.json
 test ! -d packages/hellpiercers-content
+test ! -d packages/cf-worker/enemy-portraits
+! rg -q 'HELLPIERCERS' packages/shared/src --glob '!**/sheet-persistence.test.ts' --glob '!**/setup-content-pack.ts'
 ```
+
+(`sheet-persistence.test.ts` / `setup-content-pack.ts` may mention the content pack id or Hellpiercers in comments; the brand string `HELLPIERCERS` must not appear elsewhere under `packages/shared/src`.)
+
+IP / licensing: [ADR 007](adr/007-ip-and-licensing.md).
 
 ### Sign-off (2026-07-17, Phase C)
 
 | Check | Result |
 |-------|--------|
 | Workspace `packages/hellpiercers-content` | **Removed** |
-| Product deps | **git+https … #semver:^0.0.6** |
+| Product deps | **git+https … #semver:^0.0.8** |
 | Shared content dep | **Absent** |
 | Shared catalog JSON | **0 files** |
 | `npm run build` / `test` / `lint` / `test:e2e` | **Green** |
@@ -119,6 +135,6 @@ test ! -d packages/hellpiercers-content
 ## Non-goals
 
 - GitHub Packages registry
-- Inverting Vue SFCs into `@gaem/client`
+- Inverting Vue SFCs into `@vtt-core/client`
 - Runtime-downloaded packs, hot-reload, multi-pack
 - ~~Sheet/pack-version KV migrations (parent #7)~~ done in engine; publish content ≥0.0.6 for `sheetDataKeys`

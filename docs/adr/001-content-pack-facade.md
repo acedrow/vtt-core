@@ -6,7 +6,7 @@ Accepted (Track A)
 
 ## Context
 
-Hellpiercers static data lives in `@gaem/shared` today. The engine/content split requires a stable registration API so catalogs can later move to a private content package without rewriting call sites.
+Hellpiercers static data lives in `@vtt-core/shared` today. The engine/content split requires a stable registration API so catalogs can later move to a private content package without rewriting call sites.
 
 ## Decision
 
@@ -19,9 +19,9 @@ Hellpiercers static data lives in `@gaem/shared` today. The engine/content split
 
 ## Consequences
 
-- Product boots must side-effect-import `@gaem/hellpiercers-content/register` before other `@gaem/shared` usage (see [ADR 005](005-content-package-topology.md)).
+- Product boots must side-effect-import `@vtt-core/hellpiercers-content/register` before other `@vtt-core/shared` usage (see [ADR 005](005-content-package-topology.md)).
 - Engine `*-data.ts` modules must not import Hellpiercers JSON.
-- Engine CI runs on the fixture pack only (Track E); Hellpiercers tests live in `@gaem/hellpiercers-content`.
+- Engine CI runs on the fixture pack only (Track E); Hellpiercers tests live in `@vtt-core/hellpiercers-content`.
 - Combat hooks register with the same pack (Track B / ADR 002); catalog-only packs leave combat Maps empty. Named HP combat implementations live in the content package and install into shared facades at register time (ADR 005).
 - Campaign config registers with the same pack (Track C / ADR 003). Nested `GameState.campaign` + `campaignHooks` are parent area #2 (see ADR 003 amendment).
-- Client UI/assets register via `registerClientContentPack` (Track D / ADR 004) from `@gaem/hellpiercers-content/register-client`; Workers never import that entry.
+- Client UI/assets register via `registerClientContentPack` (Track D / ADR 004) from `@vtt-core/hellpiercers-content/register-client`; Workers never import that entry.

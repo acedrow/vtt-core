@@ -7,9 +7,9 @@ isProject: false
 
 # Content-Pack Contract — Deep Dive & Plan Split
 
-**Repo home:** [`vtt-core`](/Users/lindenholt/code/vtt-core) (this repository). Sibling `/Users/lindenholt/code/gaem` is archival.
+**Repo home:** [`vtt-core`](/Users/lindenholt/code/vtt-core) (this repository). Sibling `` is archival.
 
-**Status:** Tracks A–E + close-gaps + Open B + parent **#2** + Area **#5** Phase C private git cutover + CI install auth **done** (`acedrow/hellpiercers-content` `#semver:^0.0.5`). Parent **#7** deferred. See [content-package-private-cutover.md](/Users/lindenholt/code/vtt-core/docs/content-package-private-cutover.md).
+**Status:** Tracks A–E + close-gaps + Open B + parents **#2** / **#5** / **#7** + Area **#5** Phase C private git cutover + CI install auth **done** (`acedrow/hellpiercers-content` `#semver:^0.0.6`). See [content-package-private-cutover.md](/Users/lindenholt/code/vtt-core/docs/content-package-private-cutover.md).
 
 ## Verdict
 
@@ -46,7 +46,7 @@ flowchart TB
 
 - **Sync, eager registration only** — no async pack load, no runtime KV content. Matches Express + CF Worker/DO (identical apply path).
 - **Register once at process/isolate boot** before handling REST/WS. Fail hard if registries are empty when engine code runs (`requireContentPack()`).
-- **Shared never imports pack modules** — only getters/hooks on the registry. Product boots (`client` / `server` / `cf-worker`) import `@gaem/hellpiercers-content/register`.
+- **Shared never imports pack modules** — only getters/hooks on the registry. Product boots (`client` / `server` / `cf-worker`) import `@vtt-core/hellpiercers-content/register`.
 - **Existing patterns to extend**, not invent from scratch:
   - [`registerCountdownHandler`](packages/shared/src/combat/countdown.ts)
   - [`registerAgnosiaHandler`](packages/shared/src/combat/agnosia.ts)
@@ -56,19 +56,19 @@ flowchart TB
 
 ### Product vs engine dependency matrix
 
-| Package | May depend on `@gaem/hellpiercers-content`? |
+| Package | May depend on `@vtt-core/hellpiercers-content`? |
 |---------|-----------------------------------------------|
-| `@gaem/shared` | **No** |
-| `@gaem/client` | **Yes** — product shell + boot |
-| `@gaem/server` | **Yes** — product boot |
-| `@gaem/cf-worker` | **Yes** — product boot |
-| `@gaem/e2e` | Via product boots (not a direct content import required) |
+| `@vtt-core/shared` | **No** |
+| `@vtt-core/client` | **Yes** — product shell + boot |
+| `@vtt-core/server` | **Yes** — product boot |
+| `@vtt-core/cf-worker` | **Yes** — product boot |
+| `@vtt-core/e2e` | Via product boots (not a direct content import required) |
 
-ADR 005 “engine packages do not list content” means **`@gaem/shared`** (and any future pure shell), not product entries.
+ADR 005 “engine packages do not list content” means **`@vtt-core/shared`** (and any future pure shell), not product entries.
 
 ### Combat install bridge (interim)
 
-Named HP combat implementations live in `@gaem/hellpiercers-content` and register via `CombatHookContribution.modules` (+ hooks). Shared dispatches with `combatMod(key)` / internal `content-modules-api` (not barrel-exported). Client UI helpers use `@gaem/hellpiercers-content/combat-ui`. Facade/`ContentCombatKey` install bridge **retired**.
+Named HP combat implementations live in `@vtt-core/hellpiercers-content` and register via `CombatHookContribution.modules` (+ hooks). Shared dispatches with `combatMod(key)` / internal `content-modules-api` (not barrel-exported). Client UI helpers use `@vtt-core/hellpiercers-content/combat-ui`. Facade/`ContentCombatKey` install bridge **retired**.
 
 ### ContentPack facade (conceptual)
 
@@ -90,9 +90,9 @@ Server/cf-worker register `{ catalogs, combat, campaign }`. Client registers the
 
 | Runtime | Register |
 |---------|----------|
-| Express | `@gaem/hellpiercers-content/register` at top of [`packages/server/src/index.ts`](packages/server/src/index.ts) |
+| Express | `@vtt-core/hellpiercers-content/register` at top of [`packages/server/src/index.ts`](packages/server/src/index.ts) |
 | CF Worker + DO | same in [`packages/cf-worker/src/index.ts`](packages/cf-worker/src/index.ts) and [`game-room.ts`](packages/cf-worker/src/game-room.ts) |
-| Client | `@gaem/hellpiercers-content/register` then `./register-client` in [`packages/client/src/main.ts`](packages/client/src/main.ts) |
+| Client | `@vtt-core/hellpiercers-content/register` then `./register-client` in [`packages/client/src/main.ts`](packages/client/src/main.ts) |
 | Shared Vitest | Fixture pack in setupFiles (`createFixtureContentPack()` + combat stubs) |
 | Client Vitest | Fixture shared pack + fixture client contribution |
 | Content Vitest | `registerHellpiercersContent()` |
@@ -122,14 +122,14 @@ Hook registry and most named modules are pack-owned. Checklist below is the **re
 - ~~Nested `GameState.campaign` / full types untangling~~ — **parent area #2 done**
 - KV sheet migrations / pack `id`+`version` on room state — **parent area #7**
 - Runtime-downloaded packs, hot-reload, multi-pack
-- Renaming `@gaem/*`
+- Renaming `@vtt-core/*`
 - New deploy platforms
 
 ### What “engine IP-free” means (and does not)
 
 | Required for A–E / close-gaps “IP-free” claims | Explicitly **not** required |
 |------------------------------------------------|-----------------------------|
-| Catalogs/JSON/assets/maps/rulebook out of `@gaem/shared` | Sheet/pack-version KV migrations (#7) |
+| Catalogs/JSON/assets/maps/rulebook out of `@vtt-core/shared` | Sheet/pack-version KV migrations (#7) |
 | Product boots register content only | Private remote cutover itself (separate; see below) |
 | Client peel (panels/themes/globs in content) | Combat protocol union shrink / facade retirement (Open B / #3) |
 | Fixture-default engine Vitest | |
@@ -156,7 +156,7 @@ Campaign catalogs register via pack. Nested `GameState.campaign` + hooks: parent
 
 ### D. Client contributions
 
-`registerClientContentPack` for themes, tile labels, mainSections, document title, branding, detail panels. **Client peel + branding done** — HP panels/CSS/`import.meta.glob` tile modules live under content; content uses `@gaem/client/content-pack` (no `../../../client` imports). Thin client `lib/bundledTile*.ts` re-exports from `@gaem/hellpiercers-content/tiles` remain as product passthroughs. Landing hero + favicon via `ClientContribution.branding`; party resource labels via shared campaign getters.
+`registerClientContentPack` for themes, tile labels, mainSections, document title, branding, detail panels. **Client peel + branding done** — HP panels/CSS/`import.meta.glob` tile modules live under content; content uses `@vtt-core/client/content-pack` (no `../../../client` imports). Thin client `lib/bundledTile*.ts` re-exports from `@vtt-core/hellpiercers-content/tiles` remain as product passthroughs. Landing hero + favicon via `ClientContribution.branding`; party resource labels via shared campaign getters.
 
 ---
 
@@ -164,7 +164,7 @@ Campaign catalogs register via pack. Nested `GameState.campaign` + hooks: parent
 
 In-repo strangler is green. Before replacing the workspace folder with a private git/npm dep, freeze these (detail in [content-package-private-cutover.md](/Users/lindenholt/code/vtt-core/docs/content-package-private-cutover.md)):
 
-1. **Peer graph** — `@gaem/hellpiercers-content` peerDepends on `@gaem/shared` **and** `@gaem/client` (Vue panels). Private repo must either keep that peer (product publishes a client content-pack API) or invert ownership of SFCs.
+1. **Peer graph** — `@vtt-core/hellpiercers-content` peerDepends on `@vtt-core/shared` **and** `@vtt-core/client` (Vue panels). Private repo must either keep that peer (product publishes a client content-pack API) or invert ownership of SFCs.
 2. **Exports** — Stable: `./register` (built `dist/`), `./register-client` (source TS today), `./tiles` (source TS — not in the original dual-export sketch; required for client passthroughs / Vite globs).
 3. **Build asymmetry** — Worker/Express resolve `./register` via wrangler alias → content `src/register.ts` (or `dist` after build). Client Vite resolves `register-client` + `tiles` as source. Document whichever shape private install uses.
 4. **Workers Builds auth** — deploy key / `.npmrc` so `npm install` can fetch the private package; dry-run before deleting the workspace copy.
@@ -201,7 +201,7 @@ Historical track plans:
 | D Client registry | [track_d_client_registry_85a3763a.plan.md](/Users/lindenholt/.cursor/plans/track_d_client_registry_85a3763a.plan.md) |
 | E Content package wire | [track_e_content_package_wire_a8c3d1e2.plan.md](/Users/lindenholt/.cursor/plans/track_e_content_package_wire_a8c3d1e2.plan.md) |
 
-**Executed:** A → (B ∥ C ∥ D) → E strangler → close-gaps → parent #2 → Open B exit → Area #5 topology + Phase C private git cutover + CI install auth. **Next:** parent **#7** separate; ensure `CONTENT_GIT_TOKEN` is set in dashboards.
+**Executed:** A → (B ∥ C ∥ D) → E strangler → close-gaps → parent #2 → Open B exit → Area #5 topology + Phase C private git cutover + CI install auth + parent #7 sheet/pack stamps. **Next:** residual peel (combat name gates, `combatBoard` client host, generic portrait routes) — see [full_residual_peel](/Users/lindenholt/.cursor/plans/full_residual_peel_0b6e2b03.plan.md).
 
 ---
 
@@ -213,7 +213,7 @@ ADRs 001–005 cover:
 2. Sync register-once lifecycle + test reset
 3. Getter stability during strangler
 4. Client vs server contribution split (no Vue in Worker)
-5. Pack `id` + `version` recorded on the registered pack for debug (persist on game/room deferred to #7)
+5. Pack `id` + `version` recorded on the registered pack for debug (persist on game/room done in #7)
 6. Explicit non-goals: runtime downloads, hot-reload packs, multiple simultaneous packs
 7. Product vs shared dependency matrix; install-bridge interim; private-cutover export/peer/auth notes (ADR 005 + cutover doc)
 
@@ -240,4 +240,4 @@ flowchart LR
 
 ## Relationship to parent plan
 
-Updates parent area **#1**: five-track split. Parent **#3 Combat pluginization** = Open B remainders (facade retirement + agnosia/provoke/WS peel) (**done**). Parent **#2 Types** ≈ Track C + [0a64d3ba](/Users/lindenholt/.cursor/plans/shared_types_untangle_0a64d3ba.plan.md) (**done**). Parent **#4 Client** ≈ Track D (**done**). Parent **#5** topology ≈ Track E hardening (**done**) + private cutover Phase C (gated). Parent **#6/#8/#9** ≈ Track E in-repo (**done**) + cutover doc. Parent **#10** legal/grep ≈ cutover acceptance (+ leftover brand strings / facade retirement).
+Updates parent area **#1**: five-track split. Parent **#3 Combat pluginization** = Open B remainders (facade retirement + agnosia/provoke/WS peel) (**done**). Parent **#2 Types** ≈ Track C + [0a64d3ba](/Users/lindenholt/.cursor/plans/shared_types_untangle_0a64d3ba.plan.md) (**done**). Parent **#4 Client** ≈ Track D (**done**). Parent **#5** topology ≈ Track E hardening (**done**) + private cutover Phase C (gated). Parent **#6/#9** ≈ Track E in-repo (**done**) + cutover doc. Parent **#8** testing across two repos (**done** 2026-07-21 — content CI + [ADR 006](../docs/adr/006-testing-strategy.md)). Parent **#10** legal/IP (**done** 2026-07-21 — [ADR 007](../docs/adr/007-ip-and-licensing.md)).

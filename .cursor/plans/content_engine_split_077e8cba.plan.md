@@ -7,17 +7,17 @@ isProject: false
 
 # Engine / Hellpiercers Content Split (High Level)
 
-**Repo home:** [`vtt-core`](/Users/lindenholt/code/vtt-core) (this repository). Historical monolith copy: `/Users/lindenholt/code/gaem` — do not continue structural work there.
+**Repo home:** [`vtt-core`](/Users/lindenholt/code/vtt-core) (this repository). Historical monolith copy: `` — do not continue structural work there.
 
-**Status:** Tracks A–E + close-gaps + Open B + parent **#2** + Area **#5** (topology + Phase C private git cutover + CI install auth) **done**. Content is `git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.5`; workspace folder removed. Parent **#7** stays separate. See [content_pack_contract_ca112cb6.plan.md](content_pack_contract_ca112cb6.plan.md) + [content-package-private-cutover.md](../docs/content-package-private-cutover.md).
+**Status:** Tracks A–E + close-gaps + Open B + parents **#2**–**#10** **done**. Content is `git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.6`; workspace folder removed. See [content_pack_contract_ca112cb6.plan.md](content_pack_contract_ca112cb6.plan.md) + [content-package-private-cutover.md](../docs/content-package-private-cutover.md) + [ADR 007](../docs/adr/007-ip-and-licensing.md).
 
 ## Target shape
 
 ```mermaid
 flowchart LR
   subgraph engineRepo [Engine repo - generic]
-    sharedEngine["@gaem/shared engine"]
-    client["@gaem/client shell"]
+    sharedEngine["@vtt-core/shared engine"]
+    client["@vtt-core/client shell"]
     backends["server + cf-worker"]
     e2e["e2e harness"]
   end
@@ -41,27 +41,21 @@ flowchart LR
 1. Content lives in a **private npm/git dependency**, consumed at **build time** (not runtime KV packs).
 2. Named combat modules move with content via a **plugin/registry API** so the engine stays truly generic.
 
-**Concrete default:** keep deploy + wiring in the engine repo as a thin “Hellpiercers product” entry (optional workspace package or root app that depends on the private content package). `@gaem/shared` does not import Hellpiercers symbols; product packages (`client` / `server` / `cf-worker`) register the content pack once at boot. Interim: shared keeps thin IP-named combat facades filled via `installContentCombatModules` until facade retirement.
+**Concrete default:** deploy + wiring stay in the engine repo as a thin Hellpiercers product entry. `@vtt-core/shared` does not import Hellpiercers symbols; product packages (`client` / `server` / `cf-worker`) register the content pack once at boot. Open B install-bridge facades retired.
 
 ---
 
 ## What moved / moves to the content package
 
-**Already under `packages/hellpiercers-content` (strangler):**
+**In `@vtt-core/hellpiercers-content` (private git):**
 
 - Static catalogs: `src/data/**` (no longer `packages/shared/src/data/`)
-- Named ability modules under `src/combat/` (shared retains install-bridge facades until Open B retirement)
+- Named ability modules under `src/combat/`
 - Campaign contribution registration; assets under `assets/`; maps under `maps/`; rulebook under `rulebook/`
-- HP UI panels, theme CSS, tile `import.meta.glob` modules (client peel done)
-- HP behavioral Vitest suites
+- HP UI panels, theme CSS, tile `import.meta.glob` modules
+- HP behavioral Vitest suites (+ content-repo CI)
 
-**Still engine-owned until later peels / parent areas:**
-
-- Install-bridge facades + Gorgenaut agnosia / Kopis retaliation / HP-named WS surface (Open B — see contract plan)
-- Sheet/pack-version KV migrations (#7)
-- Private git/npm cutover itself ([content-package-private-cutover.md](../docs/content-package-private-cutover.md))
-
-**Parent #2 done:** nested `GameState.campaign`, campaign hooks in content, orphan shared catalogs removed, overworld geometry / classRules on contribution, Yadathan sheet helpers in content.
+**Parent areas closed:** nested `GameState.campaign` (#2), Open B combat peel (#3), client peel (#4), private cutover (#5), deploy/sync (#6), sheet/pack-version persistence (#7), two-repo testing (#8), strangler sequencing (#9), IP/licensing (#10).
 
 ---
 
@@ -81,9 +75,9 @@ These are the workstreams to plan deeply before (or as) the migration proceeds. 
 
 ### 1. Content-pack contract & registry API — **done (Tracks A–E + close-gaps + Open B exit)**
 
-Spine landed: catalogs, combat hooks/modules, campaign contribution, client registry + branding, in-repo content package, fixture CI, facade retirement. Remaining Area #1-adjacent work is private cutover only ([contract plan](content_pack_contract_ca112cb6.plan.md) + cutover doc: peerDep on `@gaem/client`, `./tiles` + `./combat-ui` exports, register build asymmetry).
+Spine landed: catalogs, combat hooks/modules, campaign contribution, client registry + branding, in-repo content package, fixture CI, facade retirement. Remaining Area #1-adjacent work is private cutover only ([contract plan](content_pack_contract_ca112cb6.plan.md) + cutover doc: peerDep on `@vtt-core/client`, `./tiles` + `./combat-ui` exports, register build asymmetry).
 
-### 2. Untangling `@gaem/shared` (engine vs content types) — **done**
+### 2. Untangling `@vtt-core/shared` (engine vs content types) — **done**
 
 Nested `GameState.campaign: CampaignRuntimeState`, `CampaignHookContribution` + content campaign modules, `CharacterSheet`/`Player.data` bags, orphan `shared/src/data` removed, overworld geometry + class loadout rules on `CampaignContribution`, thin campaign facades deleted (dispatch via `campaign-hooks`), Yadathan sheet helpers peeled to content. Combat protocol unions / `ContentCombatKey` remain parent **#3**; pack-version KV is parent **#7**. Plan: [shared_types_untangle_0a64d3ba](/Users/lindenholt/.cursor/plans/shared_types_untangle_0a64d3ba.plan.md).
 
@@ -106,22 +100,26 @@ CF Worker + DO + KV + R2 stay in engine/product. Map/asset sync read content-pac
 ### 7. Auth, sheets, and persistence boundaries
 Keep password/HMAC auth in engine. Plan sheet validation against pack catalogs; migration of existing KV sheet shapes; what happens if pack version changes under live state. **Deferred** from A–E completion.
 
-### 8. Testing strategy across two repos — **fixture CI done in-monorepo**
-- Engine: unit tests with a **fixture mini-pack** (landed for shared/client Vitest)
-- Content: HP ability / behavioral suites in `@gaem/hellpiercers-content`
+### 8. Testing strategy across two repos — **done** (2026-07-21)
+- Engine: unit tests with a **fixture mini-pack** (shared/client Vitest)
+- Content: HP ability / behavioral suites in `@vtt-core/hellpiercers-content` + content-repo CI (`link:shared` → build/test)
 - Product/e2e: full HP Playwright via product boots
 - Preserve `ws-parity` on engine backends
+- ADR: [006-testing-strategy.md](../docs/adr/006-testing-strategy.md)
 
-### 9. Migration sequencing & strangler path
+### 9. Migration sequencing & strangler path — **done**
 Phased cut without a big-bang freeze:
 1. ~~Introduce registry API in-repo; move loaders behind it~~ **done**
-2. ~~Extract named combat modules behind hooks~~ **implementations in content; facades interim**
-3. ~~Peel `data/` + assets + rulebook into content package~~ **done (in-repo)**
+2. ~~Extract named combat modules behind hooks~~ **done** (Open B facades retired)
+3. ~~Peel `data/` + assets + rulebook into content package~~ **done** (private git)
 4. ~~Engine CI on fixture pack; client UI peel~~ **done**
-5. ~~Finish Open B peel~~ **done**; ~~topology hardening + private remote cutover (#5)~~ **done**; Workers Builds/CI private-git auth wired via `scripts/ci-install.sh` + `CONTENT_GIT_TOKEN`; #7 separate
+5. ~~Finish Open B peel~~ **done**; ~~topology hardening + private remote cutover (#5)~~ **done**; Workers Builds/CI private-git auth wired via `scripts/ci-install.sh` + `CONTENT_GIT_TOKEN`; ~~#7~~ **done**
 
-### 10. Legal / IP / open-source posture
-Even if not open-sourcing immediately: ensure engine tree has no HP catalogs, art, or rulebook tooling; facade filenames/`ContentCombatKey` allowed until retirement; watch leftover brand strings (e.g. `rule-text.ts`). Content repo stays private; license headers and README boundaries. Grep acceptance: [content-package-private-cutover.md](../docs/content-package-private-cutover.md).
+### 10. Legal / IP / open-source posture — **done** (2026-07-21)
+- Engine MIT / content proprietary (UNLICENSED); README + ADR 007 boundaries
+- No HP catalogs/art/rulebook tooling in engine source; residual tracked portrait + unused font removed
+- Content repo stays private; PDF at content root; AGENTS rulebook guidance updated
+- Grep acceptance: [content-package-private-cutover.md](../docs/content-package-private-cutover.md)
 
 ---
 
@@ -136,6 +134,6 @@ Even if not open-sourcing immediately: ensure engine tree has no HP catalogs, ar
 
 ## Suggested next work
 
-1. Parent **#7 persistence** remains separate.
+Residual peel (tracked separately): shared combat name-helper modules (reversals → assistedLaunch → sabaoth → sethian); `ClientContribution.combatBoard` host to cut `combat-ui` fan-out; generic `/api/enemy-portraits/:set/:slug`. See [full_residual_peel](/Users/lindenholt/.cursor/plans/full_residual_peel_0b6e2b03.plan.md).
 
-Area #1 Open B exit completed 2026-07-16. Parent #2 completed 2026-07-16. Parent #5 topology + Phase C private cutover completed 2026-07-17. Parent #6 deploy/secrets/maps-assets pipeline completed 2026-07-17.
+Parents **#1**–**#10** completed through 2026-07-21 (Open B 2026-07-16; #2 2026-07-16; #5–#6 2026-07-17; #8 testing + #10 IP 2026-07-21).

@@ -21,7 +21,7 @@ if [[ "${CI:-}" == "true" ]]; then
   # GitHub Actions / Linux CI need OS libraries for headless Chromium.
   (cd packages/e2e && PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_BROWSERS_PATH" npx playwright install --with-deps chromium)
 else
-  npm run playwright:install -w @gaem/e2e
+  npm run playwright:install -w @vtt-core/e2e
 fi
 
 echo "Playwright Chromium ready at $PLAYWRIGHT_BROWSERS_PATH"

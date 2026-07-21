@@ -16,17 +16,17 @@ Content repo `package.json` `"files"` allowlist must include:
 | `maps/` | Map JSON at package root (not copied into `dist/`) |
 | rulebook tooling | MD + scripts (exclude `rulebook/out`, `.venv`) |
 
-There is **no** separate JSON catalog bundle export. Catalogs load through `@gaem/hellpiercers-content/register` (compiled from `src/data/`).
+There is **no** separate JSON catalog bundle export. Catalogs load through `@vtt-core/hellpiercers-content/register` (compiled from `src/data/`).
 
 ## What the engine must run
 
 | Step | When | Script / hook |
 |------|------|----------------|
-| Resolve package root | Any sync/tooling | `scripts/content-package-root.mjs` → `require.resolve("@gaem/hellpiercers-content/package.json")` |
+| Resolve package root | Any sync/tooling | `scripts/content-package-root.mjs` → `require.resolve("@vtt-core/hellpiercers-content/package.json")` |
 | Compile content | Before server/client/worker product use | `npm run build:content` |
 | Mirror static assets | Before Vite dev/build | client `predev` / `prebuild` → `sync-content-assets` → `packages/client/public/{enemies,tiles}/` |
 | Seed maps (Express) | Local `npm run dev` boot | `mapsDirPath()` reads installed `maps/` |
-| Sync maps (CF) | Every non-dev wrangler build/deploy | `scripts/cf-wrangler-build.sh` → `npm run sync-maps -w @gaem/cf-worker` → remote `MAP_KV` |
+| Sync maps (CF) | Every non-dev wrangler build/deploy | `scripts/cf-wrangler-build.sh` → `npm run sync-maps -w @vtt-core/cf-worker` → remote `MAP_KV` |
 | Sync maps (CF local) | `npm run dev:cf` | `sync-maps:local` → preview KV |
 
 ## Register export asymmetry (intentional)
@@ -52,4 +52,4 @@ Do not “fix” this by pointing wrangler at `dist/` only — keep the source a
 
 - Runtime-downloaded packs from KV/R2
 - Shipping assets inside content `dist/`
-- ~~Sheet / pack-version KV migrations (parent #7)~~ engine stamps/migrators landed; content `sheetDataKeys` requires `@gaem/hellpiercers-content` ≥0.0.6
+- ~~Sheet / pack-version KV migrations (parent #7)~~ engine stamps/migrators landed; content `sheetDataKeys` requires `@vtt-core/hellpiercers-content` ≥0.0.6

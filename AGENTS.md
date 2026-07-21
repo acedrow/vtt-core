@@ -10,19 +10,19 @@ Monorepo (npm workspaces). Node 22 (`nvm use`).
 
 | Package | Purpose |
 |---------|---------|
-| `@gaem/shared` | Types, map parsing, game rules, combat framework, content-pack registries |
-| `@gaem/hellpiercers-content` | Private git dep — Hellpiercers catalogs, combat, assets, maps, rulebook, client UI |
-| `@gaem/client` | Vue 3 SPA — board, panels, session flow |
-| `@gaem/server` | Local dev — Express REST + in-memory WebSocket game room |
-| `@gaem/cf-worker` | Production — Cloudflare Worker, Durable Object game room, KV, R2 |
+| `@vtt-core/shared` | Types, map parsing, game rules, combat framework, content-pack registries |
+| `@vtt-core/hellpiercers-content` | Private git dep — Hellpiercers catalogs, combat, assets, maps, rulebook, client UI |
+| `@vtt-core/client` | Vue 3 SPA — board, panels, session flow |
+| `@vtt-core/server` | Local dev — Express REST + in-memory WebSocket game room |
+| `@vtt-core/cf-worker` | Production — Cloudflare Worker, Durable Object game room, KV, R2 |
 
-npm package scope is still `@gaem/*` (historical); do not rename packages unless explicitly asked.
+npm package scope is `@vtt-core/*`.
 
-**Rule of thumb:** game logic and validation belong in `@gaem/shared`. Both `server` and `cf-worker` must call the same shared functions so local dev matches production.
+**Rule of thumb:** game logic and validation belong in `@vtt-core/shared`. Both `server` and `cf-worker` must call the same shared functions so local dev matches production.
 
 ### Engine vs content
 
-This repo is the **engine / product shell**. Hellpiercers IP lives in the private git package `@gaem/hellpiercers-content` (`acedrow/hellpiercers-content`), installed into `node_modules` and registered at product boot. Local content checkout: `/Users/lindenholt/code/hellpiercers-content`.
+This repo is the **engine / product shell**. Hellpiercers IP lives in the private git package `@vtt-core/hellpiercers-content` (`acedrow/hellpiercers-content`), installed into `node_modules` and registered at product boot. Local content checkout: `/Users/lindenholt/code/hellpiercers-content` (content-local agents: see that repo’s `AGENTS.md`).
 
 | Belongs in engine (keep / generalize) | Belongs in content pack (extract) |
 |---------------------------------------|-----------------------------------|
@@ -33,12 +33,12 @@ This repo is the **engine / product shell**. Hellpiercers IP lives in the privat
 | E2e harness + fixture packs | HP-specific e2e scenarios, content-package art, rulebook PDF/docs |
 
 **Composition:**
-1. Content is a private **git** dependency (`#semver:^0.0.6`), registered at **build/boot** (not runtime KV packs).
+1. Content is a private **git** dependency (`#semver:^0.0.8`), registered at **build/boot** (not runtime KV packs).
 2. Ability code lives in content via the plugin/registry API.
 
 **Plans:** [content_engine_split](.cursor/plans/content_engine_split_077e8cba.plan.md), [content_pack_contract](.cursor/plans/content_pack_contract_ca112cb6.plan.md), [private cutover](docs/content-package-private-cutover.md).
 
-Sibling historical tree: `/Users/lindenholt/code/gaem`. Engine Vitest uses the fixture pack; HP suites run in the content repo.
+Engine Vitest uses the fixture pack; HP suites run in the content repo (see [ADR 006](docs/adr/006-testing-strategy.md)).
 
 ## Commands
 
@@ -55,7 +55,7 @@ npm run dev:cf         # Vite dev (:5173, HMR) + wrangler dev (:8787); open :517
 npm run deploy:cf      # production deploy
 ```
 
-After changing `@gaem/shared`, rebuild (or run `dev`, which watches shared).
+After changing `@vtt-core/shared`, rebuild (or run `dev`, which watches shared).
 
 Do **not** commit, push, or open PRs unless the user explicitly asks.
 
@@ -84,18 +84,18 @@ npm run lint
 npm run test:e2e
 ```
 
-- **`npm run build`** — mandatory. Shared type errors block client and server; client imports `@gaem/shared` from `dist/`.
+- **`npm run build`** — mandatory. Shared type errors block client and server; client imports `@vtt-core/shared` from `dist/`.
 - **`npm run test`** — mandatory when tests exist for the code you touched. If you add or change shared game logic, add or update tests in `packages/shared` when the behavior is worth guarding (see Code style). Run the full root `npm run test` at minimum; re-run focused suites while iterating if helpful.
-- **`npm run lint`** — mandatory. Runs ESLint, then client `vue-tsc` (`npm run typecheck`). Must report **0 errors** (ESLint warnings are pre-existing cleanup backlog; do not add new ones). The config (`eslint.config.mjs`, flat) is tuned to catch real defects, not formatting. Do not silence a rule to make a change pass — fix the code, or add a scoped `// eslint-disable-next-line <rule>` with a one-line justification only when the code is genuinely intentional. Type-aware ESLint rules on the backends and client `vue-tsc` both need `@gaem/shared` built first (`npm run build`), since they resolve types from `dist/`. A husky pre-commit hook runs `npm run lint` so IDE-only TS errors cannot slip into commits.
+- **`npm run lint`** — mandatory. Runs ESLint, then client `vue-tsc` (`npm run typecheck`). Must report **0 errors** (ESLint warnings are pre-existing cleanup backlog; do not add new ones). The config (`eslint.config.mjs`, flat) is tuned to catch real defects, not formatting. Do not silence a rule to make a change pass — fix the code, or add a scoped `// eslint-disable-next-line <rule>` with a one-line justification only when the code is genuinely intentional. Type-aware ESLint rules on the backends and client `vue-tsc` both need `@vtt-core/shared` built first (`npm run build`), since they resolve types from `dist/`. A husky pre-commit hook runs `npm run lint` so IDE-only TS errors cannot slip into commits.
 - **`npm run test:e2e`** — mandatory for code changes. Skip when the diff **only** adds or updates assets (e.g. JPGs/PNGs in the content package `assets/`, synced `public/` mirrors, portraits) with no logic, config, or UI behavior changes — including wire-up edits that only register a new tile set/label/glob so the assets appear in the gallery. Playwright headless browser tests for combat UI wiring (`packages/e2e`). **Always use the npm script** (never bare `npx playwright test` / `npx playwright install`). One-time setup: `npm run e2e:setup` (creates `.env.e2e` from `.env.e2e.example` if missing, installs Chromium into `packages/e2e/.playwright-browsers`). Re-run `e2e:setup` after Playwright version bumps or if browsers are missing. Cursor's agent sandbox pre-sets `PLAYWRIGHT_BROWSERS_PATH` to a wiped temp cache — our npm scripts and `playwright.config.ts` always override that to the in-repo directory.
 
   **Ports:** assume `npm run dev:cf` (or `npm run dev`) is already using the default ports (`:5173` client, `:8787` wrangler / `:3001` Express). E2e always binds **dedicated** ports so it can run in parallel:
   - client — `http://localhost:5174` (`E2E_CLIENT_URL`)
   - Express API — `http://localhost:3002` (`E2E_API_URL` / `PORT`)
 
-  Do **not** point e2e at `:5173` / `:3001`. The root `test:e2e` script and `@gaem/e2e` defaults already set these; Playwright starts a fresh Express + Vite stack (`reuseExistingServer: false`) with `VITE_API_BASE` / `VITE_WS_URL` so the browser client talks to `:3002`. CI runs the same script after unit tests pass.
+  Do **not** point e2e at `:5173` / `:3001`. The root `test:e2e` script and `@vtt-core/e2e` defaults already set these; Playwright starts a fresh Express + Vite stack (`reuseExistingServer: false`) with `VITE_API_BASE` / `VITE_WS_URL` so the browser client talks to `:3002`. CI runs the same script after unit tests pass.
 
-  **Alongside `dev:cf`:** port isolation alone used to be insufficient — e2e/`predev` wiped `public/tiles` and forced a shared `dist/` rebuild that raced `tsc --watch`, thrashing Vite HMR and WebSockets. Asset sync uses `packages/client/scripts/sync-dir.mjs` (rsync-like mirror, no full-tree wipe; portable for CF Workers Builds which lack `rsync`), e2e only rebuilds `@gaem/shared` when `dist/` is missing/stale (`packages/e2e/scripts/ensure-shared-built.mjs`), and the client auto-reconnects the game WebSocket after unexpected drops.
+  **Alongside `dev:cf`:** port isolation alone used to be insufficient — e2e/`predev` wiped `public/tiles` and forced a shared `dist/` rebuild that raced `tsc --watch`, thrashing Vite HMR and WebSockets. Asset sync uses `packages/client/scripts/sync-dir.mjs` (rsync-like mirror, no full-tree wipe; portable for CF Workers Builds which lack `rsync`), e2e only rebuilds `@vtt-core/shared` when `dist/` is missing/stale (`packages/e2e/scripts/ensure-shared-built.mjs`), and the client auto-reconnects the game WebSocket after unexpected drops.
 
 Do not skip verification because a change "looks small" or "only touches the client." Export omissions, missing shared rebuilds, and broken imports often surface only at build time. Asset-only imports (above) may skip `test:e2e`; still run `build` / `lint` if you touched TypeScript that registers those assets.
 
@@ -109,34 +109,34 @@ These rules exist because these mistakes have been made before:
 - **`vue/require-v-for-key` / `vue/valid-v-for`** — every `v-for` needs a key; use a **stable** id, never the loop index, for lists that can reorder (the linter can't detect index misuse, so this is on you in review).
 - **`vue/no-side-effects-in-computed-properties`** — computeds must be pure; don't mutate refs inside them (memoization caches are the rare, explicitly-disabled exception).
 - **`@typescript-eslint/no-unused-vars`** — dead imports/vars (warning). Prefix intentionally-unused with `_`.
-- **Server ↔ cf-worker parity** is not lint-enforceable, so it is guarded by a test: `packages/shared/src/ws-parity.test.ts` reads both backends' WS dispatch source and fails if their inline message-type handlers diverge or if any `ClientMessage` type is left unhandled. When you add/rename a client message, update `types.ts`, the shared handler or both backends, and this test will confirm coverage. Shared game logic still belongs in `@gaem/shared` so a fix reaches both backends; keep `PatchBody`/validators complete on both sides.
+- **Server ↔ cf-worker parity** is not lint-enforceable, so it is guarded by a test: `packages/shared/src/ws-parity.test.ts` reads both backends' WS dispatch source and fails if their inline message-type handlers diverge or if any `ClientMessage` type is left unhandled. When you add/rename a client message, update `types.ts`, the shared handler or both backends, and this test will confirm coverage. Shared game logic still belongs in `@vtt-core/shared` so a fix reaches both backends; keep `PatchBody`/validators complete on both sides.
 
 **CI:** `.github/workflows/verify.yml` runs `ci-install.sh` (secret `CONTENT_GIT_TOKEN`) → `build → lint` (eslint + client `vue-tsc`) `→ test → e2e` on every PR and push to `main`. Primary Cloudflare deploy is Workers Builds (same install script + secret); optional manual deploy via `deploy-cloudflare.yml`. See `docs/content-package-private-cutover.md` and `docs/content-package-build-contract.md`.
 
 ## Architecture
 
 - **WebSocket** `/ws` — clients receive `GameState`; server applies `validateMove` / `applyMove` / phase actions from shared package.
-- **REST** — player profiles, character sheets, portraits, dice rolls. Auth via `X-Gaem-Role` and `X-Gaem-Player-Key` (see `useSession` / `useApi`).
-- **Maps** — content package `maps/*.json` (installed under `node_modules/@gaem/hellpiercers-content/maps/`), synced to KV for cf-worker deploy.
-- **Static game data** — JSON under content `src/data/`; registered via `@gaem/hellpiercers-content/register` at product boot. Engine reads catalogs through the ContentPack registry only.
+- **REST** — player profiles, character sheets, portraits, dice rolls. Auth via `X-Vtt-Role` and `X-Vtt-Player-Key` (see `useSession` / `useApi`).
+- **Maps** — content package `maps/*.json` (installed under `node_modules/@vtt-core/hellpiercers-content/maps/`), synced to KV for cf-worker deploy.
+- **Static game data** — JSON under content `src/data/`; registered via `@vtt-core/hellpiercers-content/register` at product boot. Engine reads catalogs through the ContentPack registry only.
 - **Dev backend wiring** — the client reads `import.meta.env.DEV` and `VITE_CF_DEV` to pick a backend (`useApi.apiBase`, `useGameSocket.gameWsUrl`): plain `npm run dev` targets Express on `:3001`; `npm run dev:cf` sets `VITE_CF_DEV=1` so the client uses same-origin paths and Vite (`vite.config.ts` proxy) forwards `/api` + `/ws` to the wrangler Worker on `:8787`. In `dev:cf`, the client is served by Vite (HMR) — **not** rebuilt by wrangler: `scripts/cf-wrangler-build.sh` is a deliberate no-op under `WRANGLER_COMMAND=dev`, and `wrangler.toml` `watch_dir` excludes `client/src`. Don't reintroduce a full client `vite build` into the dev build path (it kills HMR). Open `http://localhost:5173` for both dev flows.
 
-## Content / rules sources (while Hellpiercers remains in-tree)
+## Content / rules sources
 
-When clarifying Hellpiercers mechanics or transcribing data into code, consult in order:
+When clarifying Hellpiercers mechanics or transcribing data into code, consult in order (all under the **content** package / checkout `/Users/lindenholt/code/hellpiercers-content`):
 
-1. **`HELLPIERCERS v1.02.pdf`** (gitignored, repo root) — primary rulebook text.
-2. **Content `rulebook/errata.md`** — official errata (local copy of [hellpiercers.com/#errata](https://hellpiercers.com/#errata)). Overrides or amends book text where they conflict.
-3. **Content `rulebook/developer-clarifications.md`** — Sandy Pug developer answers from the itch.io forum. Use for edge cases not covered by the errata; does not duplicate errata entries.
-4. **Content `rulebook/house-rules.md`** — table-specific house rules for this implementation. Overrides RAW and developer clarifications where they conflict.
+1. **`HELLPIERCERS v1.02.pdf`** (gitignored at the **content** repo root) — primary rulebook text.
+2. **`rulebook/errata.md`** — official errata (local copy of [hellpiercers.com/#errata](https://hellpiercers.com/#errata)). Overrides or amends book text where they conflict.
+3. **`rulebook/developer-clarifications.md`** — Sandy Pug developer answers from the itch.io forum. Use for edge cases not covered by the errata; does not duplicate errata entries.
+4. **`rulebook/house-rules.md`** — table-specific house rules for this implementation. Overrides RAW and developer clarifications where they conflict.
 
-Edit rulebook/data/assets in the content git checkout (`/Users/lindenholt/code/hellpiercers-content`), bump/tag, then bump the engine semver range if needed.
+Edit rulebook/data/assets in the content git checkout, bump/tag, then bump the engine semver range if needed.
 
-Don't guess stats or mechanics from memory — check these sources first.
-
-These rulebook paths and the PDF move to the content package when extraction lands. Prefer engine-generic designs over new Hellpiercers hardcodes when touching shared combat/types.
+Don't guess stats or mechanics from memory — check these sources first. Prefer engine-generic designs over new Hellpiercers hardcodes when touching shared combat/types. IP / licensing: [ADR 007](docs/adr/007-ip-and-licensing.md).
 
 ## Rulebook PDF workflow
+
+Engine `npm run rulebook` / `rulebook:setup` are thin wrappers around content `rulebook/` tooling ([`scripts/rulebook.mjs`](scripts/rulebook.mjs)).
 
 One-time setup (creates content `rulebook/.venv` with `pypdf`):
 
@@ -144,7 +144,7 @@ One-time setup (creates content `rulebook/.venv` with `pypdf`):
 npm run rulebook:setup
 ```
 
-The PDF must live at the repo root: `HELLPIERCERS v1.02.pdf`. It is gitignored; each developer keeps their own copy.
+The PDF must live at the **content** repo root: `HELLPIERCERS v1.02.pdf`. It is gitignored there; each developer keeps their own copy. (A leftover engine-root PDF is also gitignored but unused by the wrappers.)
 
 Extract text with:
 
@@ -203,12 +203,13 @@ npm run rulebook -- --page 200
 |------|----------|
 | Move validation, phases, HP, occupancy | `packages/shared/src/game.ts` |
 | Map tiles, walkability, spawn | `packages/shared/src/map.ts` |
-| Bundled tile appearance JPGs | content `assets/tiles/{setId}/` then `npm run sync-tile-assets -w @gaem/client` |
+| Bundled tile appearance JPGs | content `assets/tiles/{setId}/` then `npm run sync-tile-assets -w @vtt-core/client` |
 | Bundled tile feature PNGs | content `assets/tiles/features/{setId}/` then sync (same command) |
 | Bundled tile overlay PNGs | content `assets/tiles/overlays/{setId}/` then sync (same command) |
 | Enemy/class/weapon definitions | content `src/data/` + pack registration (edit content repo) |
 | Board rendering, input | `packages/client/src/components/GameBoard.vue`, `BoardCell.vue` |
-| UI panels | `packages/client/src/components/` |
+| Generic / shell UI panels | `packages/client/src/components/` |
+| Hellpiercers panels / themes / branding | content `src/client/` (edit content repo) |
 | Cross-panel state | `packages/client/src/composables/` |
 | Local API/WS handlers | `packages/server/src/index.ts` |
 | Production API/WS | `packages/cf-worker/src/` (mirror server behavior) |
@@ -243,9 +244,9 @@ ChatGPT / similar generators often produce a single square sheet (e.g. ~1254×12
 4. Crop each cell; force near-black gutters/rounded-corner pixels (e.g. RGB channels below 18) to **black** (JPG has no transparency).
 5. Resize each crop to **32×32** with nearest-neighbor.
 6. Write **`.jpg`** into the content set folder (single) or a **group subfolder** (randomized): e.g. `assets/tiles/paracletus/sand-dark/1.jpg` … `16.jpg` (`quality=95, subsampling=0`).
-7. Refresh the engine content install if needed, then `npm run sync-tile-assets -w @gaem/client` (or rely on the next `dev`/`build` `pre*` hook).
+7. Refresh the engine content install if needed, then `npm run sync-tile-assets -w @vtt-core/client` (or rely on the next `dev`/`build` `pre*` hook).
 
-No code change is needed for new files in an existing set or group — the glob picks them up. Adding a **new set folder** also requires a label in `SET_LABELS` in `packages/client/src/lib/bundledTileAppearances.ts` and including that folder in the glob.
+No code change is needed for new files in an existing set or group — the glob picks them up. Adding a **new set folder** also requires a label in content `src/client/hellpiercers-client-content.ts` (`tileSetLabels`) and including that folder in the glob in content `src/client/tiles/bundledTileAppearances.ts` (features/overlays: matching `bundledTile*.ts`).
 
 ### Feature sets
 
@@ -282,7 +283,7 @@ Many panels branch on `useSession().isGm`. Players see reduced enemy/sheet detai
 
 - **`tileAt` / occupancy** — use `buildBoardOccupancy` and cached tile index patterns; don't scan all enemies per cell.
 - **Server parity** — a fix in `packages/server` often needs the same change in `packages/cf-worker/src/game-room.ts`.
-- **Shared build** — client imports `@gaem/shared` from `dist/`; type errors in shared block the whole build.
+- **Shared build** — client imports `@vtt-core/shared` from `dist/`; type errors in shared block the whole build.
 - **Character sheets** — persisted in KV (prod) / memory (local); portraits in R2 (prod).
 - **Content coupling** — avoid new name/class/weapon string branches in engine modules; extend `specialId` / handler registries instead (see content-pack plan Track B).
 
