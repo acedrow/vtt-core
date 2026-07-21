@@ -11,10 +11,13 @@ compatibility_date = "2025-04-01"
 "@vtt-core/hellpiercers-content/register" = "../../node_modules/@vtt-core/hellpiercers-content/src/register.ts"
 
 [build]
-command = "bash scripts/cf-wrangler-build.sh"
-cwd = "../.."
-# watch_dir is relative to this config file (not build.cwd). Client is served by
-# Vite HMR in dev:cf, so we only watch worker + aliased shared/content source.
+# Resolve monorepo root via git so this works for both:
+#   cd packages/cf-worker && wrangler deploy
+#   wrangler deploy -c packages/cf-worker/wrangler.toml   (Workers Builds)
+# (wrangler resolves [build].cwd from process cwd, not the config file path.)
+command = "bash -c 'cd \"$(git rev-parse --show-toplevel)\" && exec bash scripts/cf-wrangler-build.sh'"
+# watch_dir is relative to this config file. Client is served by Vite HMR in
+# dev:cf, so we only watch worker + aliased shared/content source.
 watch_dir = ["src", "../shared/src", "../../node_modules/@vtt-core/hellpiercers-content/src"]
 
 [assets]

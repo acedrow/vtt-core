@@ -67,15 +67,24 @@ Prefer a **fine-grained PAT** (or classic PAT / machine-user token) with **Conte
 
 ### 3. Cloudflare Workers Builds (primary deploy)
 
-1. Open the Worker → **Settings → Builds**
-2. Add **build secret**: `CONTENT_GIT_TOKEN` = same PAT
-3. Set **install command** to:
+1. Open the Worker → **Settings → Builds** (Worker name `vtt-core`)
+2. **Build variables and secrets:**
+   - `CONTENT_GIT_TOKEN` = same PAT
+   - `SKIP_DEPENDENCY_INSTALL` = `true` (UI has no separate install command; skip the default `npm install`)
+3. **Build command** (runs custom install):
 
 ```bash
 bash scripts/ci-install.sh
 ```
 
-4. Deploy uses wrangler; `[build]` runs [`scripts/cf-wrangler-build.sh`](../scripts/cf-wrangler-build.sh) which builds shared + content + client and runs **`sync-maps`** to remote `MAP_KV` (see [build contract](content-package-build-contract.md)).
+4. **Deploy / version commands** (must target the worker package — bare `npx wrangler deploy` at the workspace root fails):
+
+```bash
+npx wrangler deploy -c packages/cf-worker/wrangler.toml
+npx wrangler versions upload -c packages/cf-worker/wrangler.toml
+```
+
+5. Deploy’s wrangler `[build]` runs [`scripts/cf-wrangler-build.sh`](../scripts/cf-wrangler-build.sh) (shared + content + client + **`sync-maps`** to remote `MAP_KV`; see [build contract](content-package-build-contract.md)).
 
 Also ensure Cloudflare API credentials are available to Workers Builds. Runtime secrets remain `wrangler secret put`: `GM_PASSWORD`, `PLAYER_PASSWORD`, `AUTH_SECRET`, optional `RANDOM_ORG_API_KEY`.
 
