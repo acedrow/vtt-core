@@ -2,6 +2,7 @@
   "name": "@gaem/server",
   "version": "0.0.1",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -9,7 +10,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.6",
+    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.7",
     "@gaem/shared": "*",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",

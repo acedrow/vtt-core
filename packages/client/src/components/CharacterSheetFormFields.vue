@@ -5,7 +5,7 @@ import { computed } from "vue";
 import { PLAYER_ARMOR, PLAYER_CLASSES, PLAYER_WEAPONS } from "@gaem/shared";
 
 import { useCampaignUnlocks } from "../composables/useCampaignUnlocks.js";
-import YadathanTowerPicker from "./YadathanTowerPicker.vue";
+import { getClientCombatBoard } from "../client-content-pack.js";
 
 export type CharacterSheetFormValue = {
   player: string;
@@ -27,6 +27,7 @@ const emit = defineEmits<{
 }>();
 
 const { optionUnlocked } = useCampaignUnlocks();
+const combatBoard = getClientCombatBoard();
 
 const showYadathanTowerPick = computed(() => props.modelValue.armor === YADATHAN_ARMOR_NAME);
 
@@ -100,8 +101,9 @@ function updateField(field: keyof CharacterSheetFormValue, value: string) {
     </select>
   </label>
 
-  <YadathanTowerPicker
-    v-if="showYadathanTowerPick"
+  <component
+    :is="combatBoard.towerPicker"
+    v-if="showYadathanTowerPick && combatBoard.towerPicker"
     :model-value="modelValue.yadathanTower ?? ''"
     label="Tower type"
     @update:model-value="updateField('yadathanTower', $event)"

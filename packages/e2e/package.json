@@ -1,6 +1,7 @@
 {
   "name": "@gaem/e2e",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "playwright:install": "PLAYWRIGHT_BROWSERS_PATH=\"$PWD/.playwright-browsers\" playwright install chromium",

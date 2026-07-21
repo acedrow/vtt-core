@@ -29,6 +29,25 @@ function stubModule(): object {
             return false;
           }
           if (prop === "stainwalkDamageAdjustment") return 0;
+          if (prop === "reversalTriggerSatisfied") return true;
+          if (
+            prop === "isMalakbelArmorName" ||
+            prop === "isAsmodelArmorName" ||
+            prop === "playerUsesMalakbelAegis" ||
+            prop === "playerAllowsDiagonalMovement" ||
+            prop === "isSabaothWeaponName" ||
+            prop === "isSethianWeaponName" ||
+            prop === "isWarhookWeaponName" ||
+            prop === "isKushielArmorName" ||
+            prop === "canUseAssistedLaunch" ||
+            prop === "hasSabaothBombSelected" ||
+            prop === "playerHasSabaothWeapon"
+          ) {
+            return false;
+          }
+          if (prop === "assistedLaunchAnchors" || prop === "warhookValidTargetKeys") {
+            return prop === "warhookValidTargetKeys" ? new Set() : [];
+          }
           return undefined;
         };
       },
@@ -50,6 +69,10 @@ const moduleKeys = [
   "lurkingFreak",
   "provoke",
   "heavenBurning",
+  "reversals",
+  "assistedLaunch",
+  "sabaoth",
+  "sethian",
 ];
 
 const pack = createFixtureContentPack();

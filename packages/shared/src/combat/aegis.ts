@@ -5,11 +5,13 @@ import { buildBoardOccupancy, occupancyBlockedByEnemy } from "../game.js";
 import { coordKey, isInBounds, isWalkable, tileAt } from "../map.js";
 import { movementCostMultiplier } from "./effects.js";
 import { playerArmorGearName } from "./attractor.js";
+import { combatMod } from "../combat-modules.js";
 
 export const ASSISTED_ASCENSION_GEAR = "Assisted Ascension Module (Armor)";
 
 function playerAllowsDiagonalMovement(player: Pick<Player, "armor">): boolean {
-  return player.armor === "MALAKBEL";
+  return (combatMod("reversals") as { playerUsesMalakbelAegis: (p: Pick<Player, "armor">) => boolean })
+    .playerUsesMalakbelAegis(player);
 }
 
 export function hasAssistedAscensionGear(player: Player): boolean {

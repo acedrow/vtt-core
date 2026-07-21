@@ -1,42 +1,64 @@
-import { readdir, readFile } from "node:fs/promises";
+import { readdir, readFile, stat } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
 import type { Request, Response } from "express";
 
+const SET_SLUG_RE = /^[a-z0-9-]+$/;
+
 const require = createRequire(import.meta.url);
-const portraitsDir = join(
+const enemiesRoot = join(
   dirname(require.resolve("@gaem/hellpiercers-content/package.json")),
-  "assets/enemies/paracletus"
+  "assets/enemies"
 );
 
 export const enemyPortraits = new Map<string, { body: Buffer; contentType: string }>();
 
 export async function loadEnemyPortraits(): Promise<void> {
   enemyPortraits.clear();
-  let files: string[];
+  let setDirs: string[];
   try {
-    files = await readdir(portraitsDir);
+    setDirs = await readdir(enemiesRoot);
   } catch {
     return;
   }
-  for (const file of files) {
-    if (!file.endsWith(".png")) continue;
-    const slug = file.replace(/\.png$/, "");
-    const body = await readFile(join(portraitsDir, file));
-    enemyPortraits.set(slug, { body, contentType: "image/png" });
+  for (const set of setDirs) {
+    if (!SET_SLUG_RE.test(set)) continue;
+    const setDir = join(enemiesRoot, set);
+    let setStat;
+    try {
+      setStat = await stat(setDir);
+    } catch {
+      continue;
+    }
+    if (!setStat.isDirectory()) continue;
+    let files: string[];
+    try {
+      files = await readdir(setDir);
+    } catch {
+      continue;
+    }
+    for (const file of files) {
+      if (!file.endsWith(".png")) continue;
+      const slug = file.replace(/\.png$/, "");
+      if (!SET_SLUG_RE.test(slug)) continue;
+      const body = await readFile(join(setDir, file));
+      enemyPortraits.set(`${set}/${slug}`, { body, contentType: "image/png" });
+    }
   }
 }
 
 export function getEnemyPortraitHandler(req: Request, res: Response): void {
-  const raw = req.params.slug;
-  const slug = typeof raw === "string" ? raw : raw[0];
-  if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
-    res.status(400).json({ error: "Invalid portrait slug" });
+  const rawSet = req.params.set;
+  const rawSlug = req.params.slug;
+  const set = typeof rawSet === "string" ? rawSet : rawSet[0];
+  const slug = typeof rawSlug === "string" ? rawSlug : rawSlug[0];
+  if (!set || !slug || !SET_SLUG_RE.test(set) || !SET_SLUG_RE.test(slug)) {
+    res.status(400).json({ error: "Invalid portrait set or slug" });
     return;
   }
 
-  const portrait = enemyPortraits.get(slug);
+  const portrait = enemyPortraits.get(`${set}/${slug}`);
   if (!portrait) {
     res.status(404).json({ error: "Portrait not found" });
     return;

@@ -8,7 +8,9 @@ import EffectIcon from "./EffectIcon.vue";
 import HpBar from "./HpBar.vue";
 import NoLosIcon from "./NoLosIcon.vue";
 import TerrainTypeIcon from "./TerrainTypeIcon.vue";
-import TowerIcon from "./TowerIcon.vue";
+import { getClientCombatBoard } from "../client-content-pack.js";
+
+const combatBoard = getClientCombatBoard();
 
 export type StackedEnemyRender = {
   enemy: Enemy;
@@ -522,7 +524,11 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         class="tower-icon-wrap"
         :title="cell.enemyAnchor.name ?? 'Tower'"
       >
-        <TowerIcon :size="towerIconSize(cell.enemyAnchor)" />
+        <component
+          :is="combatBoard.towerTokenIcon"
+          v-if="combatBoard.towerTokenIcon"
+          :size="towerIconSize(cell.enemyAnchor)"
+        />
       </span>
       <span v-if="cell.turnEnded" class="turn-ended-shade" aria-hidden="true"></span>
       <span v-if="cell.turnEnded" class="turn-ended-zzz" aria-hidden="true">

@@ -1,6 +1,6 @@
-import { getHeavenBurningLevel, getPlayerTower, getSeedAt, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isYadathanArmorName } from "@gaem/hellpiercers-content/combat-ui";
+import { getPlayerTower, getSeedAt, isYadathanArmorName } from "@gaem/hellpiercers-content/combat-ui";
 import type { ActionTier, Player } from "@gaem/shared";
-import { canCommitHasteForTier, canSpendActionTier, canUseActionTier, createDefaultActionBudget, getArmorByName, getArmorSpeed, getClassActiveTier, getSabaothChargesRemaining, getWeaponAttackSpec, hasSabaothBombSelected, hasteStacks, isSabaothWeaponName, isKushielArmorName, canUseAssistedLaunch, assistedLaunchAnchors, previewPlayerAttack, classGrantsSecondWeapon, classGrantsDualGear, aegisFlyingRemaining, playerAegisStacks, hasAssistedAscensionGear } from "@gaem/shared";
+import { canCommitHasteForTier, canSpendActionTier, canUseActionTier, createDefaultActionBudget, getArmorByName, getArmorSpeed, getClassActiveTier, getHeavenBurningLevel, getSabaothChargesRemaining, getWeaponAttackSpec, hasSabaothBombSelected, hasteStacks, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, isKushielArmorName, canUseAssistedLaunch, assistedLaunchAnchors, previewPlayerAttack, classGrantsSecondWeapon, classGrantsDualGear, aegisFlyingRemaining, playerAegisStacks, hasAssistedAscensionGear } from "@gaem/shared";
 import { computed, ref } from "vue";
 
 import { useGameState } from "./useGameState.js";

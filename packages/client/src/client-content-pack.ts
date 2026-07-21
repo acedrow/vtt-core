@@ -24,6 +24,14 @@ export type ClientDetailPanels = {
   overworldLocationVisibility?: Component;
 };
 
+export type ClientCombatBoard = {
+  overlays?: Component;
+  host?: Component;
+  towerTokenIcon?: Component;
+  towerPicker?: Component;
+  towerModal?: Component;
+};
+
 export type ClientBranding = {
   landingPrefix: string;
   landingAccent: string;
@@ -41,6 +49,7 @@ export type ClientContribution = {
   tileSetLabels: ClientTileSetLabels;
   mainSections: ClientMainSection[];
   detailPanels?: ClientDetailPanels;
+  combatBoard?: ClientCombatBoard;
 };
 
 let registered: ClientContribution | null = null;
@@ -60,6 +69,7 @@ let tileSetLabels: ClientTileSetLabels = {
 };
 let mainSections: ClientMainSection[] = [];
 let detailPanels: ClientDetailPanels = {};
+let combatBoard: ClientCombatBoard = {};
 
 function applyContribution(pack: ClientContribution): void {
   themes = pack.themes.slice();
@@ -74,6 +84,7 @@ function applyContribution(pack: ClientContribution): void {
   };
   mainSections = pack.mainSections.slice();
   detailPanels = { ...(pack.detailPanels ?? {}) };
+  combatBoard = { ...(pack.combatBoard ?? {}) };
 }
 
 function clearContribution(): void {
@@ -85,6 +96,7 @@ function clearContribution(): void {
   tileSetLabels = { appearances: {}, features: {}, overlays: {} };
   mainSections = [];
   detailPanels = {};
+  combatBoard = {};
 }
 
 export function registerClientContentPack(pack: ClientContribution): void {
@@ -167,4 +179,9 @@ export function isMainSectionTab(id: string): boolean {
 export function getClientDetailPanels(): ClientDetailPanels {
   requireClientContentPack();
   return detailPanels;
+}
+
+export function getClientCombatBoard(): ClientCombatBoard {
+  if (!registered) return {};
+  return combatBoard;
 }

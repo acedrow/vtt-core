@@ -23,6 +23,7 @@ const contentExports = [
   "@gaem/hellpiercers-content/register-client",
   "@gaem/hellpiercers-content/tiles",
   "@gaem/hellpiercers-content/combat-ui",
+  "@gaem/hellpiercers-content/combat-board-placement",
 ] as const;
 
 export default defineConfig({
@@ -50,6 +51,10 @@ export default defineConfig({
       {
         find: "@gaem/hellpiercers-content/combat-ui",
         replacement: path.join(contentSrc, "combat-ui.ts"),
+      },
+      {
+        find: "@gaem/hellpiercers-content/combat-board-placement",
+        replacement: path.join(contentSrc, "client/combat-board-placement.ts"),
       },
       {
         find: "@gaem/client/content-pack",

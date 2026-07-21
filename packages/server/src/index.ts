@@ -355,7 +355,7 @@ app.get("/api/character-sheets/:id/portrait", (req, res) => {
   getPortraitHandler(auth, req.params.id, res);
 });
 
-app.get("/api/enemy-portraits/paracletus/:slug", (req, res) => {
+app.get("/api/enemy-portraits/:set/:slug", (req, res) => {
   getEnemyPortraitHandler(req, res);
 });
 

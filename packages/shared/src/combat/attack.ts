@@ -7,8 +7,8 @@ import {
   patternOriginFromAnchor,
 } from "../weapon-patterns.js";
 import { getEnemyScale, enemyFootprintTiles } from "../enemy-data.js";
-import { buildBoardOccupancy, occupancyBlockedByEnemy } from "../game.js";
-import { coordKey, ensureObstacleHp, isInBounds, isObstacleTile, isWalkable, setTileTerrain, tileAt } from "../map.js";
+import { buildBoardOccupancy } from "../game.js";
+import { coordKey, ensureObstacleHp, isInBounds, isObstacleTile, setTileTerrain, tileAt } from "../map.js";
 import type { Enemy, GameState, MapTile, Player } from "../types.js";
 import { getWeaponByName } from "../player-data.js";
 import { combatMod } from "../combat-modules.js";
@@ -53,6 +53,28 @@ import { isOrthogonallyAdjacent } from "../patterns.js";
 
 export type AttackTarget = {
   enemyId: string;
+  x: number;
+  y: number;
+};
+
+export type OmnistrikePayload = {
+  bombIndices: [number, number];
+  anchors: [{ x: number; y: number }, { x: number; y: number }];
+  direction: PatternDirection;
+};
+
+export type WarhookPayload = {
+  targetEnemyId?: string;
+  targetX: number;
+  targetY: number;
+  landingX: number;
+  landingY: number;
+  damageRoll?: number;
+  useBreaker?: boolean;
+};
+
+export type WarhookTarget = {
+  enemyId?: string;
   x: number;
   y: number;
 };
@@ -122,45 +144,116 @@ function heavenBurning(): HeavenBurningModule {
   return combatMod("heavenBurning") as HeavenBurningModule;
 }
 
+type SabaothModule = {
+  isSabaothWeaponName: (name: string | undefined | null) => boolean;
+  playerHasSabaothWeapon: (player: Pick<Player, "weapon" | "weapon2">) => boolean;
+  initSabaothCharges: (player: Player) => void;
+  hasSabaothBombSelected: (player: Player | undefined) => boolean;
+  ensureSabaothCharges: (player: Player) => void;
+  getSabaothChargesRemaining: (player: Player) => number | null;
+  applySabaothSquareEffects: (
+    state: GameState,
+    tiles: { x: number; y: number }[],
+    effects: string[],
+  ) => void;
+  resolveOmnistrikePlacements: (
+    state: GameState,
+    player: Player,
+    payload: OmnistrikePayload,
+  ) => {
+    bombSpecs: [WeaponAttackSpec, WeaponAttackSpec];
+    combinedSpan: AttackRangeSpan;
+    unionTiles: { x: number; y: number }[];
+  } | null;
+  validateOmnistrikeAction: (
+    state: GameState,
+    player: Player,
+    payload: OmnistrikePayload,
+  ) => string | null;
+  applyOmnistrike: (
+    state: GameState,
+    player: Player,
+    payload: OmnistrikePayload,
+  ) => { message: string; targets: AttackTarget[] };
+};
+
+function sabaoth(): SabaothModule {
+  return combatMod("sabaoth") as SabaothModule;
+}
+
+type SethianModule = {
+  SETHIAN_WEAPON_NAME: string;
+  SETHIAN_DAMAGE_CAP: number;
+  WARHOOK_RANGE: number;
+  isSethianWeaponName: (name: string | undefined | null) => boolean;
+  isWarhookWeaponName: (name: string | undefined | null) => boolean;
+  isWarhookTerrainTarget: (tile: MapTile | undefined) => boolean;
+  warhookRangeKeys: (state: GameState, origin: { x: number; y: number }) => Set<string>;
+  applySethianWholeSwarmAttack: (
+    state: GameState,
+    spec: WeaponAttackSpec,
+    tiles: { x: number; y: number }[],
+    damageRoll?: number,
+    suppressEffects?: boolean,
+  ) => { damage: number; detail: string; targets: AttackTarget[]; effects: string[] };
+  isWarhookTargetAt: (
+    state: GameState,
+    player: Player,
+    x: number,
+    y: number,
+  ) => WarhookTarget | null;
+  warhookValidTargetKeys: (state: GameState, player: Player) => Set<string>;
+  warhookAdjacentLandingTiles: (
+    state: GameState,
+    playerId: string,
+    target: WarhookTarget,
+  ) => { x: number; y: number }[];
+  warhookNearestLandings: (
+    player: Player,
+    landings: { x: number; y: number }[],
+  ) => { x: number; y: number }[];
+  validateWarhookAction: (
+    state: GameState,
+    player: Player,
+    payload: WarhookPayload,
+  ) => string | null;
+  applyWarhook: (
+    state: GameState,
+    player: Player,
+    payload: WarhookPayload,
+  ) => { message: string; detail: string; targets: AttackTarget[] };
+};
+
+function sethian(): SethianModule {
+  return combatMod("sethian") as SethianModule;
+}
+
 export const HEAVEN_BURNING_SWORD_NAME = "Heaven Burning Sword";
 export const HEAVEN_BURNING_MIN_LEVEL = 1;
 export const HEAVEN_BURNING_MAX_LEVEL = 3;
 
 export function isSabaothWeaponName(name: string | undefined | null): boolean {
-  return name === SABAOTH_WEAPON_NAME;
+  return sabaoth().isSabaothWeaponName(name);
 }
 
 export function playerHasSabaothWeapon(player: Pick<Player, "weapon" | "weapon2">): boolean {
-  return isSabaothWeaponName(player.weapon) || isSabaothWeaponName(player.weapon2);
+  return sabaoth().playerHasSabaothWeapon(player);
 }
 
 export function initSabaothCharges(player: Player): void {
-  if (!player.counters) player.counters = {};
-  if (!playerHasSabaothWeapon(player)) {
-    delete player.counters.sabaothBomb;
-    return;
-  }
-  player.counters.sabaothCharges = SABAOTH_MAX_CHARGES;
-  delete player.counters.sabaothBomb;
+  sabaoth().initSabaothCharges(player);
 }
 
 export function hasSabaothBombSelected(player: Player | undefined): boolean {
-  if (!player || !isSabaothWeaponName(player.weapon)) return false;
-  const index = player.counters?.sabaothBomb;
-  return index != null && index >= 0;
+  return sabaoth().hasSabaothBombSelected(player);
 }
 
 export function ensureSabaothCharges(player: Player): void {
-  if (!playerHasSabaothWeapon(player)) return;
-  if (!player.counters) player.counters = {};
-  if (player.counters.sabaothCharges === undefined) {
-    player.counters.sabaothCharges = SABAOTH_MAX_CHARGES;
-  }
+  sabaoth().ensureSabaothCharges(player);
 }
 
 export function getSabaothChargesRemaining(player: Player): number | null {
-  if (!isSabaothWeaponName(player.weapon)) return null;
-  return player.counters?.sabaothCharges ?? SABAOTH_MAX_CHARGES;
+  return sabaoth().getSabaothChargesRemaining(player);
 }
 
 export function isHeavenBurningWeaponName(name: string | undefined | null): boolean {
@@ -688,51 +781,15 @@ export function applyAttackToEnemies(
   }
   applyDamageToObstaclesInTiles(state, tiles, total);
   if (isSabaothWeaponName(opts?.weaponName)) {
-    applySabaothSquareEffects(state, tiles, effects);
+    sabaoth().applySabaothSquareEffects(state, tiles, effects);
   }
   return { damage: total, detail, targets, effects };
-}
-
-// Pelti/Akeomai's Sabaoth bomb Effects (Advantageous terrain, ally Healing) act on the
-// squares themselves, not just enemies — the generic enemy-only pipeline above misses them.
-function applySabaothSquareEffects(
-  state: GameState,
-  tiles: { x: number; y: number }[],
-  effects: string[],
-): void {
-  if (!effects.length) return;
-  const setsAdvantageous = effects.includes("Advantageous");
-  const occ = buildBoardOccupancy(state);
-  for (const tile of tiles) {
-    if (setsAdvantageous) {
-      const mapTile = tileAt(state.tiles, tile.x, tile.y);
-      if (mapTile) setTileTerrain(mapTile, "advantageous");
-    }
-    const ally = occ.playerByKey.get(coordKey(tile.x, tile.y));
-    if (ally) applyUnitEffectStacks(state, ally, effects);
-  }
 }
 
 export const SETHIAN_DAMAGE_CAP = 12 + 20 * 6;
 
 export function isSethianWeaponName(name: string | undefined | null): boolean {
-  return name === SETHIAN_WEAPON_NAME;
-}
-
-function swarmHitsByGroup(
-  state: GameState,
-  tiles: { x: number; y: number }[],
-): Map<string, number> {
-  const occ = buildBoardOccupancy(state);
-  const hits = new Map<string, number>();
-  for (const tile of tiles) {
-    for (const enemy of occ.enemiesByKey.get(coordKey(tile.x, tile.y)) ?? []) {
-      const group = swarmGroupForEnemy(state, enemy.id);
-      if (!group) continue;
-      hits.set(group.canonicalId, (hits.get(group.canonicalId) ?? 0) + 1);
-    }
-  }
-  return hits;
+  return sethian().isSethianWeaponName(name);
 }
 
 function applySethianWholeSwarmAttack(
@@ -742,40 +799,7 @@ function applySethianWholeSwarmAttack(
   damageRoll?: number,
   suppressEffects?: boolean,
 ): { damage: number; detail: string; targets: AttackTarget[]; effects: string[] } {
-  const groupHits = swarmHitsByGroup(state, tiles);
-  const { total, detail } = resolveAttackDamage(spec, damageRoll);
-  const effects = suppressEffects ? [] : spec.effects ?? [];
-  const targets: AttackTarget[] = [];
-  const parts: string[] = [];
-
-  const damageOpts = { damageSpec: spec.damage };
-  const occ = buildBoardOccupancy(state);
-  for (const [canonicalId, hitCount] of groupHits) {
-    const damage = Math.min(total * hitCount, SETHIAN_DAMAGE_CAP);
-    const enemy = state.enemies.find((e) => e.id === canonicalId)!;
-    const group = swarmGroupForEnemy(state, canonicalId);
-    const memberIds = new Set(group?.memberIds ?? [canonicalId]);
-    const hitTile =
-      tiles.find((tile) => {
-        const at = occ.enemiesByKey.get(coordKey(tile.x, tile.y)) ?? [];
-        return at.some((e) => memberIds.has(e.id));
-      }) ?? { x: enemy.x, y: enemy.y };
-    applyDamageToEnemy(enemy, damage, state, { ...damageOpts, hitTile });
-    applyUnitEffectStacks(state,enemy, effects);
-    targets.push({ enemyId: canonicalId, x: hitTile.x, y: hitTile.y });
-    parts.push(`${detail}×${hitCount}=${damage}`);
-  }
-
-  const swarmCanonical = new Set(groupHits.keys());
-  for (const target of enemiesInTiles(state, tiles)) {
-    if (swarmCanonical.has(target.enemyId)) continue;
-    const enemy = state.enemies.find((e) => e.id === target.enemyId)!;
-    applyDamageToEnemy(enemy, total, state, { ...damageOpts, hitTile: { x: target.x, y: target.y } });
-    applyUnitEffectStacks(state,enemy, effects);
-    targets.push(target);
-  }
-
-  return { damage: total, detail: parts.join("; ") || detail, targets, effects };
+  return sethian().applySethianWholeSwarmAttack(state, spec, tiles, damageRoll, suppressEffects);
 }
 
 export function applyRangeAttackToEnemies(
@@ -936,12 +960,6 @@ export function applySwarmEnemyAttackToPlayer(
 
 export const OMNISTRIKE_DIRECTION: PatternDirection = "e";
 
-export type OmnistrikePayload = {
-  bombIndices: [number, number];
-  anchors: [{ x: number; y: number }, { x: number; y: number }];
-  direction: PatternDirection;
-};
-
 export function resolveBombAttackSpec(
   weaponName: string | undefined,
   bombIndex: number,
@@ -1079,43 +1097,7 @@ export function resolveOmnistrikePlacements(
   player: Player,
   payload: OmnistrikePayload,
 ): { bombSpecs: [WeaponAttackSpec, WeaponAttackSpec]; combinedSpan: AttackRangeSpan; unionTiles: { x: number; y: number }[] } | null {
-  const weapon = player.weapon;
-  if (!isSabaothWeaponName(weapon)) return null;
-  const [indexA, indexB] = payload.bombIndices;
-  const bombA = resolveBombAttackSpec(weapon, indexA);
-  const bombB = resolveBombAttackSpec(weapon, indexB);
-  if (!bombA || !bombB) return null;
-  const combinedSpan = computeOmnistrikeRangeSpan(bombA, bombB);
-  if (!combinedSpan) return null;
-
-  const tilesA = collectBombPatternTiles(state, payload.anchors[0], bombA, payload.direction);
-  const tilesB = collectBombPatternTiles(state, payload.anchors[1], bombB, payload.direction);
-  if (!tilesA.length || !tilesB.length) return null;
-  if (!patternsAdjacentOrOverlap(tilesA, tilesB)) return null;
-
-  const placementA = evaluateOmnistrikePlacement(
-    player,
-    payload.anchors[0],
-    bombA,
-    payload.direction,
-    state,
-    tilesB,
-  );
-  const placementB = evaluateOmnistrikePlacement(
-    player,
-    payload.anchors[1],
-    bombB,
-    payload.direction,
-    state,
-    tilesA,
-  );
-  if (!placementA.valid || !placementB.valid) return null;
-
-  return {
-    bombSpecs: [bombA, bombB],
-    combinedSpan,
-    unionTiles: unionPatternTiles(tilesA, tilesB),
-  };
+  return sabaoth().resolveOmnistrikePlacements(state, player, payload);
 }
 
 export function validateOmnistrikeAction(
@@ -1123,46 +1105,7 @@ export function validateOmnistrikeAction(
   player: Player,
   payload: OmnistrikePayload,
 ): string | null {
-  if (!isSabaothWeaponName(player.weapon)) return "Invalid weapon";
-  const weapon = getWeaponByName(player.weapon ?? "");
-  const bombs = weapon?.attack?.bombs;
-  if (!bombs?.length) return "Weapon has no variants";
-  for (const index of payload.bombIndices) {
-    if (!Number.isInteger(index) || index < 0 || index >= bombs.length) return "Invalid variant";
-  }
-  ensureSabaothCharges(player);
-  if ((player.counters?.sabaothCharges ?? 0) <= 0) return "No charges remaining";
-
-  const resolved = resolveOmnistrikePlacements(state, player, payload);
-  if (!resolved) {
-    const [indexA, indexB] = payload.bombIndices;
-    const bombA = resolveBombAttackSpec(player.weapon, indexA);
-    const bombB = resolveBombAttackSpec(player.weapon, indexB);
-    const combinedSpan = bombA && bombB ? computeOmnistrikeRangeSpan(bombA, bombB) : null;
-    if (!combinedSpan) return "Invalid placement";
-
-    const tilesA = collectBombPatternTiles(state, payload.anchors[0], bombA!, payload.direction);
-    const tilesB = collectBombPatternTiles(state, payload.anchors[1], bombB!, payload.direction);
-    if (!patternsAdjacentOrOverlap(tilesA, tilesB)) return "Patterns must be adjacent or overlap";
-
-    for (const [anchor, spec, other] of [
-      [payload.anchors[0], bombA!, tilesB] as const,
-      [payload.anchors[1], bombB!, tilesA] as const,
-    ]) {
-      const placement = evaluateOmnistrikePlacement(
-        player,
-        anchor,
-        spec,
-        payload.direction,
-        state,
-        other,
-      );
-      if (placement.tooFar) return "outside maximum range";
-      if (placement.tooCloseKeys.size > 0) return "inside minimum range";
-    }
-    return "Placement out of range";
-  }
-  return null;
+  return sabaoth().validateOmnistrikeAction(state, player, payload);
 }
 
 export function applyOmnistrike(
@@ -1170,100 +1113,25 @@ export function applyOmnistrike(
   player: Player,
   payload: OmnistrikePayload,
 ): { message: string; targets: AttackTarget[] } {
-  const resolved = resolveOmnistrikePlacements(state, player, payload)!;
-  const { bombSpecs, unionTiles } = resolved;
-  ensureSabaothCharges(player);
-  player.counters!.sabaothCharges = (player.counters!.sabaothCharges ?? 0) - 1;
-
-  const occ = buildBoardOccupancy(state);
-  const seenEnemies = new Set<string>();
-  const allTargets: AttackTarget[] = [];
-  const damageParts: string[] = [];
-
-  for (const bombSpec of bombSpecs) {
-    const { total, detail } = resolveAttackDamage(bombSpec);
-    if (total > 0) damageParts.push(detail);
-    const effects = bombSpec.effects ?? [];
-    // A Swarm sharing pooled HP across several occupied tiles should only take this
-    // bomb's damage once, not once per member tile it happens to cover.
-    const hitSwarmGroups = new Set<string>();
-    for (const tile of unionTiles) {
-      const mapTile = tileAt(state.tiles, tile.x, tile.y);
-      if (mapTile && effects.some((e) => e === "Advantageous")) {
-        setTileTerrain(mapTile, "advantageous");
-      }
-      for (const enemy of occ.enemiesByKey.get(coordKey(tile.x, tile.y)) ?? []) {
-        const group = swarmGroupForEnemy(state, enemy.id);
-        const hitId = group?.canonicalId ?? enemy.id;
-        if (hitSwarmGroups.has(hitId)) continue;
-        hitSwarmGroups.add(hitId);
-        const hit = group ? state.enemies.find((e) => e.id === group.canonicalId)! : enemy;
-        if (total > 0) {
-          applyDamageToEnemy(hit, total, state, {
-            damageSpec: bombSpec.damage,
-            hitTile: { x: tile.x, y: tile.y },
-          });
-        }
-        applyUnitEffectStacks(state, hit, effects);
-        if (!seenEnemies.has(hit.id)) {
-          seenEnemies.add(hit.id);
-          allTargets.push({ enemyId: hit.id, x: tile.x, y: tile.y });
-        }
-      }
-      const ally = occ.playerByKey.get(coordKey(tile.x, tile.y));
-      if (ally) applyUnitEffectStacks(state, ally, effects);
-    }
-  }
-
-  const dmgLabel = damageParts.length ? damageParts.join("+") : "0";
-  return { message: `Omnistrike (${dmgLabel} dmg)`, targets: allTargets };
+  return sabaoth().applyOmnistrike(state, player, payload);
 }
 
 export const SETHIAN_WEAPON_NAME = "Sethian Externalized Annihilation Cannon";
 export const WARHOOK_RANGE = 3;
 
-export type WarhookPayload = {
-  targetEnemyId?: string;
-  targetX: number;
-  targetY: number;
-  landingX: number;
-  landingY: number;
-  damageRoll?: number;
-  useBreaker?: boolean;
-};
-
-export type WarhookTarget = {
-  enemyId?: string;
-  x: number;
-  y: number;
-};
-
 export function isWarhookWeaponName(name: string | undefined | null): boolean {
-  return name === SETHIAN_WEAPON_NAME;
+  return sethian().isWarhookWeaponName(name);
 }
 
 export function isWarhookTerrainTarget(tile: MapTile | undefined): boolean {
-  if (!tile) return false;
-  return tile.terrain.includes("impassable") || tile.terrain.includes("obstacle");
+  return sethian().isWarhookTerrainTarget(tile);
 }
 
 export function warhookRangeKeys(
   state: GameState,
   origin: { x: number; y: number },
 ): Set<string> {
-  return rangeAttackTileKeys(state, origin, WARHOOK_RANGE);
-}
-
-function warhookTargetFootprint(
-  state: GameState,
-  target: WarhookTarget,
-): { x: number; y: number }[] {
-  if (target.enemyId) {
-    const enemy = state.enemies.find((e) => e.id === target.enemyId);
-    if (!enemy) return [];
-    return enemyFootprintTiles(enemy.x, enemy.y, getEnemyScale(enemy));
-  }
-  return [{ x: target.x, y: target.y }];
+  return sethian().warhookRangeKeys(state, origin);
 }
 
 export function isWarhookTargetAt(
@@ -1272,42 +1140,14 @@ export function isWarhookTargetAt(
   x: number,
   y: number,
 ): WarhookTarget | null {
-  if (manhattanDistance(player, { x, y }) > WARHOOK_RANGE) return null;
-  if (!isInBounds(x, y, state.width, state.height)) return null;
-
-  const occ = buildBoardOccupancy(state);
-  const enemy = occ.enemyByKey.get(coordKey(x, y));
-  if (enemy) return { enemyId: enemy.id, x, y };
-
-  const tile = tileAt(state.tiles, x, y);
-  if (isWarhookTerrainTarget(tile)) return { x, y };
-
-  return null;
+  return sethian().isWarhookTargetAt(state, player, x, y);
 }
 
 export function warhookValidTargetKeys(
   state: GameState,
   player: Player,
 ): Set<string> {
-  const keys = new Set<string>();
-  const rangeKeys = warhookRangeKeys(state, player);
-  const occ = buildBoardOccupancy(state);
-
-  for (const key of rangeKeys) {
-    const [xs, ys] = key.split(",");
-    const x = Number(xs);
-    const y = Number(ys);
-    if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
-
-    if (occ.enemyByKey.has(key)) {
-      keys.add(key);
-      continue;
-    }
-    const tile = tileAt(state.tiles, x, y);
-    if (isWarhookTerrainTarget(tile)) keys.add(key);
-  }
-
-  return keys;
+  return sethian().warhookValidTargetKeys(state, player);
 }
 
 export function warhookAdjacentLandingTiles(
@@ -1315,48 +1155,14 @@ export function warhookAdjacentLandingTiles(
   playerId: string,
   target: WarhookTarget,
 ): { x: number; y: number }[] {
-  const footprint = warhookTargetFootprint(state, target);
-  if (!footprint.length) return [];
-
-  const occ = buildBoardOccupancy(state);
-  const seen = new Set<string>();
-  const landings: { x: number; y: number }[] = [];
-
-  for (const ft of footprint) {
-    for (const delta of [
-      { dx: 0, dy: -1 },
-      { dx: 0, dy: 1 },
-      { dx: -1, dy: 0 },
-      { dx: 1, dy: 0 },
-    ]) {
-      const x = ft.x + delta.dx;
-      const y = ft.y + delta.dy;
-      const key = coordKey(x, y);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      if (!isInBounds(x, y, state.width, state.height)) continue;
-      if (!isWalkable(tileAt(state.tiles, x, y))) continue;
-      const occupant = occ.playerByKey.get(key);
-      if (occupant && occupant.id !== playerId) continue;
-      if (occupancyBlockedByEnemy(occ, x, y)) continue;
-      landings.push({ x, y });
-    }
-  }
-
-  return landings;
+  return sethian().warhookAdjacentLandingTiles(state, playerId, target);
 }
 
 export function warhookNearestLandings(
   player: Player,
   landings: { x: number; y: number }[],
 ): { x: number; y: number }[] {
-  if (landings.length <= 1) return landings;
-  let minDist = Infinity;
-  for (const tile of landings) {
-    const d = manhattanDistance(player, tile);
-    if (d < minDist) minDist = d;
-  }
-  return landings.filter((tile) => manhattanDistance(player, tile) === minDist);
+  return sethian().warhookNearestLandings(player, landings);
 }
 
 export function validateWarhookAction(
@@ -1364,23 +1170,7 @@ export function validateWarhookAction(
   player: Player,
   payload: WarhookPayload,
 ): string | null {
-  if (!isWarhookWeaponName(player.weapon)) return "Invalid weapon";
-
-  const target = isWarhookTargetAt(state, player, payload.targetX, payload.targetY);
-  if (!target) return "Invalid target";
-  if (payload.targetEnemyId) {
-    if (target.enemyId !== payload.targetEnemyId) return "Invalid target";
-  } else if (target.enemyId) {
-    return "Invalid target";
-  }
-
-  const landings = warhookAdjacentLandingTiles(state, player.id, target);
-  const landing = { x: payload.landingX, y: payload.landingY };
-  if (!landings.some((t) => t.x === landing.x && t.y === landing.y)) {
-    return "Invalid landing space";
-  }
-
-  return null;
+  return sethian().validateWarhookAction(state, player, payload);
 }
 
 export function applyWarhook(
@@ -1388,42 +1178,9 @@ export function applyWarhook(
   player: Player,
   payload: WarhookPayload,
 ): { message: string; detail: string; targets: AttackTarget[] } {
-  player.x = payload.landingX;
-  player.y = payload.landingY;
-
-  if (!player.counters) player.counters = {};
-  player.counters.warhookBlazingImmuneTurns = 2;
-
-  const targets: AttackTarget[] = [];
-  let detail = "0";
-
-  if (payload.targetEnemyId) {
-    const enemy = state.enemies.find((e) => e.id === payload.targetEnemyId);
-    if (enemy) {
-      const spec = getWeaponAttackSpec(player.weapon ?? "");
-      if (spec) {
-        const resolved = resolveAttackDamage(spec, payload.damageRoll);
-        detail = resolved.detail;
-        const group = swarmGroupForEnemy(state, enemy.id);
-        const useBreaker = !!payload.useBreaker && weaponHasBreakerTag(player);
-        if (useBreaker && group) {
-          applyBreakerAttackToSwarm(state, [{ x: enemy.x, y: enemy.y }], resolved.total, []);
-        } else if (!useBreaker && isSethianWeaponName(player.weapon) && group) {
-          applySethianWholeSwarmAttack(state, spec, [{ x: enemy.x, y: enemy.y }], payload.damageRoll);
-        } else {
-          applyDamageToEnemy(enemy, resolved.total, state, {
-            damageSpec: spec.damage,
-            hitTile: { x: enemy.x, y: enemy.y },
-          });
-        }
-      }
-      applyUnitEffectStacks(state,enemy, ["Blazing:2"]);
-      targets.push({ enemyId: enemy.id, x: enemy.x, y: enemy.y });
-    }
-  }
-
-  return { message: "Canticle Boosted Warhook", detail, targets };
+  return sethian().applyWarhook(state, player, payload);
 }
+
 
 export function enemyAttackDamage(spec: EnemyAttackSpec): number | undefined {
   if (spec.damage == null || spec.damage === "") return undefined;

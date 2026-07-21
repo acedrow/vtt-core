@@ -13,7 +13,7 @@ import { useMapSelection } from "../composables/useMapSelection.js";
 import { useGameConnection } from "../composables/useGameConnection.js";
 import { gameWsUrl, useGameSocket } from "../composables/useGameSocket.js";
 import { useGameState } from "../composables/useGameState.js";
-import { listClientMainSections } from "../client-content-pack.js";
+import { listClientMainSections, getClientCombatBoard } from "../client-content-pack.js";
 import { useInfoDataSelection } from "../composables/useInfoDataSelection.js";
 import { activeMainTab } from "../composables/useMainSectionTab.js";
 import type { MainSectionTab } from "../composables/useMainSectionTab.js";
@@ -31,7 +31,6 @@ import {
 } from "../composables/useGmTools.js";
 import ActionBar from "./ActionBar.vue";
 import GmActionBar from "./GmActionBar.vue";
-import ReversalPrompt from "./ReversalPrompt.vue";
 import ClassReactionPrompt from "./ClassReactionPrompt.vue";
 import GameBoard from "./GameBoard.vue";
 import GmToolsToolbar from "./GmToolsToolbar.vue";
@@ -39,6 +38,7 @@ import RightPanel from "./RightPanel.vue";
 import SideNav from "./SideNav.vue";
 
 const mainSections = listClientMainSections();
+const combatBoard = getClientCombatBoard();
 
 const router = useRouter();
 const { role, playerProfile, hasGmCapabilities, clearSession } = useSession();
@@ -359,7 +359,7 @@ function selectMainTab(tab: MainSectionTab) {
             :overlay-el="boardOverlaysEl"
           />
           <div ref="boardOverlaysEl" class="board-overlays">
-            <ReversalPrompt />
+            <component :is="combatBoard.overlays" v-if="combatBoard.overlays" />
             <ClassReactionPrompt />
             <ActionBar />
             <GmActionBar />

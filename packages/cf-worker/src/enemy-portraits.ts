@@ -1,6 +1,6 @@
 import type { Env } from "./env.js";
 
-const PORTRAIT_RE = /^\/api\/enemy-portraits\/paracletus\/([a-z0-9-]+)$/;
+const PORTRAIT_RE = /^\/api\/enemy-portraits\/([a-z0-9-]+)\/([a-z0-9-]+)$/;
 const portraitCache = new Map<string, ArrayBuffer>();
 
 export async function handleGetEnemyPortrait(
@@ -10,17 +10,19 @@ export async function handleGetEnemyPortrait(
   const match = new URL(request.url).pathname.match(PORTRAIT_RE);
   if (!match || request.method !== "GET") return null;
 
-  const slug = match[1];
-  let body = portraitCache.get(slug);
+  const set = match[1];
+  const slug = match[2];
+  const cacheKey = `${set}/${slug}`;
+  let body = portraitCache.get(cacheKey);
   if (!body) {
-    const assetUrl = new URL(`/enemies/paracletus/${slug}.png`, request.url);
+    const assetUrl = new URL(`/enemies/${set}/${slug}.png`, request.url);
     const assetRes = await env.ASSETS.fetch(assetUrl);
     const contentType = assetRes.headers.get("Content-Type") ?? "";
     if (!assetRes.ok || !contentType.startsWith("image/")) {
       return Response.json({ error: "Portrait not found" }, { status: 404 });
     }
     body = await assetRes.arrayBuffer();
-    portraitCache.set(slug, body);
+    portraitCache.set(cacheKey, body);
   }
 
   return new Response(body, {

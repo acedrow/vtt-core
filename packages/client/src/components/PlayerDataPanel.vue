@@ -10,7 +10,7 @@ import { useCharacterSheetSelection } from "../composables/useCharacterSheetSele
 import { useExpandableSet } from "../composables/useExpandableSet.js";
 import PanelShell from "./PanelShell.vue";
 import PlayerItemDetail from "./PlayerItemDetail.vue";
-import YadathanTowerModal from "./YadathanTowerModal.vue";
+import { getClientCombatBoard } from "../client-content-pack.js";
 
 const props = defineProps<{
   category: "armor" | "classes" | "weapons" | "equipment" | "gear";
@@ -20,6 +20,7 @@ const { closeRightPanel } = useBoardSelection();
 const { gearPick, gearPickCategory, cancelGearPick, equipGear } = useCharacterSheetSelection();
 const { optionUnlocked } = useCampaignUnlocks();
 const { isExpanded, toggle } = useExpandableSet();
+const combatBoard = getClientCombatBoard();
 const equipping = ref(false);
 const equipError = ref<string | null>(null);
 const towerModalOpen = ref(false);
@@ -212,7 +213,9 @@ function yadathanEquipLabel(name: string): string {
       </article>
     </div>
 
-    <YadathanTowerModal
+    <component
+      :is="combatBoard.towerModal"
+      v-if="combatBoard.towerModal"
       :open="towerModalOpen"
       :model-value="towerDraft"
       :title="pendingYadathanEquip ? 'Select tower type' : 'Change tower type'"

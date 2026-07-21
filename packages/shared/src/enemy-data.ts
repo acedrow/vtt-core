@@ -110,7 +110,7 @@ export function getEnemyPortraitUrl(listing: EnemyListing | undefined): string |
   if (!listing?.portrait) return null;
   const factionId = getEnemyFactionId(listing.name);
   if (!factionId) return null;
-  return `/enemies/${factionId}/${listing.portrait}.png`;
+  return `/api/enemy-portraits/${factionId}/${listing.portrait}`;
 }
 
 export function getPortraitBgExcludeHues(portraitSlug: string | undefined): [number, number][] | undefined {

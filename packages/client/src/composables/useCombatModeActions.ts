@@ -1,4 +1,4 @@
-import { isHeavenBurningWeaponName } from "@gaem/hellpiercers-content/combat-ui";
+import { isHeavenBurningWeaponName } from "@gaem/shared";
 import type { StructuredArmorAction } from "@gaem/shared";
 import { isRangeTargetAttack, isSabaothWeaponName, isWarhookWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@gaem/shared";
 import { computed, ref, type Ref } from "vue";

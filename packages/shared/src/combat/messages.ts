@@ -35,7 +35,6 @@ import {
   TILE_NAME_MAX_LENGTH,
 } from "../tile-cosmetics.js";
 import { isOrthogonallyAdjacent } from "../patterns.js";
-import { effectiveElevation } from "./elevation.js";
 import {
   actionTierBlockedReason,
   actionTierLabel,
@@ -1232,23 +1231,20 @@ export function applyGmEnemyAction(state: GameState, action: GmEnemyAction): str
 }
 
 import { getEnemyListingByName } from "../enemy-data.js";
+import { combatMod } from "../combat-modules.js";
 
-// Trigger conditions we can verify from board state. Armors whose text names a condition
-// we have no tracking for (e.g. clone count, "special terrain") fall through to `true`,
-// matching the previous always-eligible behavior.
-function reversalTriggerSatisfied(
-  state: GameState,
-  armorName: string,
-  enemy: Enemy,
-  wearer: Player,
-): boolean {
-  const distance = Math.abs(enemy.x - wearer.x) + Math.abs(enemy.y - wearer.y);
-  if (armorName === "MALAKBEL") return distance > 1;
-  if (armorName === "KUSHIEL" || armorName === "SACHIEL") return distance === 1;
-  if (armorName === "BARAQIEL") {
-    return effectiveElevation(state, enemy) <= effectiveElevation(state, wearer);
-  }
-  return true;
+type ReversalsModule = {
+  reversalTriggerSatisfied: (
+    state: GameState,
+    armorName: string,
+    enemy: Enemy,
+    wearer: Player,
+  ) => boolean;
+  isAsmodelArmorName: (name: string | undefined | null) => boolean;
+};
+
+function reversals(): ReversalsModule {
+  return combatMod("reversals") as ReversalsModule;
 }
 
 function maybeSetEnemyAttackReversal(
@@ -1278,7 +1274,7 @@ function maybeSetEnemyAttackReversal(
     targetArmor?.reversal &&
     (target.reversalCharges ?? 0) > 0 &&
     (!isYadathanArmorName(target.armor) || yadathanReversalEligible(state, target.id)) &&
-    reversalTriggerSatisfied(state, targetArmor.name, enemy, target);
+    reversals().reversalTriggerSatisfied(state, targetArmor.name, enemy, target);
   if (targetEligible) {
     setPending(target, targetArmor!.name, targetArmor!.reversal!.trigger);
     return;
@@ -1290,7 +1286,7 @@ function maybeSetEnemyAttackReversal(
     if (ally.id === target.id) continue;
     if (!isOrthogonallyAdjacent(ally, target)) continue;
     const allyArmor = getArmorByName(ally.armor ?? "");
-    if (allyArmor?.name !== "ASMODEL" || !allyArmor.reversal) continue;
+    if (!reversals().isAsmodelArmorName(allyArmor?.name) || !allyArmor?.reversal) continue;
     if ((ally.reversalCharges ?? 0) <= 0) continue;
     setPending(ally, allyArmor.name, allyArmor.reversal.trigger);
     return;

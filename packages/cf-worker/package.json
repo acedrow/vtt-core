@@ -2,6 +2,7 @@
   "name": "@gaem/cf-worker",
   "version": "0.0.1",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "deploy": "wrangler deploy",
@@ -10,7 +11,7 @@
     "sync-maps:local": "node scripts/sync-maps.mjs --local"
   },
   "dependencies": {
-    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.6",
+    "@gaem/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.7",
     "@gaem/shared": "*"
   },
   "devDependencies": {

@@ -23,6 +23,7 @@ import {
 } from "./aegis.js";
 import { canUseActionTier, spendActionTierOrHaste, spendMovement } from "./actions.js";
 import { swarmGroupForEnemy } from "./content-modules-api.js";
+import { combatMod } from "../combat-modules.js";
 import { createDefaultActionBudget, type ActionBudget } from "./types.js";
 import { enemyHasFlyingTag, isUnitFalling, syncUnitElevationOnTile } from "./elevation.js";
 
@@ -49,12 +50,21 @@ const DIAGONAL_DELTAS: [number, number][] = [
   [-1, -1],
 ];
 
+type ReversalsModule = {
+  isMalakbelArmorName: (name: string | undefined | null) => boolean;
+  playerAllowsDiagonalMovement: (player: Pick<Player, "armor">) => boolean;
+};
+
+function reversals(): ReversalsModule {
+  return combatMod("reversals") as ReversalsModule;
+}
+
 export function isMalakbelArmorName(name: string | undefined | null): boolean {
-  return name === MALAKBEL_ARMOR_NAME;
+  return reversals().isMalakbelArmorName(name);
 }
 
 export function playerAllowsDiagonalMovement(player: Pick<Player, "armor">): boolean {
-  return isMalakbelArmorName(player.armor);
+  return reversals().playerAllowsDiagonalMovement(player);
 }
 
 function movementStepDeltas(player: Player): [number, number][] {

@@ -2,7 +2,7 @@
 import { GORGENAUT_AGNOSIA_BOX, getEquipmentAttackSpec, collectEquipmentPatternTiles, isHylicAnnihilationCorridor, areOrthogonallyConnected, listRedirectableEnemyAttackIndices, rejectionFieldTileKeys, forceProjectionTileKeys, redirectionSourceTileKeys, isTowerEnemy, yadathanPlacementKeys, towerTeleportLandingKeys, kataptyTargetKeys, keraunoAdjacentEnemyIds, getPlayerTower, TOWER_IATROS, buildSwarmGroups, canSwarmMemberReachDest, getSwarmMemberHp, getSwarmMaxHp, swarmGroupForEnemy, swarmFringeTiles, pickSwarmMoveMember, getSwarmMovementRemaining, swarmCanonicalDisplayId, getEffectiveEnemyHp, getEffectiveEnemyMaxHp, weaponHasBreakerTag, attackTargetsSwarm, flowerbudPlantTiles, tileIsStained, swarmChipEligibleTargets, swarmChipPromptRequired, swarmMembersHitByTiles, maxSwarmStrikesAgainstTarget, type SwarmChipTarget } from "@gaem/hellpiercers-content/combat-ui";
 import type { EffectStacks, Enemy, MapTile, PatternDirection, Player, PlayerAction, TerrainObject } from "@gaem/shared";
 import { boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, fixedPatternTilesInBounds, findPlayerMovementPath, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, agnosiaCenteredHover, getObstacleHp, getPlayerMaxHp, isMovementStepAdjacent, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, movementStepCost, stepMoveCost, enemyMoveStepCost, isFlyingStepReachable, aegisFlyingRemaining, playerAllowsDiagonalMovement, playerAttackDirectionsAt, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, computeOmnistrikeRangeSpan, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isDirectTargetEnemyAttack, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, getWeaponAttackSpec, hasLineOfSight, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, visibleEnemyIds, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, SETHIAN_DAMAGE_CAP, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, tilesInAttractorZone, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, type AttackPreviewState } from "@gaem/shared";
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from "vue";
+import { computed, onMounted, onUnmounted, provide, ref, shallowRef, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
 import { boardCellMetrics, buildElevationContourPaths } from "../lib/elevationContours.js";
@@ -16,8 +16,7 @@ import { useEnemyMoveAnimation } from "../composables/useEnemyMoveAnimation.js";
 import { usePlayerTeleportAnimation } from "../composables/usePlayerTeleportAnimation.js";
 import { useCharacterSheets } from "../composables/useCharacterSheets.js";
 import { useEnemySpawnSelection } from "../composables/useEnemySpawnSelection.js";
-import { useStainGeyserPlacement } from "../composables/useStainGeyserPlacement.js";
-import { useGorgenautAgnosiaPlacement } from "../composables/useGorgenautAgnosiaPlacement.js";
+import { useStainGeyserPlacement, useGorgenautAgnosiaPlacement } from "@gaem/hellpiercers-content/combat-board-placement";
 import { clearActiveTool, useGmTools } from "../composables/useGmTools.js";
 import { gmToolCursor } from "../lib/gmToolCursors.js";
 import { showToast } from "../composables/useToasts.js";
@@ -34,15 +33,14 @@ import {
 } from "../composables/useMapPing.js";
 import { usePatternSelection } from "../composables/usePatternSelection.js";
 import { usePlayerSettings } from "../composables/usePlayerSettings.js";
+import { getClientCombatBoard } from "../client-content-pack.js";
+import { combatBoardHostKey } from "../composables/useCombatBoardHost.js";
 import BoardCell, { type CellRenderState } from "./BoardCell.vue";
 import BoardContextMenu, { type BoardContextMenuItem } from "./BoardContextMenu.vue";
 import AddEffectModal from "./AddEffectModal.vue";
 import AddTileEffectModal from "./AddTileEffectModal.vue";
 import ChangeTileTerrainModal from "./ChangeTileTerrainModal.vue";
-import BreakerPromptModal from "./BreakerPromptModal.vue";
 import ProvokePromptModal from "./ProvokePromptModal.vue";
-import SwarmChipModal from "./SwarmChipModal.vue";
-import GmSwarmAttackModal from "./GmSwarmAttackModal.vue";
 import TargetPickerModal, { type TargetPickerEnemy } from "./TargetPickerModal.vue";
 
 const props = defineProps<{
@@ -500,6 +498,24 @@ const swarmAttackModalProps = computed(() => {
     damageOverride: pending.damage,
   };
 });
+
+const combatBoard = getClientCombatBoard();
+provide(combatBoardHostKey, {
+  breakerPromptOpen,
+  breakerSethianHint,
+  onBreakerConfirm,
+  onBreakerCancel,
+  swarmChipOpen,
+  swarmChipEnemyName,
+  swarmChipTargets,
+  onSwarmChipConfirm,
+  onSwarmChipClose,
+  swarmAttackModalOpen,
+  swarmAttackModalProps,
+  onSwarmAttackConfirm,
+  onSwarmAttackClose,
+});
+
 const teleportOverlayAtDest = ref(false);
 
 const gridStyle = computed(() => {
@@ -5659,41 +5675,13 @@ onUnmounted(() => {
       @close="tileTerrainModalOpen = false; tileTerrainModalBulkCoords = undefined"
     />
 
-    <BreakerPromptModal
-      :open="breakerPromptOpen"
-      :sethian-hint="breakerSethianHint"
-      @close="onBreakerCancel"
-      @confirm="onBreakerConfirm"
-    />
+    <component :is="combatBoard.host" v-if="combatBoard.host" />
 
     <ProvokePromptModal
       :open="provokePromptOpen"
       :triggers="provokeTriggers"
       @close="onProvokeCancel"
       @confirm="onProvokeConfirm"
-    />
-
-    <SwarmChipModal
-      :open="swarmChipOpen"
-      :enemy-name="swarmChipEnemyName"
-      :targets="swarmChipTargets"
-      @close="onSwarmChipClose"
-      @confirm="onSwarmChipConfirm"
-    />
-
-    <GmSwarmAttackModal
-      v-if="swarmAttackModalProps"
-      :open="swarmAttackModalOpen"
-      :enemy-id="swarmAttackModalProps.enemyId"
-      :attack-index="swarmAttackModalProps.attackIndex"
-      :attack-text="swarmAttackModalProps.attackText"
-      :attack-spec="swarmAttackModalProps.attackSpec"
-      :target-player-id="swarmAttackModalProps.targetPlayerId"
-      :target-player-name="swarmAttackModalProps.targetPlayerName"
-      :max-strikes="swarmAttackModalProps.maxStrikes"
-      :damage-override="swarmAttackModalProps.damageOverride"
-      @close="onSwarmAttackClose"
-      @confirm="onSwarmAttackConfirm"
     />
 
     <TargetPickerModal
