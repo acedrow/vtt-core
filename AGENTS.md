@@ -20,7 +20,7 @@ npm package scope is `@vtt-core/*`.
 
 **Rule of thumb:** game logic and validation belong in `@vtt-core/shared`. Both `server` and `cf-worker` must call the same shared functions so local dev matches production.
 
-### Engine vs content
+### Engine vs content 
 
 This repo is the **engine / product shell**. Hellpiercers IP lives in the private git package `@vtt-core/hellpiercers-content` (`acedrow/hellpiercers-content`), installed into `node_modules` and registered at product boot. Local content checkout: `/Users/lindenholt/code/hellpiercers-content` (content-local agents: see that repo’s `AGENTS.md`).
 
