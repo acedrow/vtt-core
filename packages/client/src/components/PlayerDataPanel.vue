@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
 import type { PlayerArmor, PlayerClass, PlayerEquipment, PlayerGear, PlayerWeapon, UnlockCategory } from "@vtt-core/shared";
 import { PLAYER_ARMOR, PLAYER_CLASSES, PLAYER_EQUIPMENT, PLAYER_GEAR, PLAYER_WEAPONS } from "@vtt-core/shared";
 import { computed, ref } from "vue";
 
+import { getClientCombatBoard, sheetFieldForArmor } from "../client-content-pack.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCampaignUnlocks } from "../composables/useCampaignUnlocks.js";
 import { useCharacterSheetSelection } from "../composables/useCharacterSheetSelection.js";
 import { useExpandableSet } from "../composables/useExpandableSet.js";
 import PanelShell from "./PanelShell.vue";
 import PlayerItemDetail from "./PlayerItemDetail.vue";
-import { getClientCombatBoard } from "../client-content-pack.js";
 
 const props = defineProps<{
   category: "armor" | "classes" | "weapons" | "equipment" | "gear";
@@ -23,9 +22,11 @@ const { isExpanded, toggle } = useExpandableSet();
 const combatBoard = getClientCombatBoard();
 const equipping = ref(false);
 const equipError = ref<string | null>(null);
-const towerModalOpen = ref(false);
-const towerDraft = ref("");
-const pendingYadathanEquip = ref(false);
+const fieldModalOpen = ref(false);
+const fieldDraft = ref("");
+const pendingFieldEquip = ref(false);
+const pendingFieldArmor = ref("");
+const pendingFieldDataKey = ref("");
 
 const selectionMode = computed(
   () => !!gearPick.value && gearPickCategory.value === props.category,
@@ -56,7 +57,16 @@ const selectionTitle = computed(() => {
 
 const title = computed(() => (selectionMode.value ? selectionTitle.value : browseTitle.value));
 const currentValue = computed(() => gearPick.value?.currentValue ?? "");
-const currentTower = computed(() => gearPick.value?.yadathanTower ?? "");
+
+const armorSheetField = computed(() =>
+  props.category === "armor" ? sheetFieldForArmor(currentValue.value) : undefined,
+);
+
+const currentFieldExtra = computed(() => {
+  const field = armorSheetField.value;
+  if (!field) return "";
+  return gearPick.value?.sheetExtras?.[field.dataKey] ?? "";
+});
 
 const gearSlotFilter = computed(() => gearPick.value?.gearSlotFilter);
 
@@ -94,14 +104,39 @@ function onClose() {
   else closeRightPanel();
 }
 
+function itemSheetField(itemName: string) {
+  return props.category === "armor" ? sheetFieldForArmor(itemName) : undefined;
+}
+
+function itemExtra(itemName: string): string | undefined {
+  const field = itemSheetField(itemName);
+  if (!field || itemName !== currentValue.value) return undefined;
+  return currentFieldExtra.value || undefined;
+}
+
+function equipLabel(itemName: string): string {
+  if (!itemSheetField(itemName)) {
+    return itemName === currentValue.value ? "Equipped" : "Equip";
+  }
+  if (itemName !== currentValue.value) return "Equip";
+  return "Change option";
+}
+
+function equipDisabled(itemName: string): boolean {
+  if (equipping.value) return true;
+  if (itemSheetField(itemName)) return false;
+  return itemName === currentValue.value;
+}
+
 async function onEquip(item: PlayerClass | PlayerArmor | PlayerWeapon | PlayerEquipment | PlayerGear) {
   if (equipping.value || isLocked(item.name)) return;
-  if (item.name === YADATHAN_ARMOR_NAME && props.category === "armor") {
+  const field = itemSheetField(item.name);
+  if (field && props.category === "armor") {
     if (item.name === currentValue.value) {
-      openTowerModal(false);
+      openFieldModal(false, item.name, field.dataKey);
       return;
     }
-    openTowerModal(true);
+    openFieldModal(true, item.name, field.dataKey);
     return;
   }
   if (item.name === currentValue.value) return;
@@ -112,30 +147,31 @@ async function onEquip(item: PlayerClass | PlayerArmor | PlayerWeapon | PlayerEq
   equipping.value = false;
 }
 
-function openTowerModal(equipArmor: boolean) {
-  towerDraft.value = currentTower.value;
-  pendingYadathanEquip.value = equipArmor;
-  towerModalOpen.value = true;
+function openFieldModal(equipArmor: boolean, armorName: string, dataKey: string) {
+  fieldDraft.value = equipArmor ? "" : currentFieldExtra.value;
+  pendingFieldEquip.value = equipArmor;
+  pendingFieldArmor.value = armorName;
+  pendingFieldDataKey.value = dataKey;
+  fieldModalOpen.value = true;
 }
 
-function closeTowerModal() {
-  towerModalOpen.value = false;
-  towerDraft.value = "";
-  pendingYadathanEquip.value = false;
+function closeFieldModal() {
+  fieldModalOpen.value = false;
+  fieldDraft.value = "";
+  pendingFieldEquip.value = false;
+  pendingFieldArmor.value = "";
+  pendingFieldDataKey.value = "";
 }
 
-async function confirmTowerPick(tower: string) {
+async function confirmFieldPick(value: string) {
   equipping.value = true;
   equipError.value = null;
-  const err = await equipGear(YADATHAN_ARMOR_NAME, { yadathanTower: tower });
-  closeTowerModal();
+  const err = await equipGear(pendingFieldArmor.value, {
+    [pendingFieldDataKey.value]: value,
+  });
+  closeFieldModal();
   if (err) equipError.value = err;
   equipping.value = false;
-}
-
-function yadathanEquipLabel(name: string): string {
-  if (name !== currentValue.value) return "Equip";
-  return "Change tower";
 }
 </script>
 
@@ -171,20 +207,10 @@ function yadathanEquipLabel(name: string): string {
               v-if="selectionMode && !isLocked(item.name)"
               type="button"
               class="equip-btn cta secondary"
-              :disabled="
-                item.name === YADATHAN_ARMOR_NAME && category === 'armor'
-                  ? equipping
-                  : item.name === currentValue || equipping
-              "
+              :disabled="equipDisabled(item.name)"
               @click="onEquip(item)"
             >
-              {{
-                item.name === YADATHAN_ARMOR_NAME && category === 'armor'
-                  ? yadathanEquipLabel(item.name)
-                  : item.name === currentValue
-                    ? "Equipped"
-                    : "Equip"
-              }}
+              {{ equipLabel(item.name) }}
             </button>
             <button
               type="button"
@@ -205,9 +231,7 @@ function yadathanEquipLabel(name: string): string {
           <PlayerItemDetail
             :item="item"
             :kind="category"
-            :selected-tower="
-              category === 'armor' && item.name === YADATHAN_ARMOR_NAME ? currentTower : undefined
-            "
+            :selected-tower="itemExtra(item.name)"
           />
         </div>
       </article>
@@ -216,11 +240,11 @@ function yadathanEquipLabel(name: string): string {
     <component
       :is="combatBoard.towerModal"
       v-if="combatBoard.towerModal"
-      :open="towerModalOpen"
-      :model-value="towerDraft"
-      :title="pendingYadathanEquip ? 'Select tower type' : 'Change tower type'"
-      @close="closeTowerModal"
-      @confirm="confirmTowerPick"
+      :open="fieldModalOpen"
+      :model-value="fieldDraft"
+      :title="pendingFieldEquip ? 'Select option' : 'Change option'"
+      @close="closeFieldModal"
+      @confirm="confirmFieldPick"
     />
   </PanelShell>
 </template>

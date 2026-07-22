@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
 import { computed } from "vue";
 
 import { PLAYER_ARMOR, PLAYER_CLASSES, PLAYER_WEAPONS } from "@vtt-core/shared";
 
+import {
+  clearHiddenSheetExtras,
+  sheetFieldsAfter,
+} from "../client-content-pack.js";
 import { useCampaignUnlocks } from "../composables/useCampaignUnlocks.js";
-import { getClientCombatBoard } from "../client-content-pack.js";
 
 export type CharacterSheetFormValue = {
   player: string;
@@ -13,7 +15,7 @@ export type CharacterSheetFormValue = {
   class: string;
   armor: string;
   weapon: string;
-  yadathanTower?: string;
+  extras: Record<string, string>;
 };
 
 const props = defineProps<{
@@ -27,16 +29,36 @@ const emit = defineEmits<{
 }>();
 
 const { optionUnlocked } = useCampaignUnlocks();
-const combatBoard = getClientCombatBoard();
 
-const showYadathanTowerPick = computed(() => props.modelValue.armor === YADATHAN_ARMOR_NAME);
+const loadout = computed(() => ({
+  class: props.modelValue.class,
+  armor: props.modelValue.armor,
+  weapon: props.modelValue.weapon,
+}));
 
-function updateField(field: keyof CharacterSheetFormValue, value: string) {
-  const next = { ...props.modelValue, [field]: value };
-  if (field === "armor" && value !== YADATHAN_ARMOR_NAME) {
-    next.yadathanTower = "";
-  }
-  emit("update:modelValue", next);
+const fieldsAfterClass = computed(() => sheetFieldsAfter("class", loadout.value));
+const fieldsAfterArmor = computed(() => sheetFieldsAfter("armor", loadout.value));
+const fieldsAfterWeapon = computed(() => sheetFieldsAfter("weapon", loadout.value));
+
+function emitNext(next: CharacterSheetFormValue) {
+  emit("update:modelValue", {
+    ...next,
+    extras: clearHiddenSheetExtras(
+      { class: next.class, armor: next.armor, weapon: next.weapon },
+      next.extras,
+    ),
+  });
+}
+
+function updateField(field: "player" | "name" | "class" | "armor" | "weapon", value: string) {
+  emitNext({ ...props.modelValue, [field]: value });
+}
+
+function updateExtra(dataKey: string, value: string) {
+  emitNext({
+    ...props.modelValue,
+    extras: { ...props.modelValue.extras, [dataKey]: value },
+  });
 }
 </script>
 
@@ -82,6 +104,15 @@ function updateField(field: keyof CharacterSheetFormValue, value: string) {
     </select>
   </label>
 
+  <component
+    :is="field.component"
+    v-for="field in fieldsAfterClass"
+    :key="field.id"
+    :model-value="modelValue.extras[field.dataKey] ?? ''"
+    :label="field.label"
+    @update:model-value="updateExtra(field.dataKey, $event)"
+  />
+
   <label class="modal-field">
     <span>Armor</span>
     <select
@@ -102,11 +133,12 @@ function updateField(field: keyof CharacterSheetFormValue, value: string) {
   </label>
 
   <component
-    :is="combatBoard.towerPicker"
-    v-if="showYadathanTowerPick && combatBoard.towerPicker"
-    :model-value="modelValue.yadathanTower ?? ''"
-    label="Tower type"
-    @update:model-value="updateField('yadathanTower', $event)"
+    :is="field.component"
+    v-for="field in fieldsAfterArmor"
+    :key="field.id"
+    :model-value="modelValue.extras[field.dataKey] ?? ''"
+    :label="field.label"
+    @update:model-value="updateExtra(field.dataKey, $event)"
   />
 
   <label class="modal-field">
@@ -127,4 +159,13 @@ function updateField(field: keyof CharacterSheetFormValue, value: string) {
       </option>
     </select>
   </label>
+
+  <component
+    :is="field.component"
+    v-for="field in fieldsAfterWeapon"
+    :key="field.id"
+    :model-value="modelValue.extras[field.dataKey] ?? ''"
+    :label="field.label"
+    @update:model-value="updateExtra(field.dataKey, $event)"
+  />
 </template>

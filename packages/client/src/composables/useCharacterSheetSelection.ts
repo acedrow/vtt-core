@@ -15,7 +15,7 @@ export type GearPick = {
   sheetId: string;
   field: GearField;
   currentValue: string;
-  yadathanTower?: string;
+  sheetExtras?: Record<string, string>;
   gearSlotFilter?: "weapon" | "armor";
 };
 
@@ -64,30 +64,30 @@ export function useCharacterSheetSelection() {
     sheetId: string,
     field: GearField,
     currentValue: string,
-    yadathanTower?: string,
+    sheetExtras?: Record<string, string>,
     gearSlotFilter?: "weapon" | "armor",
   ) {
     clearDataCategory();
     selectedFactionId.value = null;
     selectedTableId.value = null;
-    gearPick.value = { sheetId, field, currentValue, yadathanTower, gearSlotFilter };
+    gearPick.value = { sheetId, field, currentValue, sheetExtras, gearSlotFilter };
     activeTab.value = "info";
   }
 
   async function equipGear(
     name: string,
-    extra?: { yadathanTower?: string },
+    extra?: Record<string, string>,
   ): Promise<string | null> {
     const pick = gearPick.value;
     if (!pick) return null;
     try {
       const body: Record<string, string> = {};
-      if (pick.field === "armor" && extra?.yadathanTower && name === pick.currentValue) {
-        body.yadathanTower = extra.yadathanTower;
+      if (pick.field === "armor" && extra && name === pick.currentValue) {
+        Object.assign(body, extra);
       } else {
         body[pick.field] = name;
-        if (pick.field === "armor" && extra?.yadathanTower) {
-          body.yadathanTower = extra.yadathanTower;
+        if (pick.field === "armor" && extra) {
+          Object.assign(body, extra);
         }
       }
       const res = await apiFetch(`/api/character-sheets/${pick.sheetId}`, {

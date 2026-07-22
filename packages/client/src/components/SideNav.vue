@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
 import type { CharacterSheet, FactionId, GameMapSummary, PlayerProfile, ReconTableId } from "@vtt-core/shared";
 import { BOARD_HEIGHT, BOARD_WIDTH, FACTIONS, getFactionById, listEnemyFactionIds, listReconTables } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
+import { sheetFieldsExtrasValid } from "../client-content-pack.js";
 import { useApi } from "../composables/useApi.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCharacterSheetSelection } from "../composables/useCharacterSheetSelection.js";
@@ -58,7 +58,7 @@ const createForm = ref({
   class: "",
   armor: "",
   weapon: "",
-  yadathanTower: "",
+  extras: {} as Record<string, string>,
 });
 
 const createMapForm = ref({
@@ -84,8 +84,10 @@ const filteredMaps = computed(() => {
 const createFormValid = computed(() => {
   const f = createForm.value;
   if (!f.player || !f.name || !f.class || !f.armor || !f.weapon) return false;
-  if (f.armor === YADATHAN_ARMOR_NAME && !f.yadathanTower) return false;
-  return true;
+  return sheetFieldsExtrasValid(
+    { class: f.class, armor: f.armor, weapon: f.weapon },
+    f.extras,
+  );
 });
 
 const profileNameById = computed(() => {
@@ -240,7 +242,7 @@ function openCreate() {
     class: "",
     armor: "",
     weapon: "",
-    yadathanTower: "",
+    extras: {},
   };
   createError.value = null;
   showCreate.value = true;
@@ -250,10 +252,19 @@ async function createSheet() {
   creating.value = true;
   createError.value = null;
   try {
+    const f = createForm.value;
+    const body: Record<string, string> = {
+      player: f.player,
+      name: f.name,
+      class: f.class,
+      armor: f.armor,
+      weapon: f.weapon,
+      ...f.extras,
+    };
     const res = await apiFetch("/api/character-sheets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(createForm.value),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       const data = (await res.json().catch(() => null)) as { error?: string } | null;

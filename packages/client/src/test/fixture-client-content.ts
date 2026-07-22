@@ -33,5 +33,7 @@ export function createFixtureClientContribution(): ClientContribution {
     mainSections: [
       { id: "fixture-section", label: "Fixture Section", component: FixturePanel },
     ],
+    sheetFields: [],
+    sheetChrome: [],
   };
 }

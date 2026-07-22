@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
-import { boardModeForEquipment } from "../client-content-pack.js";
+import {
+  boardModeForEquipment,
+  extrasFromSheetData,
+  extrasPayload,
+  sheetChromeForSlot,
+  sheetFieldForArmor,
+  visibleSheetFields,
+} from "../client-content-pack.js";
 import type { CharacterSheet, PlayerProfile } from "@vtt-core/shared";
-import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, SABAOTH_MAX_CHARGES } from "@vtt-core/shared";
+import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, HEAVEN_BURNING_MAX_LEVEL, isSabaothWeaponName, SABAOTH_MAX_CHARGES } from "@vtt-core/shared";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 
 import AbilityBlock from "./AbilityBlock.vue";
@@ -57,7 +63,7 @@ const form = ref({
   gear: "",
   gearArmor: "",
   weapon2: "",
-  yadathanTower: "",
+  extras: {} as Record<string, string>,
   tags: [] as string[],
 });
 const editingField = ref<EditableField | null>(null);
@@ -168,7 +174,30 @@ const showWeaponGearRow = computed(
   () => hasGearSlot.value || classGrantsDualGear(form.value.class),
 );
 const showArmorGearRow = computed(() => classGrantsDualGear(form.value.class));
-const showYadathanTowerPick = computed(() => form.value.armor === YADATHAN_ARMOR_NAME);
+const armorSheetField = computed(() => sheetFieldForArmor(form.value.armor));
+const selectedArmorExtra = computed(() => {
+  const field = armorSheetField.value;
+  if (!field) return undefined;
+  return form.value.extras[field.dataKey] || undefined;
+});
+const classChrome = computed(() =>
+  sheetChromeForSlot("classActions", { className: form.value.class }),
+);
+const weaponChrome = computed(() =>
+  sheetChromeForSlot("weaponActions", { weaponName: equippedWeaponName.value }),
+);
+const weaponSublines = computed(() =>
+  sheetChromeForSlot("weaponSubline", { weaponName: equippedWeaponName.value }),
+);
+const gearChrome = computed(() =>
+  sheetChromeForSlot("gearActions", { className: form.value.class }),
+);
+const gearArmorChrome = computed(() =>
+  sheetChromeForSlot("gearArmorActions", { className: form.value.class }),
+);
+const replacesWeaponActive = computed(() =>
+  weaponChrome.value.some((plugin) => plugin.replacesWeaponActive),
+);
 
 const canUseEquipmentCharge = computed(() => {
   if (!canSupport.value || !form.value.equipment) return false;
@@ -206,8 +235,10 @@ const attackTooltipPinned = computed(
 );
 const weaponVariantConfirmOpen = ref(false);
 const pendingWeaponVariantIndex = ref<number | null>(null);
-const showWeaponCharges = computed(
-  () => combatUiUnlocked.value && isSabaothWeaponName(equippedWeaponName.value) && !!boardPlayer.value,
+const showWeaponCharges = computed(() =>
+  weaponSublines.value.some((plugin) => plugin.sublineKind === "sabaothCharges") &&
+  combatUiUnlocked.value &&
+  !!boardPlayer.value,
 );
 const weaponChargesRemaining = computed(() => {
   const player = boardPlayer.value;
@@ -221,8 +252,8 @@ const weaponChargesDisplay = computed(() => {
 });
 const showHeavenBurningLevel = computed(
   () =>
+    weaponSublines.value.some((plugin) => plugin.sublineKind === "heavenBurningLevel") &&
     combatUiUnlocked.value &&
-    isHeavenBurningWeaponName(equippedWeaponName.value) &&
     !!boardPlayer.value,
 );
 const heavenBurningLevelRemaining = computed(() => {
@@ -244,6 +275,23 @@ const canConfirmWeaponVariant = computed(() => (weaponChargesRemaining.value ?? 
 
 function useHeavenBurningUnfold() {
   sendPlayerAction({ action: "weaponActive", detail: "heaven_burning_unfold" });
+}
+
+function runSheetChromeAction(action: string | undefined) {
+  if (!action) return;
+  if (action === "hephaestusRestore") useHephaestusRestore();
+  else if (action === "harpeRecall") recallHarpeTrap();
+  else if (action === "heavenBurningUnfold") useHeavenBurningUnfold();
+  else if (action === "epeusBagWeapon") openEpeusBag("weapon");
+  else if (action === "epeusBagArmor") openEpeusBag("armor");
+}
+
+function sheetChromeDisabled(action: string | undefined): boolean {
+  if (action === "hephaestusRestore") return !canUseBaselineCommunism.value;
+  if (action === "harpeRecall") return !canSupport.value || !hasThrownTrap.value;
+  if (action === "heavenBurningUnfold") return !canUseHeavenBurningUnfold.value;
+  if (action === "epeusBagWeapon" || action === "epeusBagArmor") return !canMain.value;
+  return false;
 }
 
 function requestWeaponVariantChange(index: number) {
@@ -322,13 +370,26 @@ async function loadPortrait() {
 function syncBoardLoadoutIfNeeded() {
   const bp = boardPlayer.value;
   if (!bp) return;
+  const boardExtras = extrasFromSheetData(bp.data);
+  const formExtras = form.value.extras;
+  let extrasOutOfSync = false;
+  for (const field of visibleSheetFields({
+    class: form.value.class,
+    armor: form.value.armor,
+    weapon: form.value.weapon,
+  })) {
+    if ((boardExtras[field.dataKey] ?? "") !== (formExtras[field.dataKey] ?? "")) {
+      extrasOutOfSync = true;
+      break;
+    }
+  }
   const outOfSync =
     bp.class !== form.value.class ||
     bp.armor !== form.value.armor ||
     (bp.equipment ?? "") !== form.value.equipment ||
     (bp.gear ?? "") !== form.value.gear ||
     (bp.gearArmor ?? "") !== form.value.gearArmor ||
-    (typeof boardPlayer.value?.data?.yadathanTower === "string" ? boardPlayer.value.data.yadathanTower : "") !== form.value.yadathanTower;
+    extrasOutOfSync;
   if (!outOfSync) return;
   send({
     type: "syncPlayerSheet",
@@ -340,7 +401,7 @@ function syncBoardLoadoutIfNeeded() {
     gear: form.value.gear,
     gearArmor: form.value.gearArmor || undefined,
     weapon2: form.value.weapon2,
-    data: form.value.yadathanTower ? { yadathanTower: form.value.yadathanTower } : undefined,
+    data: extrasPayload(form.value.extras),
   });
 }
 
@@ -362,7 +423,7 @@ async function loadSheet() {
       gear: data.sheet.gear ?? "",
       gearArmor: data.sheet.gearArmor ?? "",
       weapon2: data.sheet.weapon2 ?? "",
-      yadathanTower: (typeof data.sheet.data?.yadathanTower === "string" ? data.sheet.data.yadathanTower : "") ?? "",
+      extras: extrasFromSheetData(data.sheet.data),
       tags: [...(data.sheet.tags ?? [])],
     };
     await loadPortrait();
@@ -390,10 +451,8 @@ async function saveSheet() {
       gearArmor: form.value.gearArmor,
       weapon2: form.value.weapon2,
       tags: form.value.tags,
+      ...form.value.extras,
     };
-    if (form.value.armor === YADATHAN_ARMOR_NAME) {
-      body.yadathanTower = form.value.yadathanTower;
-    }
     if (role.value === "gm") body.player = form.value.player;
 
     const res = await apiFetch(`/api/character-sheets/${props.sheetId}`, {
@@ -418,7 +477,7 @@ async function saveSheet() {
           equipment: form.value.equipment,
           gear: form.value.gear,
           weapon2: form.value.weapon2,
-          data: form.value.yadathanTower ? { yadathanTower: form.value.yadathanTower } : undefined,
+          data: extrasPayload(form.value.extras),
         });
     }
   } catch (e) {
@@ -440,7 +499,7 @@ function resetFormFromSheet() {
     gear: sheet.value.gear ?? "",
     gearArmor: sheet.value.gearArmor ?? "",
     weapon2: sheet.value.weapon2 ?? "",
-    yadathanTower: (typeof sheet.value.data?.yadathanTower === "string" ? sheet.value.data.yadathanTower : "") ?? "",
+    extras: extrasFromSheetData(sheet.value.data),
     tags: [...(sheet.value.tags ?? [])],
   };
   tagsDraft.value = "";
@@ -474,7 +533,7 @@ function startGearFieldEdit(field: GearField) {
     props.sheetId,
     field,
     form.value[field],
-    field === "armor" ? form.value.yadathanTower : undefined,
+    field === "armor" ? form.value.extras : undefined,
     gearSlotFilter,
   );
 }
@@ -742,22 +801,16 @@ onUnmounted(() => {
                 </template>
               </SheetActionButton>
               <SheetActionButton
-                v-if="form.class === 'HEPHAESTUS'"
-                :active="mode === 'hephaestusRestore'"
-                :disabled="!canUseBaselineCommunism"
-                @click="useHephaestusRestore"
+                v-for="plugin in classChrome"
+                :key="plugin.id"
+                :active="plugin.modeId ? mode === plugin.modeId : false"
+                :disabled="sheetChromeDisabled(plugin.action)"
+                @click="runSheetChromeAction(plugin.action)"
               >
-                Passive
-                <template #tooltip>
+                {{ plugin.label }}
+                <template v-if="plugin.action === 'hephaestusRestore'" #tooltip>
                   <AbilityBlock tier-label="Free action" :content="selectedClass.passiveAbility" />
                 </template>
-              </SheetActionButton>
-              <SheetActionButton
-                v-if="form.class === 'HARPE'"
-                :disabled="!canSupport || !hasThrownTrap"
-                @click="recallHarpeTrap"
-              >
-                Recall trap
               </SheetActionButton>
             </template>
           </SheetGearFieldRow>
@@ -768,7 +821,7 @@ onUnmounted(() => {
             kind="armor"
             :item="selectedArmor"
             :can-edit="canEdit"
-            :selected-tower="showYadathanTowerPick ? form.yadathanTower : undefined"
+            :selected-tower="selectedArmorExtra"
             @start-edit="startGearFieldEdit('armor')"
           >
             <template v-if="showSheetCombatActions && selectedArmor" #actions>
@@ -819,17 +872,18 @@ onUnmounted(() => {
                 </template>
               </SheetActionButton>
               <SheetActionButton
-                v-if="isHeavenBurningWeaponName(equippedWeaponName)"
-                :disabled="!canUseHeavenBurningUnfold"
-                @click="useHeavenBurningUnfold"
+                v-for="plugin in weaponChrome"
+                :key="plugin.id"
+                :disabled="sheetChromeDisabled(plugin.action)"
+                @click="runSheetChromeAction(plugin.action)"
               >
-                Unfold
+                {{ plugin.label }}
                 <template #tooltip>
                   <AbilityBlock tier-label="Aux action" :content="selectedWeapon.activeAbility" />
                 </template>
               </SheetActionButton>
               <SheetActionButton
-                v-else
+                v-if="!replacesWeaponActive"
                 :active="mode === 'omnistrike' || mode === 'warhook'"
                 :disabled="!canUseWeaponActive"
                 @click="useWeaponActive(equippedWeaponName)"
@@ -933,10 +987,12 @@ onUnmounted(() => {
                 </template>
               </SheetActionButton>
               <SheetActionButton
-                v-if="form.class === 'EPEUS' && canMain"
-                @click="openEpeusBag('weapon')"
+                v-for="plugin in gearChrome"
+                :key="plugin.id"
+                :disabled="sheetChromeDisabled(plugin.action)"
+                @click="runSheetChromeAction(plugin.action)"
               >
-                Bag of Tricks
+                {{ plugin.label }}
               </SheetActionButton>
             </template>
           </SheetGearFieldRow>
@@ -950,12 +1006,14 @@ onUnmounted(() => {
             :can-edit="canEdit"
             @start-edit="startGearFieldEdit('gearArmor')"
           >
-            <template v-if="showSheetCombatActions && form.class === 'EPEUS' && form.gearArmor" #actions>
+            <template v-if="showSheetCombatActions && form.gearArmor" #actions>
               <SheetActionButton
-                :disabled="!canMain"
-                @click="openEpeusBag('armor')"
+                v-for="plugin in gearArmorChrome"
+                :key="plugin.id"
+                :disabled="sheetChromeDisabled(plugin.action)"
+                @click="runSheetChromeAction(plugin.action)"
               >
-                Bag of Tricks
+                {{ plugin.label }}
               </SheetActionButton>
             </template>
           </SheetGearFieldRow>

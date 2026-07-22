@@ -40,6 +40,51 @@ export type ClientBoardModePlugin = {
   hint?: string;
 };
 
+export type ClientSheetFieldWhen = {
+  armor?: string;
+  class?: string;
+  weapon?: string;
+};
+
+export type ClientSheetFieldPlugin = {
+  id: string;
+  dataKey: string;
+  when?: ClientSheetFieldWhen;
+  component: Component;
+  clearWhenHidden?: boolean;
+  /** When visible, extras[dataKey] must be non-empty for create/save validity. Default true. */
+  required?: boolean;
+  /** Where to mount in the create/edit form shell. Default "armor". */
+  after?: "class" | "armor" | "weapon";
+  label?: string;
+};
+
+export type ClientSheetLoadout = {
+  class?: string;
+  armor?: string;
+  weapon?: string;
+};
+
+export type ClientSheetChromeSlot =
+  | "classActions"
+  | "weaponActions"
+  | "weaponSubline"
+  | "gearActions"
+  | "gearArmorActions";
+
+export type ClientSheetChromePlugin = {
+  id: string;
+  slot: ClientSheetChromeSlot;
+  whenClass?: string;
+  whenWeapon?: (weaponName: string) => boolean;
+  label?: string;
+  modeId?: string;
+  action?: string;
+  sublineKind?: "sabaothCharges" | "heavenBurningLevel";
+  /** When true, replace the generic weapon Active button with this action. */
+  replacesWeaponActive?: boolean;
+};
+
 export type ClientBranding = {
   landingPrefix: string;
   landingAccent: string;
@@ -59,6 +104,8 @@ export type ClientContribution = {
   detailPanels?: ClientDetailPanels;
   combatBoard?: ClientCombatBoard;
   boardModes?: ClientBoardModePlugin[];
+  sheetFields?: ClientSheetFieldPlugin[];
+  sheetChrome?: ClientSheetChromePlugin[];
 };
 
 let registered: ClientContribution | null = null;
@@ -80,6 +127,8 @@ let mainSections: ClientMainSection[] = [];
 let detailPanels: ClientDetailPanels = {};
 let combatBoard: ClientCombatBoard = {};
 let boardModes: ClientBoardModePlugin[] = [];
+let sheetFields: ClientSheetFieldPlugin[] = [];
+let sheetChrome: ClientSheetChromePlugin[] = [];
 
 function applyContribution(pack: ClientContribution): void {
   themes = pack.themes.slice();
@@ -96,6 +145,8 @@ function applyContribution(pack: ClientContribution): void {
   detailPanels = { ...(pack.detailPanels ?? {}) };
   combatBoard = { ...(pack.combatBoard ?? {}) };
   boardModes = (pack.boardModes ?? []).slice();
+  sheetFields = (pack.sheetFields ?? []).slice();
+  sheetChrome = (pack.sheetChrome ?? []).slice();
 }
 
 function clearContribution(): void {
@@ -109,6 +160,8 @@ function clearContribution(): void {
   detailPanels = {};
   combatBoard = {};
   boardModes = [];
+  sheetFields = [];
+  sheetChrome = [];
 }
 
 export function registerClientContentPack(pack: ClientContribution): void {
@@ -212,4 +265,98 @@ export function boardModeForClass(className: string | undefined): string | null 
 export function boardModeForEquipment(equipmentName: string): string | null {
   const plugin = boardModes.find((m) => m.activateForEquipment?.(equipmentName));
   return plugin?.id ?? null;
+}
+
+export function listClientSheetFields(): ClientSheetFieldPlugin[] {
+  if (!registered) return [];
+  return sheetFields;
+}
+
+export function sheetFieldMatches(
+  field: ClientSheetFieldPlugin,
+  loadout: ClientSheetLoadout,
+): boolean {
+  const when = field.when;
+  if (!when) return true;
+  if (when.class != null && when.class !== loadout.class) return false;
+  if (when.armor != null && when.armor !== loadout.armor) return false;
+  if (when.weapon != null && when.weapon !== loadout.weapon) return false;
+  return true;
+}
+
+export function visibleSheetFields(loadout: ClientSheetLoadout): ClientSheetFieldPlugin[] {
+  return sheetFields.filter((field) => sheetFieldMatches(field, loadout));
+}
+
+export function sheetFieldsAfter(
+  after: "class" | "armor" | "weapon",
+  loadout: ClientSheetLoadout,
+): ClientSheetFieldPlugin[] {
+  return visibleSheetFields(loadout).filter((field) => (field.after ?? "armor") === after);
+}
+
+export function sheetFieldsExtrasValid(
+  loadout: ClientSheetLoadout,
+  extras: Record<string, string>,
+): boolean {
+  for (const field of visibleSheetFields(loadout)) {
+    if (field.required === false) continue;
+    if (!(extras[field.dataKey] ?? "").trim()) return false;
+  }
+  return true;
+}
+
+export function clearHiddenSheetExtras(
+  loadout: ClientSheetLoadout,
+  extras: Record<string, string>,
+): Record<string, string> {
+  const next = { ...extras };
+  for (const field of sheetFields) {
+    if (!field.clearWhenHidden) continue;
+    if (sheetFieldMatches(field, loadout)) continue;
+    delete next[field.dataKey];
+  }
+  return next;
+}
+
+export function sheetFieldForArmor(armorName: string): ClientSheetFieldPlugin | undefined {
+  return sheetFields.find((field) => field.when?.armor === armorName);
+}
+
+export function extrasFromSheetData(
+  data: Record<string, unknown> | undefined | null,
+): Record<string, string> {
+  const extras: Record<string, string> = {};
+  for (const field of sheetFields) {
+    const value = data?.[field.dataKey];
+    if (typeof value === "string") extras[field.dataKey] = value;
+  }
+  return extras;
+}
+
+export function extrasPayload(
+  extras: Record<string, string>,
+): Record<string, string> | undefined {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(extras)) {
+    if (value) out[key] = value;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+export function listClientSheetChrome(): ClientSheetChromePlugin[] {
+  if (!registered) return [];
+  return sheetChrome;
+}
+
+export function sheetChromeForSlot(
+  slot: ClientSheetChromeSlot,
+  ctx: { className?: string; weaponName?: string },
+): ClientSheetChromePlugin[] {
+  return sheetChrome.filter((plugin) => {
+    if (plugin.slot !== slot) return false;
+    if (plugin.whenClass != null && plugin.whenClass !== ctx.className) return false;
+    if (plugin.whenWeapon && !plugin.whenWeapon(ctx.weaponName ?? "")) return false;
+    return true;
+  });
 }
