@@ -44,8 +44,6 @@ function assistedLaunch(): AssistedLaunchModule {
   return combatMod("assistedLaunch") as AssistedLaunchModule;
 }
 
-export const KUSHIEL_ARMOR_NAME = "KUSHIEL";
-
 export function isKushielArmorName(name: string | undefined | null): boolean {
   return assistedLaunch().isKushielArmorName(name);
 }

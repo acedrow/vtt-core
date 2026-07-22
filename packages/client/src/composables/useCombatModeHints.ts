@@ -8,6 +8,7 @@ import {
 } from "@vtt-core/shared";
 import { computed, type Ref } from "vue";
 
+import { listClientBoardModes } from "../client-content-pack.js";
 import { useBoardActionMode } from "./useBoardActionMode.js";
 
 const DEFAULT_ATTACK_HINT =
@@ -25,7 +26,6 @@ export function useCombatModeHints(opts: {
     warhookStep,
     towerTeleportStep,
     kataptyTargetIds,
-    borrowAllyId,
     assistedLaunchStep,
     equipmentCoverTiles,
     forceProjectionStep,
@@ -119,17 +119,6 @@ export function useCombatModeHints(opts: {
     return `Select exactly 3 Katapty targets (${kataptyTargetIds.value.length}/3), then confirm`;
   });
 
-  const varunastraBorrowHint = computed(() => {
-    if (mode.value !== "varunastraBorrow") return null;
-    if (!borrowAllyId.value) return "Click a squad ally to borrow their weapon pattern";
-    return "Aim the borrowed pattern, then click highlighted tiles to attack";
-  });
-
-  const chrysaorBrandHint = computed(() => {
-    if (mode.value !== "chrysaorBrand") return null;
-    return "Click a creature or obstacle in line of sight to Brand:2";
-  });
-
   const assistedLaunchHint = computed(() => {
     if (mode.value !== "assistedLaunch") return null;
     if (assistedLaunchStep.value === "selectAnchor") return "Select impassable terrain, an obstacle, or an ally to launch from";
@@ -170,6 +159,13 @@ export function useCombatModeHints(opts: {
     }
   });
 
+  const packModeHint = computed(() => {
+    const id = mode.value;
+    if (!id) return null;
+    const plugin = listClientBoardModes().find((m) => m.id === id);
+    return plugin?.hint ?? null;
+  });
+
   const boardHintRows = computed(() => {
     const rows: { key: string; text: string }[] = [];
     if (mode.value === "attack") rows.push({ key: "attack", text: attackHint.value });
@@ -184,9 +180,10 @@ export function useCombatModeHints(opts: {
     if (armorHint.value) rows.push({ key: "armor", text: armorHint.value });
     if (towerTeleportHint.value) rows.push({ key: "towerTeleport", text: towerTeleportHint.value });
     if (kataptyHint.value) rows.push({ key: "katapty", text: kataptyHint.value });
-    if (varunastraBorrowHint.value) rows.push({ key: "varunastraBorrow", text: varunastraBorrowHint.value });
-    if (chrysaorBrandHint.value) rows.push({ key: "chrysaorBrand", text: chrysaorBrandHint.value });
     if (assistedLaunchHint.value) rows.push({ key: "assistedLaunch", text: assistedLaunchHint.value });
+    if (packModeHint.value && mode.value) {
+      rows.push({ key: mode.value, text: packModeHint.value });
+    }
     return rows;
   });
 
@@ -199,8 +196,6 @@ export function useCombatModeHints(opts: {
     armorHint,
     towerTeleportHint,
     kataptyHint,
-    varunastraBorrowHint,
-    chrysaorBrandHint,
     assistedLaunchHint,
     equipmentCorridorHint,
     equipmentCoverHint,

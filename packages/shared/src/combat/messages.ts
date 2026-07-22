@@ -165,7 +165,7 @@ import {
   previewSprintProvokes,
   previewPathProvokes,
   recordPassedEnemiesOnPath,
-  EXPANDED_AGGRESSION_GEAR,
+  isExpandedAggressionGearName,
 } from "./provoke.js";
 import { applyPushFromOrigin, applyRecoilFromTarget } from "./push.js";
 import {
@@ -863,7 +863,7 @@ export function applyPlayerAction(
     case "useEquipment": {
       maybeSpendActionTier(state, player, "support");
       player.equipmentUses = 0;
-      if (playerArmorGearName(player) === EXPANDED_AGGRESSION_GEAR) {
+      if (isExpandedAggressionGearName(playerArmorGearName(player))) {
         const gearMsg = activateExpandedAggressionGear(state, player);
         return `${playerLabel(player)} used equipment${gearMsg ? ` — ${gearMsg}` : ""}`;
       }

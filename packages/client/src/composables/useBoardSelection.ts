@@ -1,7 +1,7 @@
-import { swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
 import type { GameState } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
+import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import { readPersistedUi } from "./uiPersist.js";
 import { selectedFactionId } from "./useFactionSelection.js";
 import { clearActiveTool } from "./useGmTools.js";
@@ -32,7 +32,7 @@ function reconcileEnemyBoardSelection(s: GameState) {
   const anchorId = sel.soloSwarmMember
     ? sel.id
     : (trackedIds.find((id) => s.enemies.some((e) => e.id === id)) ?? sel.id);
-  const group = swarmGroupForEnemy(s, anchorId);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, anchorId);
   if (!group || group.size < 2) return;
 
   const hasAll =
@@ -133,7 +133,7 @@ export function useBoardSelection() {
     selectedFactionId.value = null;
     selectedTableId.value = null;
     const s = gameState.value;
-    const group = s ? swarmGroupForEnemy(s, enemyId) : null;
+    const group = s ? getCombatBoardHelpers().swarmGroupForEnemy(s, enemyId) : null;
     boardSelection.value = {
       kind: "enemy",
       id: group?.canonicalId ?? enemyId,
@@ -147,7 +147,7 @@ export function useBoardSelection() {
     selectedFactionId.value = null;
     selectedTableId.value = null;
     const s = gameState.value;
-    const group = s ? swarmGroupForEnemy(s, enemyId) : null;
+    const group = s ? getCombatBoardHelpers().swarmGroupForEnemy(s, enemyId) : null;
     if (!group || group.size < 2) {
       selectBoardEnemy(enemyId);
       return;

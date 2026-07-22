@@ -9,8 +9,6 @@ import { useCombatModeHints } from "../composables/useCombatModeHints.js";
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useGameState } from "../composables/useGameState.js";
 import ActionBudgetChips from "./ActionBudgetChips.vue";
-import EpeusBagModal from "./EpeusBagModal.vue";
-import HarpeRecallModal from "./HarpeRecallModal.vue";
 import WeaponPatternDiagram from "./WeaponPatternDiagram.vue";
 
 const {
@@ -53,8 +51,6 @@ const {
   classModeActive,
   showHephaestusRestore,
   showHarpeRecall,
-  epeusBagOpen,
-  harpeRecallOpen,
   pickMode,
   pickAegisMode,
   pickArmorMode,
@@ -63,8 +59,6 @@ const {
   useClassActive,
   useHephaestusRestore,
   recallHarpeTrap,
-  onEpeusBagConfirm,
-  onHarpeRecallConfirm,
   useWeaponActive,
   confirmKatapty,
   canConfirmRangeAttack,
@@ -309,12 +303,6 @@ function weaponSwap() {
     <button v-if="mode" type="button" class="action-btn cancel" @click="clearMode">
       Cancel
     </button>
-    <EpeusBagModal :open="epeusBagOpen" @close="epeusBagOpen = false" @confirm="onEpeusBagConfirm" />
-    <HarpeRecallModal
-      :open="harpeRecallOpen"
-      @close="harpeRecallOpen = false"
-      @confirm="onHarpeRecallConfirm"
-    />
   </div>
 </template>
 

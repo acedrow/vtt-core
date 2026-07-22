@@ -1,6 +1,12 @@
 import { findEffectByName, RULE_EFFECTS } from "./effects-data.js";
 import { getEnemyListingByName, listEnemyListings } from "./enemy-data.js";
-import { GAME_TERMS, getGameTermByName } from "./game-terms-data.js";
+import {
+  EXTRA_EFFECT_NAMES,
+  GAME_TERMS,
+  getGameTermByName,
+  LITERAL_TERM_LOOKUP,
+  LITERAL_TERMS,
+} from "./game-terms-data.js";
 import { findModifierByName, findPatternByName } from "./pattern-data.js";
 import { getTerrainTypeById } from "./terrain-data.js";
 
@@ -32,84 +38,6 @@ export type RuleTextLink = {
 export type RuleTextSegment =
   | { kind: "text"; text: string }
   | { kind: "term"; text: string; tooltip?: RuleTermTooltip; link?: RuleTextLink };
-
-const EXTRA_EFFECT_NAMES = [
-  "Retaliation",
-  "Compel",
-  "Pressure",
-  "Throw",
-  "Bounce",
-  "Pull",
-  "Push",
-  "Haste",
-  "Transference",
-  "Brand",
-  "Charge",
-  "Mark",
-  "Burst",
-  "Arc",
-  "Uneasy",
-  "Fortified",
-  "Cover",
-  "Advantageous",
-  "Void",
-  "Provoke",
-  "Breaker",
-  "Swarm",
-  "Swarmed",
-  "Flying",
-  "Minion",
-  "Fortification",
-  "Stationary",
-  "Immobile",
-  "Link",
-  "Stained",
-  "Temporary HP",
-  "Shared HP",
-  "Spin Charge",
-  "Combo Tag",
-  "Combo Tags",
-  "Equipment",
-  "Reversal",
-  "TACCOM",
-  "Effects",
-  "Pattern",
-  "Damage",
-  "Healing",
-  "Blazing",
-  "Bleed",
-  "Lingering",
-  "Pin",
-  "Aegis",
-  "Shock",
-  "Slow",
-  "Bound",
-  "Countdown",
-];
-
-const LITERAL_TERMS = [
-  "Main Action",
-  "Support Action",
-  "Aux Action",
-  "free action",
-  "regular attack",
-  "weapon attack",
-  "armor action",
-  "Void terrain",
-  "Advantageous Terrain",
-  "Advantageous terrain",
-  "miniboss",
-  "line of sight",
-  "Breaker tag",
-  "Swarm trait",
-];
-
-const LITERAL_TERM_LOOKUP: Record<string, string> = {
-  "breaker tag": "Breaker",
-  "swarm trait": "Swarm",
-  "void terrain": "Void",
-  "advantageous terrain": "Advantageous",
-};
 
 type TermMatch = { start: number; end: number; text: string };
 

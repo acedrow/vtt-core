@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { kataptyNeedsTargetPick } from "@vtt-core/hellpiercers-content/combat-ui";
+import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { PhaseAction } from "@vtt-core/shared";
 import { isPlayerDowned, isSandboxMode, remainingPlayerIds, roundPhaseLabel, turnHolderLabel } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, ref } from "vue";
@@ -211,7 +211,7 @@ function onPhaseAction() {
     action === "endPlayerTurn" &&
     yourPlayerId.value &&
     gameState.value &&
-    kataptyNeedsTargetPick(gameState.value, yourPlayerId.value)
+    getCombatBoardHelpers().kataptyNeedsTargetPick(gameState.value, yourPlayerId.value)
   ) {
     setMode("kataptyPick");
     showToast("Select exactly 3 Katapty targets, then end turn again");

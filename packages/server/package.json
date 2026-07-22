@@ -10,7 +10,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@vtt-core/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.9",
+    "@vtt-core/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.10",
     "@vtt-core/shared": "*",
     "dotenv": "^17.4.2",
     "express": "^4.21.2",

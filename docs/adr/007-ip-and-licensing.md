@@ -14,7 +14,7 @@ Hellpiercers catalogs, art, maps, rulebook, and pack UI live in a private conten
 2. **Content (`@vtt-core/hellpiercers-content`)** — proprietary / `"license": "UNLICENSED"`; all rights reserved; not licensed for redistribution.
 3. **No per-file SPDX headers** — root LICENSE files + README notices are enough while repos stay private.
 4. **Forbidden in engine source tree** — Hellpiercers catalog JSON under `packages/shared`, tracked HP art under engine packages (e.g. `packages/cf-worker/enemy-portraits`), rulebook PDF/tooling owned by content (engine keeps thin `scripts/rulebook*.mjs` wrappers only).
-5. **Allowed product coupling** — `client` / `server` / `cf-worker` may depend on and boot-register `@vtt-core/hellpiercers-content`; client may import `./combat-ui` and `./tiles`; Highshade shell typography may remain in the client; interim combat module key names in shared remain until a later peel.
+5. **Allowed product coupling** — `client` / `server` / `cf-worker` may depend on and boot-register `@vtt-core/hellpiercers-content`; client may import `./tiles` (and may use `./combat-board-placement` for placement composables); board/combat UI helpers must come through `ClientContribution.combatBoard.helpers` / slots, not direct `./combat-ui` imports. Highshade shell typography may remain in the client; interim combat module key names in shared remain until a later peel.
 6. **Rulebook PDF** — lives at the **content** repo root (gitignored). Engine `npm run rulebook*` resolve the content package and invoke its tooling.
 
 ## Consequences

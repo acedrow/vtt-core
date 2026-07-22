@@ -1,9 +1,9 @@
-import { swarmCanonicalDisplayId, swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
 import type { GameState } from "@vtt-core/shared";
 import { getEnemyMaxHp, getPlayerMaxHp } from "@vtt-core/shared";
 import type { Ref } from "vue";
 import { onUnmounted, ref, watch } from "vue";
 
+import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import { DAMAGE_ANIMATION_DURATION_MS } from "../lib/damageAnimationTiming.js";
 
 export type DamageIndicator = {
@@ -64,12 +64,12 @@ export function useDamageIndicators(gameState: Ref<GameState | null>) {
         if (key.startsWith("e:")) {
           const enemyId = key.slice(2);
           if (silent.has(enemyId)) continue;
-          const group = swarmGroupForEnemy(state, enemyId);
+          const group = getCombatBoardHelpers().swarmGroupForEnemy(state, enemyId);
           if (group) {
             const swarmKey = group.canonicalId;
             if (seenSwarmKeys.has(swarmKey)) continue;
             seenSwarmKeys.add(swarmKey);
-            const displayId = swarmCanonicalDisplayId(state, group.memberIds);
+            const displayId = getCombatBoardHelpers().swarmCanonicalDisplayId(state, group.memberIds);
             const anchor = state.enemies.find((e) => e.id === displayId);
             if (anchor) addIndicator(anchor.x, anchor.y, delta);
             continue;

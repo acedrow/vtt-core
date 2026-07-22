@@ -123,8 +123,6 @@ export function enemiesInRange(
     .map((e) => ({ enemyId: e.id, x: e.x, y: e.y }));
 }
 
-export const SABAOTH_MAX_CHARGES = 5;
-
 type HeavenBurningModule = {
   HEAVEN_BURNING_SWORD_NAME: string;
   HEAVEN_BURNING_MIN_LEVEL: number;
@@ -226,9 +224,6 @@ type SethianModule = {
 function sethian(): SethianModule {
   return combatMod("sethian") as SethianModule;
 }
-
-export const HEAVEN_BURNING_MIN_LEVEL = 1;
-export const HEAVEN_BURNING_MAX_LEVEL = 3;
 
 export function isSabaothWeaponName(name: string | undefined | null): boolean {
   return sabaoth().isSabaothWeaponName(name);
@@ -784,8 +779,6 @@ export function applyAttackToEnemies(
   return { damage: total, detail, targets, effects };
 }
 
-export const SETHIAN_DAMAGE_CAP = 12 + 20 * 6;
-
 export function isSethianWeaponName(name: string | undefined | null): boolean {
   return sethian().isSethianWeaponName(name);
 }
@@ -1114,7 +1107,6 @@ export function applyOmnistrike(
   return sabaoth().applyOmnistrike(state, player, payload);
 }
 
-export const SETHIAN_WEAPON_NAME = "Sethian Externalized Annihilation Cannon";
 export const WARHOOK_RANGE = 3;
 
 export function isWarhookWeaponName(name: string | undefined | null): boolean {

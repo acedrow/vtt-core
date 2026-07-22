@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { GORGENAUT_AGNOSIA_BOX, getEquipmentAttackSpec, collectEquipmentPatternTiles, isHylicAnnihilationCorridor, areOrthogonallyConnected, listRedirectableEnemyAttackIndices, rejectionFieldTileKeys, forceProjectionTileKeys, redirectionSourceTileKeys, isTowerEnemy, yadathanPlacementKeys, towerTeleportLandingKeys, kataptyTargetKeys, keraunoAdjacentEnemyIds, getPlayerTower, TOWER_IATROS, buildSwarmGroups, canSwarmMemberReachDest, getSwarmMemberHp, getSwarmMaxHp, swarmGroupForEnemy, swarmFringeTiles, pickSwarmMoveMember, getSwarmMovementRemaining, swarmCanonicalDisplayId, getEffectiveEnemyHp, getEffectiveEnemyMaxHp, weaponHasBreakerTag, attackTargetsSwarm, flowerbudPlantTiles, tileIsStained, swarmChipEligibleTargets, swarmChipPromptRequired, swarmMembersHitByTiles, maxSwarmStrikesAgainstTarget, type SwarmChipTarget } from "@vtt-core/hellpiercers-content/combat-ui";
+import { getCombatBoardHelpers } from "../combat-board-helpers.js";
+import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, MapTile, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, fixedPatternTilesInBounds, findPlayerMovementPath, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, agnosiaCenteredHover, getObstacleHp, getPlayerMaxHp, isMovementStepAdjacent, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, movementStepCost, stepMoveCost, enemyMoveStepCost, isFlyingStepReachable, aegisFlyingRemaining, playerAllowsDiagonalMovement, playerAttackDirectionsAt, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, computeOmnistrikeRangeSpan, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isDirectTargetEnemyAttack, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, getWeaponAttackSpec, hasLineOfSight, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, visibleEnemyIds, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, SETHIAN_DAMAGE_CAP, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, tilesInAttractorZone, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, type AttackPreviewState } from "@vtt-core/shared";
+import { boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, fixedPatternTilesInBounds, findPlayerMovementPath, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, agnosiaCenteredHover, getObstacleHp, getPlayerMaxHp, isMovementStepAdjacent, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, movementStepCost, stepMoveCost, enemyMoveStepCost, isFlyingStepReachable, aegisFlyingRemaining, playerAllowsDiagonalMovement, playerAttackDirectionsAt, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, computeOmnistrikeRangeSpan, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isDirectTargetEnemyAttack, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, getWeaponAttackSpec, hasLineOfSight, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, visibleEnemyIds, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, tilesInAttractorZone, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
@@ -379,7 +380,7 @@ const provokeTriggers = ref<ProvokeTrigger[]>([]);
 const pendingProvokeMove = ref<(() => void) | null>(null);
 const swarmChipOpen = ref(false);
 const swarmChipEnemyId = ref<string | null>(null);
-const swarmChipTargets = ref<SwarmChipTarget[]>([]);
+const swarmChipTargets = ref<CombatBoardSwarmChipTarget[]>([]);
 const swarmAttackModalOpen = ref(false);
 const swarmAttackPending = ref<{
   enemyId: string;
@@ -405,17 +406,17 @@ function maybePromptSwarmChip(enemyId: string) {
   const s = gameState.value;
   if (!s || !canGmMoveEnemies(s)) return;
   const enemy = s.enemies.find((e) => e.id === enemyId);
-  if (!enemy || enemy.exhausted || isTowerEnemy(enemy)) return;
-  if (!swarmChipPromptRequired(s, enemyId)) return;
-  const group = swarmGroupForEnemy(s, enemyId)!;
+  if (!enemy || enemy.exhausted || getCombatBoardHelpers().isTowerEnemy(enemy)) return;
+  if (!getCombatBoardHelpers().swarmChipPromptRequired(s, enemyId)) return;
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyId)!;
   swarmChipEnemyId.value = group.canonicalId;
-  swarmChipTargets.value = swarmChipEligibleTargets(s, enemyId);
+  swarmChipTargets.value = getCombatBoardHelpers().swarmChipEligibleTargets(s, enemyId);
   swarmChipOpen.value = true;
 }
 
 function ensureSwarmChipResolved(enemyId: string): boolean {
   const s = gameState.value;
-  if (!s || !swarmChipPromptRequired(s, enemyId)) return true;
+  if (!s || !getCombatBoardHelpers().swarmChipPromptRequired(s, enemyId)) return true;
   maybePromptSwarmChip(enemyId);
   return false;
 }
@@ -430,9 +431,9 @@ const breakerSethianHint = computed(() => {
   const ctx = attackContext.value;
   if (!action || !s || !ctx || !isSethianWeaponName(ctx.weapon)) return undefined;
   const tiles = attackTilesForAction(action);
-  const hits = swarmMembersHitByTiles(s, tiles).length;
+  const hits = getCombatBoardHelpers().swarmMembersHitByTiles(s, tiles).length;
   if (!hits) return undefined;
-  return `Attack as whole: damage × ${hits} pattern square${hits === 1 ? "" : "s"} (max ${SETHIAN_DAMAGE_CAP} total).`;
+  return `Attack as whole: damage × ${hits} pattern square${hits === 1 ? "" : "s"} (max ${getCombatBoardHelpers().SETHIAN_DAMAGE_CAP} total).`;
 });
 
 function gateProvoke(triggers: ProvokeTrigger[], action: () => void) {
@@ -486,7 +487,7 @@ const swarmAttackModalProps = computed(() => {
   const player = s.players.find((p) => p.id === pending.targetPlayerId);
   const enemy = s.enemies.find((e) => e.id === pending.enemyId);
   const attackEntry = getEnemyAttack(enemy?.name, pending.attackIndex);
-  const maxStrikes = player ? maxSwarmStrikesAgainstTarget(s, pending.enemyId, player) : 0;
+  const maxStrikes = player ? getCombatBoardHelpers().maxSwarmStrikesAgainstTarget(s, pending.enemyId, player) : 0;
   return {
     enemyId: pending.enemyId,
     attackIndex: pending.attackIndex,
@@ -755,7 +756,7 @@ const armorPlaceTowerKeys = computed(() => {
   const armor = getArmorByName(me.armor ?? "");
   const structured = armor?.armorActionStructured;
   if (!structured || structured.kind !== "place_tower") return new Set<string>();
-  return yadathanPlacementKeys(s, me, structured.range);
+  return getCombatBoardHelpers().yadathanPlacementKeys(s, me, structured.range);
 });
 
 const armorPushTargetKeys = computed(() => {
@@ -1000,7 +1001,7 @@ const towerTeleportPrimaryKeys = computed(() => {
   const s = gameState.value;
   if (!id || !s) return new Set<string>();
   if (towerTeleportStep.value === "selectKeraunoTarget" && towerTeleportLanding.value) {
-    const adjacent = keraunoAdjacentEnemyIds(s, towerTeleportLanding.value.x, towerTeleportLanding.value.y);
+    const adjacent = getCombatBoardHelpers().keraunoAdjacentEnemyIds(s, towerTeleportLanding.value.x, towerTeleportLanding.value.y);
     const keys = new Set<string>();
     for (const enemyId of adjacent) {
       const enemy = s.enemies.find((e) => e.id === enemyId);
@@ -1016,7 +1017,7 @@ const towerTeleportSecondaryKeys = computed(() => {
   const id = yourPlayerId.value;
   const s = gameState.value;
   if (!id || !s || towerTeleportStep.value === "selectKeraunoTarget") return new Set<string>();
-  return towerTeleportLandingKeys(s, id);
+  return getCombatBoardHelpers().towerTeleportLandingKeys(s, id);
 });
 
 const assistedLaunchPreview = computed(() => {
@@ -1084,7 +1085,7 @@ const kataptyPickKeys = computed(() => {
   const id = yourPlayerId.value;
   const s = gameState.value;
   if (!id || !s) return new Set<string>();
-  return kataptyTargetKeys(s, id);
+  return getCombatBoardHelpers().kataptyTargetKeys(s, id);
 });
 
 const kataptySelectedCoordKeys = computed(() => {
@@ -1106,9 +1107,9 @@ const reversalLineKeys = computed(() => {
   const heal = new Set<string>();
   const damage = new Set<string>();
   if (!r || !me || !s) return { heal, damage };
-  const tower = getPlayerTower(s, me.id);
+  const tower = getCombatBoardHelpers().getPlayerTower(s, me.id);
   if (!tower) return { heal, damage };
-  const iatros = tower.name === TOWER_IATROS;
+  const iatros = tower.name === getCombatBoardHelpers().TOWER_IATROS;
   const targetSet = iatros ? heal : damage;
   const lines: { from: { x: number; y: number }; to: { x: number; y: number } }[] = [
     { from: { x: me.x, y: me.y }, to: { x: tower.x, y: tower.y } },
@@ -1186,8 +1187,8 @@ const borrowContext = computed(() => {
 const equipmentCorridorContext = computed(() => {
   const me = yourPlayer.value;
   if (boardActionMode.value !== "equipmentCorridor" || !me?.equipment) return null;
-  if (!isHylicAnnihilationCorridor(me.equipment)) return null;
-  const spec = getEquipmentAttackSpec(me.equipment);
+  if (!getCombatBoardHelpers().isHylicAnnihilationCorridor(me.equipment)) return null;
+  const spec = getCombatBoardHelpers().getEquipmentAttackSpec(me.equipment);
   if (!spec) return null;
   return { me, spec };
 });
@@ -1199,7 +1200,7 @@ const equipmentCorridorPlacementPreview = computed(() => {
   if (!ctx || !s) return null;
   const anchor = attackAimed.value ? attackAnchor.value : previewHoverCell.value;
   if (!anchor) return null;
-  const patternTiles = collectEquipmentPatternTiles(
+  const patternTiles = getCombatBoardHelpers().collectEquipmentPatternTiles(
     s,
     anchor,
     ctx.me.equipment!,
@@ -1235,7 +1236,7 @@ const equipmentCoverRangeKeys = computed(() => {
   const me = yourPlayer.value;
   const s = gameState.value;
   if (!me || !s) return new Set<string>();
-  return rejectionFieldTileKeys(s, me);
+  return getCombatBoardHelpers().rejectionFieldTileKeys(s, me);
 });
 
 const equipmentCoverSelectedKeys = computed(() => coordsToKeySet(equipmentCoverTiles.value));
@@ -1259,7 +1260,7 @@ const equipmentForceProjectionSquareKeys = computed(() => {
   const s = gameState.value;
   const occ = occupancy.value;
   if (!me || !s || !occ) return new Set<string>();
-  return forceProjectionTileKeys(s, me, occ);
+  return getCombatBoardHelpers().forceProjectionTileKeys(s, me, occ);
 });
 
 const redirectSourceKeys = computed(() => {
@@ -1269,7 +1270,7 @@ const redirectSourceKeys = computed(() => {
   const me = yourPlayer.value;
   const s = gameState.value;
   if (!me || !s) return new Set<string>();
-  return redirectionSourceTileKeys(s, me);
+  return getCombatBoardHelpers().redirectionSourceTileKeys(s, me);
 });
 
 const redirectTargetKeys = computed(() => {
@@ -1723,16 +1724,16 @@ const gmEnemyMoveTargetKeys = computed(() => {
   if (gmActiveTool.value === "forceMove") return keys;
   if (!s || !id || !canGmMoveEnemies(s)) return keys;
   const enemy = s.enemies.find((e) => e.id === id);
-  if (!enemy || enemy.exhausted || isTowerEnemy(enemy)) return keys;
+  if (!enemy || enemy.exhausted || getCombatBoardHelpers().isTowerEnemy(enemy)) return keys;
 
-  const group = swarmGroupForEnemy(s, id);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, id);
   const occ = occupancy.value ?? undefined;
 
   if (group && isSoloSwarmMemberSelected.value) {
-    const remaining = isSandboxMode(s) ? Infinity : getSwarmMovementRemaining(s, group.memberIds);
+    const remaining = isSandboxMode(s) ? Infinity : getCombatBoardHelpers().getSwarmMovementRemaining(s, group.memberIds);
     if (remaining < 1) return keys;
-    for (const tile of swarmFringeTiles(s, group.memberIds, occ)) {
-      if (!canSwarmMemberReachDest(s, id, tile.x, tile.y, occ)) continue;
+    for (const tile of getCombatBoardHelpers().swarmFringeTiles(s, group.memberIds, occ)) {
+      if (!getCombatBoardHelpers().canSwarmMemberReachDest(s, id, tile.x, tile.y, occ)) continue;
       const cost = enemyMoveStepCost(s, enemy, enemy.x, enemy.y, tile.x, tile.y, { swarm: true });
       if (cost <= remaining) keys.add(boardCellKey(tile.x, tile.y));
     }
@@ -1745,7 +1746,7 @@ const gmEnemyMoveTargetKeys = computed(() => {
     for (const { dx, dy } of deltas) {
       const destX = enemy.x + dx;
       const destY = enemy.y + dy;
-      if (!canSwarmMemberReachDest(s, id, destX, destY, occ)) continue;
+      if (!getCombatBoardHelpers().canSwarmMemberReachDest(s, id, destX, destY, occ)) continue;
       const cost = enemyMoveStepCost(s, enemy, enemy.x, enemy.y, destX, destY, { swarm: true });
       if (cost <= remaining) keys.add(boardCellKey(destX, destY));
     }
@@ -1753,10 +1754,10 @@ const gmEnemyMoveTargetKeys = computed(() => {
   }
 
   if (group) {
-    const remaining = isSandboxMode(s) ? Infinity : getSwarmMovementRemaining(s, group.memberIds);
+    const remaining = isSandboxMode(s) ? Infinity : getCombatBoardHelpers().getSwarmMovementRemaining(s, group.memberIds);
     if (remaining < 1) return keys;
-    for (const tile of swarmFringeTiles(s, group.memberIds, occupancy.value ?? undefined)) {
-      const moverId = pickSwarmMoveMember(s, group.memberIds, tile.x, tile.y);
+    for (const tile of getCombatBoardHelpers().swarmFringeTiles(s, group.memberIds, occupancy.value ?? undefined)) {
+      const moverId = getCombatBoardHelpers().pickSwarmMoveMember(s, group.memberIds, tile.x, tile.y);
       if (!moverId) continue;
       const mover = s.enemies.find((e) => e.id === moverId);
       if (!mover) continue;
@@ -1827,7 +1828,7 @@ const gmEnemyAttackTargetKeys = computed(() => {
     pending.plantFlowerbud || attackSpec.specialId === "flowerbud-plant";
 
   if (plantFlowerbud && enemy) {
-    for (const tile of flowerbudPlantTiles(s, enemy)) {
+    for (const tile of getCombatBoardHelpers().flowerbudPlantTiles(s, enemy)) {
       keys.add(coordKey(tile.x, tile.y));
     }
     return keys;
@@ -1835,7 +1836,7 @@ const gmEnemyAttackTargetKeys = computed(() => {
 
   if (stainTeleport && (pending.targetPlayerId || pending.targetEnemyId)) {
     for (const tile of s.tiles) {
-      if (tileIsStained(s, tile.x, tile.y)) keys.add(coordKey(tile.x, tile.y));
+      if (getCombatBoardHelpers().tileIsStained(s, tile.x, tile.y)) keys.add(coordKey(tile.x, tile.y));
     }
     return keys;
   }
@@ -1947,7 +1948,7 @@ const cellStateByKey = computed(() => {
   const occ = occupancy.value;
   if (!s || !occ) return map;
 
-  const swarmGroups = buildSwarmGroups(s);
+  const swarmGroups = getCombatBoardHelpers().buildSwarmGroups(s);
 
   const playerCanMove =
     props.role === "player" &&
@@ -2153,32 +2154,32 @@ const cellStateByKey = computed(() => {
         hp:
           canUseGmTools.value
             ? {
-                currentHp: getEffectiveEnemyHp(stacked, s),
-                maxHp: getEffectiveEnemyMaxHp(stacked, s),
+                currentHp: getCombatBoardHelpers().getEffectiveEnemyHp(stacked, s),
+                maxHp: getCombatBoardHelpers().getEffectiveEnemyMaxHp(stacked, s),
               }
             : undefined,
         selected: isEnemySelected(stacked.id) || isEnemyBulkSelected(stacked.id),
         dying: isEnemyDying(stacked.id),
         defeated: isEnemyDefeated(stacked.id),
-        turnEnded: !isTowerEnemy(stacked) && !isSandboxMode(s) && !!stacked.exhausted,
+        turnEnded: !getCombatBoardHelpers().isTowerEnemy(stacked) && !isSandboxMode(s) && !!stacked.exhausted,
         animating: stacked.id === animatingEnemyId.value,
       })),
       enemyHp:
         enemyAnchor && s && canUseGmTools.value
           ? (() => {
-              const group = swarmGroupForEnemy(s, enemyAnchor.id, swarmGroups);
+              const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyAnchor.id, swarmGroups);
               if (
                 isSoloSwarmMemberSelected.value &&
                 selectedEnemyId.value === enemyAnchor.id &&
                 group &&
                 group.size > 1
               ) {
-                const memberHp = getSwarmMemberHp(getEffectiveEnemyHp(enemyAnchor, s), group.size);
-                return { currentHp: memberHp, maxHp: getSwarmMaxHp(1) };
+                const memberHp = getCombatBoardHelpers().getSwarmMemberHp(getCombatBoardHelpers().getEffectiveEnemyHp(enemyAnchor, s), group.size);
+                return { currentHp: memberHp, maxHp: getCombatBoardHelpers().getSwarmMaxHp(1) };
               }
               return {
-                currentHp: getEffectiveEnemyHp(enemyAnchor, s),
-                maxHp: getEffectiveEnemyMaxHp(enemyAnchor, s),
+                currentHp: getCombatBoardHelpers().getEffectiveEnemyHp(enemyAnchor, s),
+                maxHp: getCombatBoardHelpers().getEffectiveEnemyMaxHp(enemyAnchor, s),
               };
             })()
           : undefined,
@@ -2187,16 +2188,16 @@ const cellStateByKey = computed(() => {
         if (isSoloSwarmMemberSelected.value && selectedEnemyId.value === enemyAnchor.id) {
           return true;
         }
-        const group = swarmGroupForEnemy(s, enemyAnchor.id, swarmGroups);
+        const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyAnchor.id, swarmGroups);
         if (!group) return true;
-        return swarmCanonicalDisplayId(s, group.memberIds) === enemyAnchor.id;
+        return getCombatBoardHelpers().swarmCanonicalDisplayId(s, group.memberIds) === enemyAnchor.id;
       })(),
       effectStacks: player?.effects ?? enemyAnchor?.effects,
       turnEnded: player
         ? !isSandboxMode(s) &&
           s.roundPhase !== "deployment" &&
           s.actedPlayerIds.includes(player.id)
-        : !!(enemyAnchor && !isTowerEnemy(enemyAnchor) && !isSandboxMode(s) && enemyAnchor.exhausted),
+        : !!(enemyAnchor && !getCombatBoardHelpers().isTowerEnemy(enemyAnchor) && !isSandboxMode(s) && enemyAnchor.exhausted),
       playerDowned: player ? isPlayerDowned(player) : false,
       playerPortraitUrl: player?.characterSheetId
         ? portraitUrlFor(player.characterSheetId)
@@ -2435,29 +2436,29 @@ const tooltipData = computed(() => {
   if (!tile) return null;
   const enemiesAtTile = s.enemies.filter((e) => e.x === cell.x && e.y === cell.y);
   const enemyEntries = enemiesAtTile
-    .filter((e) => !isTowerEnemy(e))
+    .filter((e) => !getCombatBoardHelpers().isTowerEnemy(e))
     .map((anchor) => {
-      const group = swarmGroupForEnemy(s, anchor.id);
+      const group = getCombatBoardHelpers().swarmGroupForEnemy(s, anchor.id);
       const baseName = anchor.name ?? "Enemy";
       if (group && group.size > 1) {
         const solo =
           isSoloSwarmMemberSelected.value && selectedEnemyId.value === anchor.id;
-        const memberHp = getSwarmMemberHp(group.currentHp, group.size);
+        const memberHp = getCombatBoardHelpers().getSwarmMemberHp(group.currentHp, group.size);
         return {
           ...anchor,
           displayName: solo ? `${baseName} (Swarm member)` : `${baseName} (Swarm · ${group.size})`,
           displayHp: solo ? memberHp : group.currentHp,
-          displayMaxHp: solo ? getSwarmMaxHp(1) : group.maxHp,
+          displayMaxHp: solo ? getCombatBoardHelpers().getSwarmMaxHp(1) : group.maxHp,
         };
       }
       return {
         ...anchor,
         displayName: baseName,
-        displayHp: getEffectiveEnemyHp(anchor, s),
-        displayMaxHp: getEffectiveEnemyMaxHp(anchor, s),
+        displayHp: getCombatBoardHelpers().getEffectiveEnemyHp(anchor, s),
+        displayMaxHp: getCombatBoardHelpers().getEffectiveEnemyMaxHp(anchor, s),
       };
     });
-  const towers = enemiesAtTile.filter((e) => isTowerEnemy(e));
+  const towers = enemiesAtTile.filter((e) => getCombatBoardHelpers().isTowerEnemy(e));
   const moveCost = (() => {
     const sel = boardSelection.value;
     if (!sel) return null;
@@ -2470,7 +2471,7 @@ const tooltipData = computed(() => {
     const enemy = s.enemies.find((e) => e.id === sel.id);
     if (!enemy) return null;
     if (!isMovementStepAdjacent(enemy, cell, false)) return null;
-    const swarm = swarmGroupForEnemy(s, enemy.id) != null;
+    const swarm = getCombatBoardHelpers().swarmGroupForEnemy(s, enemy.id) != null;
     return enemyMoveStepCost(s, enemy, enemy.x, enemy.y, cell.x, cell.y, { swarm });
   })();
   return {
@@ -2756,7 +2757,7 @@ function gmEnemyMoveDestAt(x: number, y: number): { x: number; y: number } | nul
   const key = boardCellKey(x, y);
   if (!gmEnemyMoveTargetKeys.value.has(key)) return null;
 
-  const group = swarmGroupForEnemy(s, id);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, id);
   if (group) return { x, y };
 
   const enemy = s.enemies.find((e) => e.id === id);
@@ -2820,9 +2821,9 @@ function tryMoveSelectedEnemyToDest(destX: number, destY: number): boolean {
   }
   if (!canGmMoveEnemies(s)) return false;
 
-  const group = swarmGroupForEnemy(s, selected);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, selected);
   if (group && isSoloSwarmMemberSelected.value) {
-    if (!canSwarmMemberReachDest(s, selected, destX, destY, occupancy.value ?? undefined)) {
+    if (!getCombatBoardHelpers().canSwarmMemberReachDest(s, selected, destX, destY, occupancy.value ?? undefined)) {
       return false;
     }
     sendEnemyMove(selected, destX, destY, {
@@ -2833,7 +2834,7 @@ function tryMoveSelectedEnemyToDest(destX: number, destY: number): boolean {
     return true;
   }
   if (group) {
-    const moverId = pickSwarmMoveMember(s, group.memberIds, destX, destY);
+    const moverId = getCombatBoardHelpers().pickSwarmMoveMember(s, group.memberIds, destX, destY);
     if (!moverId) return false;
     const mover = s.enemies.find((e) => e.id === moverId)!;
     sendEnemyMove(selected, destX, destY, {
@@ -2855,7 +2856,7 @@ function handleKataptyPick(enemyId: string): boolean {
   const s = gameState.value;
   if (!s || boardActionMode.value !== "kataptyPick") return false;
   const enemy = s.enemies.find((e) => e.id === enemyId);
-  if (!enemy || isTowerEnemy(enemy)) return true;
+  if (!enemy || getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
   if (!kataptyPickKeys.value.has(coordKey(enemy.x, enemy.y))) return true;
   const ids = kataptyTargetIds.value;
   const idx = ids.indexOf(enemy.id);
@@ -2935,7 +2936,7 @@ function onEnemyCellDblClick(_x: number, _y: number, enemyId: string) {
   }
   const s = gameState.value;
   if (props.role !== "gm" || !s) return;
-  const group = swarmGroupForEnemy(s, enemyId);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyId);
   if (!group || group.size < 2) return;
   selectBoardEnemyMember(enemyId);
 }
@@ -3067,7 +3068,7 @@ function submitAttackAction(action: Extract<PlayerAction, { action: "attack" }>)
   const ctx = attackContext.value;
   if (!me || !s || !ctx) return;
   const tiles = attackTilesForAction(action);
-  if (weaponHasBreakerTag(me, ctx.weapon) && attackTargetsSwarm(s, tiles)) {
+  if (getCombatBoardHelpers().weaponHasBreakerTag(me, ctx.weapon) && getCombatBoardHelpers().attackTargetsSwarm(s, tiles)) {
     pendingAttackAction.value = action;
     breakerPromptOpen.value = true;
     return;
@@ -3242,8 +3243,8 @@ function handleAttackCellClick(x: number, y: number, targetEnemyId?: string): bo
         name: e.name ?? "Enemy",
         ...(canUseGmTools.value
           ? {
-              hp: getEffectiveEnemyHp(e, s),
-              maxHp: getEffectiveEnemyMaxHp(e, s),
+              hp: getCombatBoardHelpers().getEffectiveEnemyHp(e, s),
+              maxHp: getCombatBoardHelpers().getEffectiveEnemyMaxHp(e, s),
             }
           : {}),
       }));
@@ -3407,13 +3408,13 @@ function handleEquipmentCoverCellClick(x: number, y: number): boolean {
   if (selected.length >= 3) return false;
 
   const next = [...selected, { x, y }];
-  if (next.length > 1 && !areOrthogonallyConnected(next)) {
+  if (next.length > 1 && !getCombatBoardHelpers().areOrthogonallyConnected(next)) {
     showToast("Tiles must be connected");
     return true;
   }
   equipmentCoverTiles.value = next;
 
-  if (next.length === 3 && areOrthogonallyConnected(next)) {
+  if (next.length === 3 && getCombatBoardHelpers().areOrthogonallyConnected(next)) {
     sendPlayerAction({
       action: "useEquipment",
       detail: me.equipment,
@@ -3461,7 +3462,7 @@ function handleEquipmentRedirectCellClick(x: number, y: number, enemyId?: string
     if (!enemyId || !redirectSourceKeys.value.has(coordKey(x, y))) return false;
     const anchor = s.enemies.find((e) => e.id === enemyId);
     if (!anchor?.name) return false;
-    const indices = listRedirectableEnemyAttackIndices(anchor.name);
+    const indices = getCombatBoardHelpers().listRedirectableEnemyAttackIndices(anchor.name);
     if (!indices.length) {
       showToast("No supported attacks");
       return true;
@@ -3738,7 +3739,7 @@ function handleEquipmentCorridorCellClick(x: number, y: number): boolean {
   const key = coordKey(x, y);
 
   if (!attackAimed.value) {
-    const tiles = collectEquipmentPatternTiles(s, { x, y }, me.equipment!, attackDirection.value);
+    const tiles = getCombatBoardHelpers().collectEquipmentPatternTiles(s, { x, y }, me.equipment!, attackDirection.value);
     if (tiles.length < (ctx.spec.tiles?.length ?? 0)) return false;
     attackAnchor.value = { x, y };
     attackAimed.value = true;
@@ -4067,10 +4068,10 @@ function handleCombatCellClick(x: number, y: number): boolean {
       return true;
     }
     if (!towerTeleportSecondaryKeys.value.has(key)) return true;
-    const tower = getPlayerTower(s, me.id);
+    const tower = getCombatBoardHelpers().getPlayerTower(s, me.id);
     towerTeleportLanding.value = { x, y };
     if (tower?.name === "Kerauno") {
-      const adjacent = keraunoAdjacentEnemyIds(s, x, y);
+      const adjacent = getCombatBoardHelpers().keraunoAdjacentEnemyIds(s, x, y);
       if (adjacent.length > 0) {
         towerTeleportStep.value = "selectKeraunoTarget";
         return true;
@@ -4114,7 +4115,7 @@ function handleCombatCellClick(x: number, y: number): boolean {
     return true;
   }
   if (m === "kataptyPick") {
-    if (!enemy || isTowerEnemy(enemy)) return true;
+    if (!enemy || getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
     return handleKataptyPick(enemy.id);
   }
   if (m === "rez") {
@@ -4260,7 +4261,7 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
       return true;
     }
     if (enemy && enemy.id !== pending.enemyId) {
-      const canon = swarmGroupForEnemy(s, enemy.id)?.canonicalId ?? enemy.id;
+      const canon = getCombatBoardHelpers().swarmGroupForEnemy(s, enemy.id)?.canonicalId ?? enemy.id;
       gmEnemyAttack.value = {
         ...pending,
         stainTeleport: true,
@@ -4304,7 +4305,7 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
   }
 
   if (enemyOnTile && enemyOnTile.id !== pending.enemyId) {
-    const canon = swarmGroupForEnemy(s, enemyOnTile.id)?.canonicalId ?? enemyOnTile.id;
+    const canon = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyOnTile.id)?.canonicalId ?? enemyOnTile.id;
     send({
       type: "gmEnemyAction",
       action: {
@@ -5106,7 +5107,7 @@ function endEnemyTurn(enemyId: string): boolean {
   const s = gameState.value;
   if (!s) return false;
   const enemy = s.enemies.find((e) => e.id === enemyId);
-  if (!enemy || enemy.exhausted || isTowerEnemy(enemy) || !canGmMoveEnemies(s)) return false;
+  if (!enemy || enemy.exhausted || getCombatBoardHelpers().isTowerEnemy(enemy) || !canGmMoveEnemies(s)) return false;
   send({ type: "gmEnemyAction", action: { action: "exhaust", enemyId: enemy.id } });
   return true;
 }
@@ -5207,7 +5208,7 @@ function onKeydown(e: KeyboardEvent) {
         if (s && sourceId) {
           const source = s.enemies.find((e) => e.id === sourceId);
           if (source?.name) {
-            const indices = listRedirectableEnemyAttackIndices(source.name);
+            const indices = getCombatBoardHelpers().listRedirectableEnemyAttackIndices(source.name);
             const cur = redirectAttackIndex.value ?? indices[0]!;
             const pos = indices.indexOf(cur);
             redirectAttackIndex.value = indices[(pos + 1) % indices.length]!;
@@ -5285,7 +5286,7 @@ function onKeydown(e: KeyboardEvent) {
             enemy.x,
             enemy.y,
             getEnemyScale(enemy),
-            GORGENAUT_AGNOSIA_BOX,
+            getCombatBoardHelpers().GORGENAUT_AGNOSIA_BOX,
           );
           setGorgenautAgnosiaHover(centered.x, centered.y);
         }
@@ -5323,7 +5324,7 @@ function onKeydown(e: KeyboardEvent) {
         const anchor = arrowTarget(e.key, enemy);
         if (anchor) {
           e.preventDefault();
-          if (!swarmGroupForEnemy(s, selected)) {
+          if (!getCombatBoardHelpers().swarmGroupForEnemy(s, selected)) {
             tryMoveSelectedEnemyToDest(anchor.x, anchor.y);
           }
         }

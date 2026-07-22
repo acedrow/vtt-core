@@ -59,6 +59,7 @@ import { replaceEffectsCatalog, type RuleEffect } from "./effects-data.js";
 import { replaceEnemyCatalog, type EnemyFaction, type EnemyListing } from "./enemy-data.js";
 import { replaceFactionCatalog, type FactionListing } from "./faction-data.js";
 import { replaceGameTermsCatalog, type GameTerm } from "./game-terms-data.js";
+export type { GameTermsCatalog } from "./game-terms-data.js";
 import { replaceGmStratcomActionsCatalog, type GmStratcomAction } from "./gm-stratcom-actions-data.js";
 import {
   replacePatternCatalog,
@@ -100,6 +101,9 @@ export type CatalogContribution = {
   reconMoves: ReconMove[];
   reconTables: ReconTable[];
   gameTerms: GameTerm[];
+  extraEffectNames?: string[];
+  literalTerms?: string[];
+  literalTermLookup?: Record<string, string>;
 };
 
 export type CombatHookContribution = {
@@ -154,7 +158,12 @@ function applyCatalogs(catalogs: CatalogContribution): void {
   replaceGmStratcomActionsCatalog(catalogs.gmStratcomActions);
   replaceReconMovesCatalog(catalogs.reconMoves);
   replaceReconTablesCatalog(catalogs.reconTables);
-  replaceGameTermsCatalog(catalogs.gameTerms);
+  replaceGameTermsCatalog({
+    terms: catalogs.gameTerms,
+    extraEffectNames: catalogs.extraEffectNames,
+    literalTerms: catalogs.literalTerms,
+    literalTermLookup: catalogs.literalTermLookup,
+  });
 }
 
 function clearCombatHooks(): void {

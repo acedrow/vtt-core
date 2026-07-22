@@ -8,13 +8,11 @@ import {
   visibleSheetFields,
 } from "../client-content-pack.js";
 import type { CharacterSheet, PlayerProfile } from "@vtt-core/shared";
-import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, HEAVEN_BURNING_MAX_LEVEL, isSabaothWeaponName, SABAOTH_MAX_CHARGES } from "@vtt-core/shared";
+import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, isSabaothWeaponName } from "@vtt-core/shared";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 
 import AbilityBlock from "./AbilityBlock.vue";
 import CharacterSheetCombat from "./CharacterSheetCombat.vue";
-import EpeusBagModal from "./EpeusBagModal.vue";
-import HarpeRecallModal from "./HarpeRecallModal.vue";
 import HpBar from "./HpBar.vue";
 import ModalDialog from "./ModalDialog.vue";
 import RuleText from "./RuleText.vue";
@@ -135,16 +133,11 @@ const {
 const playerClass = computed(() => form.value.class);
 
 const {
-  epeusBagOpen,
-  epeusBagInitialSlot,
-  harpeRecallOpen,
   pickArmorMode,
   useClassActive,
   openEpeusBag,
   useHephaestusRestore,
   recallHarpeTrap,
-  onEpeusBagConfirm,
-  onHarpeRecallConfirm,
   useWeaponActive,
   toggleWeaponAttack,
   onDualBombIndices,
@@ -235,43 +228,30 @@ const attackTooltipPinned = computed(
 );
 const weaponVariantConfirmOpen = ref(false);
 const pendingWeaponVariantIndex = ref<number | null>(null);
-const showWeaponCharges = computed(() =>
-  weaponSublines.value.some((plugin) => plugin.sublineKind === "sabaothCharges") &&
-  combatUiUnlocked.value &&
-  !!boardPlayer.value,
-);
-const weaponChargesRemaining = computed(() => {
+const weaponSublineText = computed(() => {
   const player = boardPlayer.value;
-  if (!player) return null;
-  return getSabaothChargesRemaining(player);
+  if (!player || !combatUiUnlocked.value) return null;
+  for (const plugin of weaponSublines.value) {
+    const text = plugin.formatSubline?.(player);
+    if (text) return text;
+  }
+  return null;
 });
-const weaponChargesDisplay = computed(() => {
-  const remaining = weaponChargesRemaining.value;
-  if (remaining == null) return null;
-  return `${"●".repeat(remaining)}${"○".repeat(SABAOTH_MAX_CHARGES - remaining)}`;
-});
-const showHeavenBurningLevel = computed(
-  () =>
-    weaponSublines.value.some((plugin) => plugin.sublineKind === "heavenBurningLevel") &&
-    combatUiUnlocked.value &&
-    !!boardPlayer.value,
-);
 const heavenBurningLevelRemaining = computed(() => {
   const player = boardPlayer.value;
   if (!player) return null;
   return getHeavenBurningLevel(player);
-});
-const heavenBurningLevelDisplay = computed(() => {
-  const level = heavenBurningLevelRemaining.value;
-  if (level == null) return null;
-  return `${"●".repeat(level)}${"○".repeat(HEAVEN_BURNING_MAX_LEVEL - level)}`;
 });
 const heavenBurningAttackLevelIndex = computed(() => {
   const level = heavenBurningLevelRemaining.value;
   if (level == null) return undefined;
   return level - 1;
 });
-const canConfirmWeaponVariant = computed(() => (weaponChargesRemaining.value ?? 0) > 0);
+const canConfirmWeaponVariant = computed(() => {
+  const player = boardPlayer.value;
+  if (!player) return false;
+  return (getSabaothChargesRemaining(player) ?? 0) > 0;
+});
 
 function useHeavenBurningUnfold() {
   sendPlayerAction({ action: "weaponActive", detail: "heaven_burning_unfold" });
@@ -906,11 +886,8 @@ onUnmounted(() => {
                 </template>
               </SheetActionButton>
             </template>
-            <template v-if="showWeaponCharges && weaponChargesDisplay" #subline>
-              Weapon charges {{ weaponChargesDisplay }}
-            </template>
-            <template v-else-if="showHeavenBurningLevel && heavenBurningLevelDisplay" #subline>
-              Sword level {{ heavenBurningLevelDisplay }}
+            <template v-if="weaponSublineText" #subline>
+              {{ weaponSublineText }}
             </template>
             <p v-if="rangeAttackHint" class="range-attack-hint">{{ rangeAttackHint }}</p>
             <p v-if="rangedPatternAttackHint" class="range-attack-hint">{{ rangedPatternAttackHint }}</p>
@@ -1053,17 +1030,6 @@ onUnmounted(() => {
     >
       <p class="variant-confirm-text">Confirm changing weapon pattern for 1 charge.</p>
     </ModalDialog>
-    <EpeusBagModal
-      :open="epeusBagOpen"
-      :initial-slot="epeusBagInitialSlot"
-      @close="epeusBagOpen = false"
-      @confirm="onEpeusBagConfirm"
-    />
-    <HarpeRecallModal
-      :open="harpeRecallOpen"
-      @close="harpeRecallOpen = false"
-      @confirm="onHarpeRecallConfirm"
-    />
   </div>
 </template>
 

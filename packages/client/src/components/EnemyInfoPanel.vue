@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getEffectiveEnemyHp, getEffectiveEnemyMaxHp, getSwarmMemberHp, getSwarmMaxHp, getSwarmMovementRemaining, getYadathanTowerDef, isTowerEnemy, swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
+import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import { getEnemyBossActionBudget, getEnemyListingByName, getEnemyScale, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@vtt-core/shared";
 import { computed } from "vue";
 
@@ -12,8 +12,8 @@ import { useApi } from "../composables/useApi.js";
 import { useEnemySpawnSelection } from "../composables/useEnemySpawnSelection.js";
 import { useEnemyPortraitColors } from "../composables/useEnemyPortraitColors.js";
 import { useSession } from "../composables/useSession.js";
-import { useStainGeyserPlacement } from "../composables/useStainGeyserPlacement.js";
-import { useGorgenautAgnosiaPlacement } from "../composables/useGorgenautAgnosiaPlacement.js";
+import { useStainGeyserPlacement } from "@vtt-core/hellpiercers-content/combat-board-placement";
+import { useGorgenautAgnosiaPlacement } from "@vtt-core/hellpiercers-content/combat-board-placement";
 import HpBar from "./HpBar.vue";
 import PanelShell from "./PanelShell.vue";
 import RuleText from "./RuleText.vue";
@@ -46,10 +46,10 @@ const listing = computed(() =>
 
 const towerDef = computed(() => {
   const enemy = activeEnemy.value;
-  if (enemy && !isTowerEnemy(enemy)) return undefined;
+  if (enemy && !getCombatBoardHelpers().isTowerEnemy(enemy)) return undefined;
   const name = enemy?.name ?? props.enemyName;
   if (!name) return undefined;
-  if (enemy || !listing.value) return getYadathanTowerDef(name);
+  if (enemy || !listing.value) return getCombatBoardHelpers().getYadathanTowerDef(name);
   return undefined;
 });
 
@@ -67,7 +67,7 @@ const swarmGroup = computed(() => {
   const s = gameState.value;
   const id = props.enemyId;
   if (!s || !id) return null;
-  return swarmGroupForEnemy(s, id);
+  return getCombatBoardHelpers().swarmGroupForEnemy(s, id);
 });
 
 const soloSwarmMember = computed(
@@ -91,9 +91,9 @@ const maxHp = computed(() => {
   if (!s || !enemy) return listing.value?.hp ?? towerDef.value?.hp ?? 0;
   const group = swarmGroup.value;
   if (soloSwarmMember.value && group) {
-    return getSwarmMaxHp(1);
+    return getCombatBoardHelpers().getSwarmMaxHp(1);
   }
-  return getEffectiveEnemyMaxHp(enemy, s);
+  return getCombatBoardHelpers().getEffectiveEnemyMaxHp(enemy, s);
 });
 const currentHp = computed(() => {
   const s = gameState.value;
@@ -101,14 +101,14 @@ const currentHp = computed(() => {
   if (!s || !enemy) return 0;
   const group = swarmGroup.value;
   if (soloSwarmMember.value && group) {
-    return getSwarmMemberHp(getEffectiveEnemyHp(enemy, s), group.size);
+    return getCombatBoardHelpers().getSwarmMemberHp(getCombatBoardHelpers().getEffectiveEnemyHp(enemy, s), group.size);
   }
-  return getEffectiveEnemyHp(enemy, s);
+  return getCombatBoardHelpers().getEffectiveEnemyHp(enemy, s);
 });
 const showHpBar = computed(() => {
   const enemy = activeEnemy.value;
   if (!enemy) return false;
-  if (isTowerEnemy(enemy)) return true;
+  if (getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
   return hasGmCapabilities.value;
 });
 const hpEditable = computed(() => hasGmCapabilities.value && !!activeEnemy.value);
@@ -128,7 +128,7 @@ const bossBudget = computed(() => {
 });
 
 const showUseAttack = computed(
-  () => hasGmCapabilities.value && showGmCombatUi.value && !!activeEnemy.value && !isTowerEnemy(activeEnemy.value!),
+  () => hasGmCapabilities.value && showGmCombatUi.value && !!activeEnemy.value && !getCombatBoardHelpers().isTowerEnemy(activeEnemy.value!),
 );
 
 const isInSwarm = computed(() => (swarmGroup.value?.size ?? 0) > 1);
@@ -161,10 +161,10 @@ const enemySpeedLabel = computed(() => {
   const s = gameState.value;
   const enemy = activeEnemy.value;
   if (!enemy || !s) return null;
-  const group = swarmGroupForEnemy(s, enemy.id);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemy.id);
   const max = getEnemySpeed(enemy);
   if (group && group.size > 1) {
-    return `${getSwarmMovementRemaining(s, group.memberIds)}/${max}`;
+    return `${getCombatBoardHelpers().getSwarmMovementRemaining(s, group.memberIds)}/${max}`;
   }
   const remaining = enemy.movementRemaining ?? max;
   return `${remaining}/${max}`;
@@ -207,7 +207,7 @@ function commitHp(hp: number) {
 
 function endEnemyTurn() {
   const enemy = activeEnemy.value;
-  if (!enemy || enemy.exhausted || isTowerEnemy(enemy)) return;
+  if (!enemy || enemy.exhausted || getCombatBoardHelpers().isTowerEnemy(enemy)) return;
   send({ type: "gmEnemyAction", action: { action: "exhaust", enemyId: enemy.id } });
 }
 
@@ -264,7 +264,7 @@ function spawnUnit() {
         </div>
 
         <div
-          v-if="showGmCombatUi && activeEnemy && !activeEnemy.exhausted && !isTowerEnemy(activeEnemy)"
+          v-if="showGmCombatUi && activeEnemy && !activeEnemy.exhausted && !getCombatBoardHelpers().isTowerEnemy(activeEnemy)"
           class="enemy-actions"
         >
           <button type="button" class="action-btn end-turn-btn" @click="endEnemyTurn">
@@ -304,7 +304,7 @@ function spawnUnit() {
         <span v-if="listing?.actions" class="stat">Actions: {{ listing.actions }}</span>
         <span v-if="bossBudget != null" class="stat">Boss budget: {{ bossBudget }}</span>
         <span
-          v-if="activeEnemy?.exhausted && !isTowerEnemy(activeEnemy)"
+          v-if="activeEnemy?.exhausted && !getCombatBoardHelpers().isTowerEnemy(activeEnemy)"
           class="stat exhausted"
         >Exhausted</span>
         <span v-if="hasGmCapabilities && listing?.agnosiaHp != null" class="stat">Agnosia HP: {{ listing.agnosiaHp }}</span>

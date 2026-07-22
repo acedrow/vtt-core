@@ -7,6 +7,10 @@ import { boardModeForClass } from "../client-content-pack.js";
 import { useBoardActionMode, type BoardActionMode } from "./useBoardActionMode.js";
 import { useCombatActions } from "./useCombatActions.js";
 
+const epeusBagOpen = ref(false);
+const epeusBagInitialSlot = ref<"weapon" | "armor" | null>(null);
+const harpeRecallOpen = ref(false);
+
 export function useCombatModeActions(opts?: {
   playerClass?: Ref<string | undefined>;
   playerId?: () => string | null;
@@ -39,10 +43,6 @@ export function useCombatModeActions(opts?: {
   } = useBoardActionMode();
 
   const playerClass = opts?.playerClass ?? computed(() => activePlayer.value?.class);
-
-  const epeusBagOpen = ref(false);
-  const epeusBagInitialSlot = ref<"weapon" | "armor" | null>(null);
-  const harpeRecallOpen = ref(false);
 
   const classMode = computed(() => boardModeForClass(playerClass.value) as BoardActionMode | null);
 

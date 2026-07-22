@@ -82,6 +82,9 @@ function fixtureCatalogs(): CatalogContribution {
     reconMoves: [],
     reconTables: [],
     gameTerms: [{ id: "FixtureTerm", summary: "term", description: "Fixture game term." }],
+    extraEffectNames: ["FixtureEffect"],
+    literalTerms: ["Fixture Action"],
+    literalTermLookup: { "fixture action": "FixtureTerm" },
   };
 }
 

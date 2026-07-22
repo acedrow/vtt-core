@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getSwarmMovementRemaining, isTowerEnemy, swarmGroupForEnemy } from "@vtt-core/hellpiercers-content/combat-ui";
+import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import { getEnemyListingByName, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
@@ -23,7 +23,7 @@ const activeEnemy = computed(() => {
 });
 
 const activeIsTower = computed(() =>
-  activeEnemy.value ? isTowerEnemy(activeEnemy.value) : false,
+  activeEnemy.value ? getCombatBoardHelpers().isTowerEnemy(activeEnemy.value) : false,
 );
 
 const listing = computed(() => getEnemyListingByName(activeEnemy.value?.name));
@@ -32,7 +32,7 @@ const isInSwarm = computed(() => {
   const s = gameState.value;
   const enemy = activeEnemy.value;
   if (!s || !enemy) return false;
-  const group = swarmGroupForEnemy(s, enemy.id);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemy.id);
   return (group?.size ?? 0) > 1;
 });
 
@@ -50,9 +50,9 @@ const speedLabel = computed(() => {
   const s = gameState.value;
   if (!enemy || !s) return "—";
   const max = getEnemySpeed(enemy);
-  const group = swarmGroupForEnemy(s, enemy.id);
+  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemy.id);
   if (group && group.size > 1) {
-    return `${getSwarmMovementRemaining(s, group.memberIds)}/${max}`;
+    return `${getCombatBoardHelpers().getSwarmMovementRemaining(s, group.memberIds)}/${max}`;
   }
   const remaining = enemy.movementRemaining ?? max;
   return `${remaining}/${max}`;

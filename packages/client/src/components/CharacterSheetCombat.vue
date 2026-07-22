@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { isYadathanArmorName } from "@vtt-core/hellpiercers-content/combat-ui";
 import { computed } from "vue";
 
-import { getEffectSummary, getArmorByName, KUSHIEL_ARMOR_NAME } from "@vtt-core/shared";
+import { getEffectSummary, getArmorByName } from "@vtt-core/shared";
+import { sheetFieldForArmor } from "../client-content-pack.js";
 
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
@@ -53,10 +53,12 @@ const speedLabel = computed(() => {
 const pills = computed(() => (activePlayer.value ? effectPills(activePlayer.value) : []));
 
 const showTowerStep = computed(
-  () => activePlayer.value && isYadathanArmorName(activePlayer.value.armor),
+  () => !!activePlayer.value && !!sheetFieldForArmor(activePlayer.value.armor ?? ""),
 );
 
-const assistedLaunchAbility = computed(() => getArmorByName(KUSHIEL_ARMOR_NAME)?.specialMovement);
+const assistedLaunchAbility = computed(() =>
+  activePlayer.value ? getArmorByName(activePlayer.value.armor ?? "")?.specialMovement : undefined,
+);
 
 function pillTitle(token: string) {
   const id = token.split(":")[0] ?? token;

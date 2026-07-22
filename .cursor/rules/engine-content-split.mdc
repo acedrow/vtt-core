@@ -20,11 +20,11 @@ Shared must not import the content package. Product packages side-effect-registe
 
 - Content = private git dep (`#semver:^0.0.8`). **Sync register-once** at boot (not runtime KV packs).
 - Product boots: `@vtt-core/hellpiercers-content/register` (+ client `./register-client`). Never `@vtt-core/shared/register-hellpiercers`.
-- Named combat implementations live in the content package and register via `CombatHookContribution.modules` + hooks; shared dispatches with `combatMod(key)`. Client UI helpers use `@vtt-core/hellpiercers-content/combat-ui`.
+- Named combat implementations live in the content package and register via `CombatHookContribution.modules` + hooks; shared dispatches with `combatMod(key)`. Client board/combat UI helpers register via `ClientContribution.combatBoard.helpers` (not direct `./combat-ui` imports in engine source).
 - Engine CI / shared Vitest target: fixture catalogs; content repo owns HP tests. Product/e2e registers Hellpiercers.
 - npm package scope is `@vtt-core/*`.
 - Nested `GameState.campaign` (parent #2) is done. Sheet/pack-version KV stamps + migrators (parent #7) are done in engine; content must ship `sheetDataKeys` (`@vtt-core/hellpiercers-content` ≥0.0.8).
-- Client content exports include `./combat-ui` and `./combat-board-placement` (plus `./tiles`, `./register`, `./register-client`).
+- Client content exports include `./combat-ui` (content-internal / optional product), `./combat-board-placement`, `./tiles`, `./register`, `./register-client`. Residual peel: combat UI is contribution-hosted; see residual peel plans.
 - ADRs: `docs/adr/001`–`008` (incl. package rename)
 ## Plans
 

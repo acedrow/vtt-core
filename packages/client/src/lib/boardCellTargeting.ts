@@ -1,9 +1,11 @@
 import type { BoardActionMode, OmnistrikeStep } from "../composables/useBoardActionMode.js";
+import { listClientBoardModes } from "../client-content-pack.js";
 
 export type BoardTargetingContext = {
   omnistrikeStep?: OmnistrikeStep;
 };
 
+// Engine core modes that always route token clicks to cell targeting.
 export const BOARD_CELL_TARGETING_MODES = [
   "move",
   "attack",
@@ -18,21 +20,14 @@ export const BOARD_CELL_TARGETING_MODES = [
   "towerTeleport",
   "kataptyPick",
   "rez",
-  "kopisMark",
-  "chrysaorBrand",
-  "sharurAttractor",
-  "hephaestusSynesis",
-  "hephaestusRestore",
-  "harpeTrap",
-  "varunastraBorrow",
   "assistedLaunch",
   "equipmentCorridor",
   "equipmentCover",
   "equipmentForceProjection",
   "equipmentRedirect",
-] as const satisfies readonly Exclude<BoardActionMode, null | "gmEnemyAttack">[];
+] as const;
 
-const targetingModes = new Set<BoardActionMode>(BOARD_CELL_TARGETING_MODES);
+const targetingModes = new Set<string>(BOARD_CELL_TARGETING_MODES);
 
 export function routesTokenClickToCellTargeting(
   mode: BoardActionMode,
@@ -40,5 +35,6 @@ export function routesTokenClickToCellTargeting(
 ): boolean {
   if (!mode || mode === "gmEnemyAttack") return false;
   if (mode === "omnistrike" && ctx.omnistrikeStep === "selectBombs") return false;
-  return targetingModes.has(mode);
+  if (targetingModes.has(mode)) return true;
+  return listClientBoardModes().some((plugin) => plugin.id === mode);
 }

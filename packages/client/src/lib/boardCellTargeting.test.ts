@@ -31,6 +31,11 @@ describe("routesTokenClickToCellTargeting", () => {
     expect(routesTokenClickToCellTargeting("assistedLaunch")).toBe(true);
   });
 
+  it("routes pack-registered board modes", () => {
+    expect(routesTokenClickToCellTargeting("kopisMark")).toBe(true);
+    expect(routesTokenClickToCellTargeting("chrysaorBrand")).toBe(true);
+  });
+
   for (const mode of BOARD_CELL_TARGETING_MODES) {
     it(`routes ${mode} token clicks to cell targeting`, () => {
       expect(routesTokenClickToCellTargeting(mode)).toBe(true);

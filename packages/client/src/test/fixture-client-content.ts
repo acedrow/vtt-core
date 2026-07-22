@@ -33,6 +33,15 @@ export function createFixtureClientContribution(): ClientContribution {
     mainSections: [
       { id: "fixture-section", label: "Fixture Section", component: FixturePanel },
     ],
+    boardModes: [
+      { id: "kopisMark", hint: "Fixture kopis hint" },
+      { id: "chrysaorBrand", hint: "Fixture brand hint" },
+      { id: "varunastraBorrow", hint: "Fixture borrow hint" },
+      { id: "harpeTrap" },
+      { id: "sharurAttractor" },
+      { id: "hephaestusSynesis" },
+      { id: "hephaestusRestore" },
+    ],
     sheetFields: [],
     sheetChrome: [],
   };

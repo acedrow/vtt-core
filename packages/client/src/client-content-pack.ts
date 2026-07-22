@@ -1,4 +1,9 @@
 import type { Component } from "vue";
+import type { Player } from "@vtt-core/shared";
+
+import type { ClientCombatBoardHelpers } from "./combat-board-helpers.js";
+
+export type { ClientCombatBoardHelpers } from "./combat-board-helpers.js";
 
 export type ClientThemeOption = {
   id: string;
@@ -30,6 +35,7 @@ export type ClientCombatBoard = {
   towerTokenIcon?: Component;
   towerPicker?: Component;
   towerModal?: Component;
+  helpers?: ClientCombatBoardHelpers;
 };
 
 export type ClientBoardModePlugin = {
@@ -80,7 +86,8 @@ export type ClientSheetChromePlugin = {
   label?: string;
   modeId?: string;
   action?: string;
-  sublineKind?: "sabaothCharges" | "heavenBurningLevel";
+  /** Pack-owned weapon subline text (e.g. charge / level dots). */
+  formatSubline?: (player: Player) => string | null;
   /** When true, replace the generic weapon Active button with this action. */
   replacesWeaponActive?: boolean;
 };

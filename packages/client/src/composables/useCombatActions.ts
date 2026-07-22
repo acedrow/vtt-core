@@ -1,7 +1,7 @@
-import { getPlayerTower, getSeedAt, isYadathanArmorName } from "@vtt-core/hellpiercers-content/combat-ui";
 import type { ActionTier, Player } from "@vtt-core/shared";
-import { canCommitHasteForTier, canSpendActionTier, canUseActionTier, createDefaultActionBudget, getArmorByName, getArmorSpeed, getClassActiveTier, getHeavenBurningLevel, getSabaothChargesRemaining, getWeaponAttackSpec, hasSabaothBombSelected, hasteStacks, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, isKushielArmorName, canUseAssistedLaunch, assistedLaunchAnchors, previewPlayerAttack, classGrantsSecondWeapon, classGrantsDualGear, aegisFlyingRemaining, playerAegisStacks, hasAssistedAscensionGear } from "@vtt-core/shared";
+import { canCommitHasteForTier, canSpendActionTier, canUseActionTier, createDefaultActionBudget, getArmorByName, getArmorSpeed, getClassActiveTier, getHeavenBurningLevel, getSabaothChargesRemaining, getWeaponAttackSpec, hasSabaothBombSelected, hasteStacks, isHeavenBurningWeaponName, isSabaothWeaponName, isKushielArmorName, canUseAssistedLaunch, assistedLaunchAnchors, previewPlayerAttack, classGrantsSecondWeapon, classGrantsDualGear, aegisFlyingRemaining, playerAegisStacks, hasAssistedAscensionGear } from "@vtt-core/shared";
 import { computed, ref } from "vue";
+import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 
 import { useGameState } from "./useGameState.js";
 import { useSession } from "./useSession.js";
@@ -150,7 +150,7 @@ export function useCombatActions(playerId?: () => string | null) {
   const canUseHeavenBurningUnfold = computed(() => {
     const p = activePlayer.value;
     if (!p || !canAux.value || !isHeavenBurningWeaponName(p.weapon)) return false;
-    return (heavenBurningLevel.value ?? 1) < HEAVEN_BURNING_MAX_LEVEL;
+    return (heavenBurningLevel.value ?? 1) < getCombatBoardHelpers().HEAVEN_BURNING_MAX_LEVEL;
   });
 
   const hasWeaponAttack = computed(() => {
@@ -168,9 +168,9 @@ export function useCombatActions(playerId?: () => string | null) {
   const canTowerTeleport = computed(() => {
     const p = activePlayer.value;
     const s = gameState.value;
-    if (!p || !s || !isYadathanArmorName(p.armor)) return false;
+    if (!p || !s || !getCombatBoardHelpers().isYadathanArmorName(p.armor)) return false;
     if ((p.actionBudget?.movementRemaining ?? 0) <= 0) return false;
-    return !!getPlayerTower(s, p.id);
+    return !!getCombatBoardHelpers().getPlayerTower(s, p.id);
   });
 
   const showAssistedLaunch = computed(() => isKushielArmorName(activePlayer.value?.armor));
@@ -193,7 +193,7 @@ export function useCombatActions(playerId?: () => string | null) {
     const p = activePlayer.value;
     const s = gameState.value;
     if (!p || !s) return false;
-    return !!getSeedAt(s, p.x, p.y);
+    return !!getCombatBoardHelpers().getSeedAt(s, p.x, p.y);
   });
 
   const pendingActions = computed(() => gameState.value?.combat?.pendingActions ?? []);

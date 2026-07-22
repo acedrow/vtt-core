@@ -37,11 +37,9 @@ function provokeRules(): ProvokeRules {
   return combatMod("provoke") as ProvokeRules;
 }
 
-// Interim exports for tests/call sites; values come from the content provoke module.
-export const MURIEL_ARMOR_NAME = "MURIEL";
-export const JEHOEL_ARMOR_NAME = "JEHOEL";
-export const KOPIS_CLASS_NAME = "KOPIS";
-export const EXPANDED_AGGRESSION_GEAR = "Expanded Aggression Rituals (Armor)";
+export function isExpandedAggressionGearName(gear: string | undefined): boolean {
+  return provokeRules().isExpandedAggressionGear(gear);
+}
 
 export type ProvokeTrigger = {
   sourceId: string;
