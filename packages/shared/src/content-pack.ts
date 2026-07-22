@@ -18,10 +18,20 @@ import {
   type PendingConfirmHandler,
 } from "./combat/pending-confirm.js";
 import {
+  clearCombatLifecycleHooks,
+  replaceCombatLifecycleHooks,
+  type CombatLifecycleHooks,
+} from "./combat/combat-lifecycle.js";
+import {
   clearProvokeRetaliationHandler,
   registerProvokeRetaliationHandler,
   type ProvokeRetaliationHandler,
 } from "./combat/provoke-retaliation.js";
+import {
+  clearWeaponActiveHandlers,
+  replaceWeaponActiveHandlers,
+  type WeaponActiveHandler,
+} from "./combat/weapon-active.js";
 import {
   clearSpecialIdHandlers,
   registerSpecialIdHandler,
@@ -99,8 +109,12 @@ export type CombatHookContribution = {
   agnosiaHandlers?: Record<string, AgnosiaHandler>;
   pendingConfirmHandlers?: Record<string, PendingConfirmHandler>;
   onProvokeRetaliation?: ProvokeRetaliationHandler;
+  lifecycle?: CombatLifecycleHooks;
+  weaponActiveHandlers?: WeaponActiveHandler[];
   modules?: Record<string, object>;
 };
+
+export type { CombatLifecycleHooks, WeaponActiveHandler };
 
 export type { CampaignContribution, CampaignHookContribution };
 
@@ -150,12 +164,16 @@ function clearCombatHooks(): void {
   clearAgnosiaHandlers();
   clearPendingConfirmHandlers();
   clearProvokeRetaliationHandler();
+  clearCombatLifecycleHooks();
+  clearWeaponActiveHandlers();
   clearCombatModules();
 }
 
 function replaceCombatHooks(combat: CombatHookContribution): void {
   clearCombatHooks();
   replaceCombatModules(combat.modules ?? {});
+  replaceCombatLifecycleHooks(combat.lifecycle ?? {});
+  replaceWeaponActiveHandlers(combat.weaponActiveHandlers ?? []);
   for (const [id, handler] of Object.entries(combat.specialIdHandlers ?? {})) {
     registerSpecialIdHandler(id, handler);
   }

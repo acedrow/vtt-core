@@ -43,9 +43,6 @@ export function tryChalazaorDamageNegation(...args: any[]): any {
 
 // --- chrysaor ---
 
-export const CHRYSAOR_CLASS = "CHRYSAOR";
-export const BRAND_EFFECT = "Brand";
-
 export function obstacleBrandKey(...args: any[]): any {
   const v = (combatMod("chrysaor") as any).obstacleBrandKey;
   if (typeof v !== "function") return v;
@@ -82,12 +79,6 @@ export function detonateBrand(...args: any[]): any {
   return v(...args);
 }
 
-export function tickBrands(...args: any[]): any {
-  const v = (combatMod("chrysaor") as any).tickBrands;
-  if (typeof v !== "function") return v;
-  return v(...args);
-}
-
 export function chrysaorImmuneToAreaEffects(...args: any[]): any {
   const v = (combatMod("chrysaor") as any).chrysaorImmuneToAreaEffects;
   if (typeof v !== "function") return v;
@@ -113,13 +104,6 @@ export type MovementHookResult = {
   messages: string[];
   interrupt: boolean;
 };
-
-export const HARPE_CLASS = "HARPE";
-export const KOPIS_CLASS = "KOPIS";
-export const SHARUR_CLASS = "SHARUR";
-export const VARUNASTRA_CLASS = "VARUNASTRA";
-export const HEPHAESTUS_CLASS = "HEPHAESTUS";
-export const EPEUS_CLASS = "EPEUS";
 
 export function validateClassActive(...args: any[]): any {
   const v = (combatMod("classAbilities") as any).validateClassActive;
@@ -171,12 +155,6 @@ export function classActiveTierFor(...args: any[]): any {
 
 
 // --- equipment ---
-
-export const HYLIC_ANNIHILATION_CORRIDOR = "Hylic Annihilation Corridor";
-export const PROMETHEAN_GRADE_HYLIC_REJECTION_FIELD = "Promethean-Grade Hylic Rejection Field";
-export const THOUGHT_GUIDING_REDIRECTION_CIRCUITS = "Thought-Guiding Redirection Circuits";
-export const TRANSIENT_FORCE_PROJECTION = "Transient Force Projection";
-export const ANNIHILATION_CORRIDOR_TILE_EFFECT = "AnnihilationCorridor";
 
 export function isHylicAnnihilationCorridor(...args: any[]): any {
   const v = (combatMod("equipment") as any).isHylicAnnihilationCorridor;
@@ -359,8 +337,6 @@ export function applyGorgenautStainTeleport(...args: any[]): any {
 
 // --- kopis ---
 
-export const MAG_DUMP_EFFECT = "Mag Dump";
-
 export function ensureKopisCombatFields(...args: any[]): any {
   const v = (combatMod("kopis") as any).ensureKopisCombatFields;
   if (typeof v !== "function") return v;
@@ -381,12 +357,6 @@ export function syncKopisMarkEffects(...args: any[]): any {
 
 export function applyKopisMark(...args: any[]): any {
   const v = (combatMod("kopis") as any).applyKopisMark;
-  if (typeof v !== "function") return v;
-  return v(...args);
-}
-
-export function handleEnemyDefeated(...args: any[]): any {
-  const v = (combatMod("kopis") as any).handleEnemyDefeated;
   if (typeof v !== "function") return v;
   return v(...args);
 }
@@ -416,9 +386,6 @@ export function applyLurkingFreakAgnosia(...args: any[]): any {
 
 // --- stain-geyser ---
 
-export const STAIN_GEYSER_NAME = "Stain Geyser";
-export const STAIN_GEYSER_OVERLAY_GROUP_KEY = "tiles/overlays/stain/stain";
-
 export function stainGeyserAreaSize(...args: any[]): any {
   const v = (combatMod("stainGeyser") as any).stainGeyserAreaSize;
   if (typeof v !== "function") return v;
@@ -433,13 +400,6 @@ export function stainGeyserBoxTiles(...args: any[]): any {
 
 
 // --- stainwalk ---
-
-export type StainwalkKind =
-  | "orobas"
-  | "eyesting-rose"
-  | "gorgenaut"
-  | "lurking-freak"
-  | "stain-creep";
 
 export function stainwalkKind(...args: any[]): any {
   const v = (combatMod("stainwalk") as any).stainwalkKind;
@@ -467,24 +427,6 @@ export function tileIsStained(...args: any[]): any {
 
 export function enemyOnStainedTile(...args: any[]): any {
   const v = (combatMod("stainwalk") as any).enemyOnStainedTile;
-  if (typeof v !== "function") return v;
-  return v(...args);
-}
-
-export function applyStainwalkMovement(...args: any[]): any {
-  const v = (combatMod("stainwalk") as any).applyStainwalkMovement;
-  if (typeof v !== "function") return v;
-  return v(...args);
-}
-
-export function applyStainwalkGmTurnEnd(...args: any[]): any {
-  const v = (combatMod("stainwalk") as any).applyStainwalkGmTurnEnd;
-  if (typeof v !== "function") return v;
-  return v(...args);
-}
-
-export function stainwalkDamageAdjustment(...args: any[]): any {
-  const v = (combatMod("stainwalk") as any).stainwalkDamageAdjustment;
   if (typeof v !== "function") return v;
   return v(...args);
 }
@@ -751,29 +693,6 @@ export function swarmMembersHitByTiles(...args: any[]): any {
 
 // --- yadathan ---
 
-export const YADATHAN_ARMOR_NAME = "YADATHAN";
-export const TOWER_KATAPTY = "Katapty";
-export const TOWER_KERAUNO = "Kerauno";
-export const TOWER_HERMNDION = "Hermńdion";
-export const TOWER_IATROS = "Iatrós";
-export const YADATHAN_TOWER_NAMES = [
-  TOWER_KATAPTY,
-  TOWER_KERAUNO,
-  TOWER_HERMNDION,
-  TOWER_IATROS,
-] as const;
-
-export type YadathanTowerName = (typeof YADATHAN_TOWER_NAMES)[number];
-
-export type YadathanTowerDef = {
-  name: string;
-  hp: number;
-  scale: number;
-  tags: string;
-  special: string;
-};
-
-
 export function isYadathanArmorName(...args: any[]): any {
   const v = (combatMod("yadathan") as any).isYadathanArmorName;
   if (typeof v !== "function") return v;
@@ -788,12 +707,6 @@ export function getPlayerYadathanTowerName(...args: any[]): any {
 
 export function isValidYadathanTowerName(...args: any[]): any {
   const v = (combatMod("yadathan") as any).isValidYadathanTowerName;
-  if (typeof v !== "function") return v;
-  return v(...args);
-}
-
-export function getYadathanTowerDef(...args: any[]): any {
-  const v = (combatMod("yadathan") as any).getYadathanTowerDef;
   if (typeof v !== "function") return v;
   return v(...args);
 }
@@ -926,12 +839,6 @@ export function yadathanReversalEligible(...args: any[]): any {
 
 export function applyYadathanReversal(...args: any[]): any {
   const v = (combatMod("yadathan") as any).applyYadathanReversal;
-  if (typeof v !== "function") return v;
-  return v(...args);
-}
-
-export function resolveYadathanEndOfTurn(...args: any[]): any {
-  const v = (combatMod("yadathan") as any).resolveYadathanEndOfTurn;
   if (typeof v !== "function") return v;
   return v(...args);
 }

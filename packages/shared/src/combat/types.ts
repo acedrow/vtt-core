@@ -131,7 +131,7 @@ export type BoardToken = {
   ownerId: string;
   x: number;
   y: number;
-  kind: "kopis";
+  kind: string;
 };
 
 export type AttractorTile = {
@@ -189,22 +189,9 @@ export type PendingClassReaction =
   | OffhandPistolPushReaction
   | BrandStripReaction;
 
-export type ClassActiveKind =
-  | "weapon_trap"
-  | "mag_dump"
-  | "back_up"
-  | "borrowing_this"
-  | "synesis_conversion"
-  | "bag_of_tricks"
-  | "soul_branding";
+export type ClassActiveKind = string;
 
-export type AttackPreviewMode =
-  | "attack"
-  | "varunastraBorrow"
-  | "equipmentCorridor"
-  | "equipmentForceProjection"
-  | "omnistrike"
-  | "gmEnemyAttack";
+export type AttackPreviewMode = string;
 
 export type AttackPreviewState = {
   playerId?: string;
@@ -241,9 +228,16 @@ export type CombatState = {
   attractors?: AttractorTile[];
   attractorPulledEnemyIds?: string[];
   gearCheckGrants?: Record<string, string>;
+  // Generic mark map (enemyId → owner player id). Prefer over legacy kopisMarks.
+  marks?: Record<string, string>;
+  // Brand target key (unit id or `obs:x,y`) → owner player id. Prefer over chrysaorBrands.
+  brands?: Record<string, string>;
+  /** @deprecated Use marks */
   kopisMarks?: Record<string, string>;
-  // Brand target key (unit id or `obs:x,y`) → CHRYSAOR owner player id
+  /** @deprecated Use brands */
   chrysaorBrands?: Record<string, string>;
+  /** Pack-owned opaque combat extras. */
+  pack?: Record<string, unknown>;
   countdownKinds?: Record<string, string>;
   equipmentTerrainSnapshots?: { x: number; y: number; terrain: TerrainType[] }[];
   sideEffectMessages?: string[];
@@ -409,7 +403,22 @@ export function createDefaultCombatState(playerCount: number): CombatState {
     boardTokens: [],
     attractors: [],
     gearCheckGrants: {},
-    kopisMarks: {},
+    marks: {},
+    brands: {},
+    pack: {},
     countdownKinds: {},
   };
+}
+
+// Lift legacy IP-named maps onto generic bags (and keep aliases in sync for readers).
+export function migrateCombatStateFields(combat: CombatState): void {
+  if (!combat.marks) combat.marks = { ...(combat.kopisMarks ?? {}) };
+  else if (combat.kopisMarks) Object.assign(combat.marks, combat.kopisMarks);
+  combat.kopisMarks = combat.marks;
+
+  if (!combat.brands) combat.brands = { ...(combat.chrysaorBrands ?? {}) };
+  else if (combat.chrysaorBrands) Object.assign(combat.brands, combat.chrysaorBrands);
+  combat.chrysaorBrands = combat.brands;
+
+  if (!combat.pack) combat.pack = {};
 }

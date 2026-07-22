@@ -63,10 +63,8 @@ import {
   applyDamageToEnemy,
   applyDamageToObstacle,
   applyDamageToPlayer,
-  applyOmnistrike,
   applyRangeAttackToEnemies,
   applySwarmEnemyAttackToPlayer,
-  applyWarhook,
   collectAttackTiles,
   collectEnemyPatternAttackTiles,
   effectiveRangeLimit,
@@ -81,21 +79,16 @@ import {
   isDirectTargetEnemyAttack,
   isPatternEnemyAttack,
   isSelectTargetEnemyAttack,
-  isWarhookWeaponName,
   manhattanDistance,
   resolveAttackWeapon,
   resolveCombatAttackSpec,
   resolveEnemyPatternOrigin,
   resolveRangeAttackObstacleCoords,
   resolveRangeAttackTargetIds,
-  applyHeavenBurningUnfold,
   ensureSabaothCharges,
   hasSabaothBombSelected,
   isSabaothWeaponName,
   resetHeavenBurningLevelAfterAttack,
-  validateHeavenBurningUnfold,
-  validateOmnistrikeAction,
-  validateWarhookAction,
 } from "./attack.js";
 import {
   applyAnnihilationCorridorEndOfTurnDamage,
@@ -185,7 +178,8 @@ import {
   validateClassPassive,
   validateResolveClassReaction,
 } from "./content-modules-api.js";
-import { handleEnemyDefeated } from "./content-modules-api.js";
+import { runEnemyDefeated } from "./combat-lifecycle.js";
+import { findWeaponActiveHandler } from "./weapon-active.js";
 import { playerArmorGearName, validateRemoveAttractor, applyRemoveAttractor, applyAttractorEndOfTurnPulls, clearAttractorPullForEnemy } from "./attractor.js";
 import { applyTransferenceHeal } from "./transference.js";
 import { computePathCostWithFlying, resolveFlyingMask, spendAegisFlying } from "./aegis.js";
@@ -484,19 +478,15 @@ export function validatePlayerAction(
       return validateResolveClassReaction(state, playerId, action);
     }
     case "weaponActive": {
-      if (action.detail === "heaven_burning_unfold") {
-        const blocked = actionTierBlocked(player, "aux", state);
+      const weaponHandler = findWeaponActiveHandler(player, action);
+      if (weaponHandler) {
+        const tier = action.detail === "heaven_burning_unfold" ? "aux" : "main";
+        const blocked = actionTierBlocked(player, tier, state);
         if (blocked) return blocked;
-        return validateHeavenBurningUnfold(player);
+        return weaponHandler.validate(state, player, action);
       }
       const blocked = actionTierBlocked(player, "main", state);
       if (blocked) return blocked;
-      if (isSabaothWeaponName(player.weapon) && action.omnistrike) {
-        return validateOmnistrikeAction(state, player, action.omnistrike);
-      }
-      if (isWarhookWeaponName(player.weapon) && action.warhook) {
-        return validateWarhookAction(state, player, action.warhook);
-      }
       return null;
     }
     case "useEquipment": {
@@ -632,7 +622,7 @@ export function applyPlayerAction(
       const defeatMsgs: string[] = [];
       for (const e of hitEnemies) {
         if ((e!.hp ?? 0) <= 0) {
-          const tokenMsg = handleEnemyDefeated(state, e!, playerId);
+          const tokenMsg = runEnemyDefeated(state, e!, playerId);
           if (tokenMsg) defeatMsgs.push(tokenMsg);
         }
       }
@@ -788,7 +778,7 @@ export function applyPlayerAction(
             }),
           );
           if ((enemy.hp ?? 1) <= 0) {
-            const tokenMsg = handleEnemyDefeated(state, enemy, playerId);
+            const tokenMsg = runEnemyDefeated(state, enemy, playerId);
             if (tokenMsg) parts.push(tokenMsg);
           }
         } else {
@@ -850,58 +840,13 @@ export function applyPlayerAction(
       return applyResolveClassReaction(state, playerId, action);
     }
     case "weaponActive": {
-      if (action.detail === "heaven_burning_unfold") {
-        maybeSpendActionTier(state, player, "aux");
-        const level = applyHeavenBurningUnfold(player);
-        return `${playerLabel(player)} charged Heaven Burning Sword to Level ${level}`;
+      const weaponHandler = findWeaponActiveHandler(player, action);
+      if (weaponHandler) {
+        const tier = action.detail === "heaven_burning_unfold" ? "aux" : "main";
+        maybeSpendActionTier(state, player, tier);
+        return weaponHandler.apply(state, player, action);
       }
       maybeSpendActionTier(state, player, "main");
-      if (isSabaothWeaponName(player.weapon) && action.omnistrike) {
-        const result = applyOmnistrike(state, player, action.omnistrike);
-        const hitEnemies = result.targets
-          .map((t) => state.enemies.find((e) => e.id === t.enemyId))
-          .filter(Boolean);
-        const names = hitEnemies.map((e) => enemyLabel(e!)).join(", ");
-        const defeated = hitEnemies
-          .filter((e) => (e!.hp ?? 0) <= 0)
-          .map((e) => enemyLabel(e!))
-          .join(", ");
-        let msg = `${playerLabel(player)} used ${result.message} → ${names || "no targets"}`;
-        const defeatMsgs: string[] = [];
-        for (const e of hitEnemies) {
-          if ((e!.hp ?? 0) <= 0) {
-            const tokenMsg = handleEnemyDefeated(state, e!, playerId);
-            if (tokenMsg) defeatMsgs.push(tokenMsg);
-          }
-        }
-        if (defeated) msg += `; defeated ${defeated}`;
-        if (defeatMsgs.length) msg += `; ${defeatMsgs.join("; ")}`;
-        return msg;
-      }
-      if (isWarhookWeaponName(player.weapon) && action.warhook) {
-        const wh = action.warhook;
-        const result = applyWarhook(state, player, wh);
-        recordPassedEnemiesOnPath(state, player, [{ x: wh.landingX, y: wh.landingY }]);
-        const hitEnemies = result.targets
-          .map((t) => state.enemies.find((e) => e.id === t.enemyId))
-          .filter(Boolean);
-        const names = hitEnemies.map((e) => enemyLabel(e!)).join(", ");
-        const defeated = hitEnemies
-          .filter((e) => (e!.hp ?? 0) <= 0)
-          .map((e) => enemyLabel(e!))
-          .join(", ");
-        let msg = `${playerLabel(player)} used ${result.message} (${result.detail} dmg) → ${names || "no targets"}`;
-        const defeatMsgs: string[] = [];
-        for (const e of hitEnemies) {
-          if ((e!.hp ?? 0) <= 0) {
-            const tokenMsg = handleEnemyDefeated(state, e!, playerId);
-            if (tokenMsg) defeatMsgs.push(tokenMsg);
-          }
-        }
-        if (defeated) msg += `; defeated ${defeated}`;
-        if (defeatMsgs.length) msg += `; ${defeatMsgs.join("; ")}`;
-        return msg;
-      }
       const weapon = getWeaponByName(player.weapon ?? "");
       addPendingAction(
         state,
@@ -937,7 +882,7 @@ export function applyPlayerAction(
         for (const id of hitEnemyIds) {
           const enemy = state.enemies.find((e) => e.id === id);
           if (enemy && (enemy.hp ?? 0) <= 0) {
-            const tokenMsg = handleEnemyDefeated(state, enemy, playerId);
+            const tokenMsg = runEnemyDefeated(state, enemy, playerId);
             if (tokenMsg) defeatMsgs.push(tokenMsg);
           }
         }
@@ -951,7 +896,7 @@ export function applyPlayerAction(
         for (const id of hitEnemyIds) {
           const enemy = state.enemies.find((e) => e.id === id);
           if (enemy && (enemy.hp ?? 0) <= 0) {
-            const tokenMsg = handleEnemyDefeated(state, enemy, playerId);
+            const tokenMsg = runEnemyDefeated(state, enemy, playerId);
             if (tokenMsg) defeatMsgs.push(tokenMsg);
           }
         }

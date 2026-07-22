@@ -1,14 +1,24 @@
 import { hasGmCapabilities } from "./auth-capabilities.js";
 import type { Enemy, GameMap, GameState, VttRole, PhaseAction, Player, TerrainObject, TurnHolder } from "./types.js";
 import { playerLabel } from "./console.js";
-import { createDefaultActionBudget, createDefaultCombatState } from "./combat/types.js";
+import {
+  createDefaultActionBudget,
+  createDefaultCombatState,
+  migrateCombatStateFields,
+} from "./combat/types.js";
 import { tickRoundCountdowns, tickUnitEndOfTurn, tickUnitStartOfTurn } from "./combat/effects.js";
-import { tickBrands } from "./combat/content-modules-api.js";
 import { clearAegisFlyingUsed, ensureAssistedAscensionAegis } from "./combat/aegis.js";
+import {
+  runEnemyAdded,
+  runEnemyMaxHpOverride,
+  runGmTurnEnd,
+  runIsPersistentEnemy,
+  runPlayerEndOfTurn,
+  runRoundAdvance,
+} from "./combat/combat-lifecycle.js";
 import { enemyHasFlyingTag, initializeUnitElevation, syncUnitElevationOnTile } from "./combat/elevation.js";
 import { enemyMoveStepCost } from "./combat/movement.js";
 import { resetEnemyExhaustion, resetGmTurnActions } from "./combat/enemy.js";
-import { applyStainwalkGmTurnEnd, applyStainwalkMovement } from "./combat/content-modules-api.js";
 import { getEnemyMaxHpByName, getEnemyScale, getEnemyScaleByName, enemyFootprintTiles, ensureEnemyMovement, spendEnemyMovement } from "./enemy-data.js";
 import {
   defaultOverworldRegions,
@@ -25,12 +35,7 @@ import { applyLoadoutToPlayer, getClassMaxHp, getArmorSpeed } from "./player-dat
 import { ensureGameStateContentPack } from "./sheet-persistence.js";
 import { coordKey, createInitialStateFromMap, isFootprintInBounds, isInBounds, isWalkable, tileAt } from "./map.js";
 import { isOrthogonallyAdjacent } from "./patterns.js";
-import {
-  getYadathanTowerDef,
-  isTowerEnemy,
-  kataptyNeedsTargetPick,
-  resolveYadathanEndOfTurn,
-} from "./combat/content-modules-api.js";
+import { kataptyNeedsTargetPick } from "./combat/content-modules-api.js";
 import { enterTaccom, exitTaccom, resetTaccomEncounter } from "./combat/taccom-reset.js";
 import {
   reconcileSwarmHp,
@@ -305,7 +310,7 @@ function finishPlayerTurn(state: GameState, playerId: string, suffix = "ended th
     delete player.hasteActionTier;
     if (!isSandboxMode(state)) tickWarhookBlazingImmunity(player);
   }
-  const yadathanMsgs = player ? resolveYadathanEndOfTurn(state, player) : [];
+  const lifecycleMsgs = player ? runPlayerEndOfTurn(state, player) : [];
   const gearCheckMsgs = player ? grantVarunastraGearCheck(state, player) : [];
   const attractorEndMsgs = player ? applyAttractorEndOfTurnPulls(state, player, "player") : [];
   if (state.combat) state.combat.attackPreview = null;
@@ -313,7 +318,7 @@ function finishPlayerTurn(state: GameState, playerId: string, suffix = "ended th
   state.turn = { role: "gm" };
   let msg = `${playerLabel(player!)} ${suffix}`;
   if (ticks.length) msg += `. ${ticks.join("; ")}`;
-  if (yadathanMsgs.length) msg += `. ${yadathanMsgs.join("; ")}`;
+  if (lifecycleMsgs.length) msg += `. ${lifecycleMsgs.join("; ")}`;
   if (gearCheckMsgs.length) msg += `. ${gearCheckMsgs.join("; ")}`;
   if (attractorEndMsgs.length) msg += `. ${attractorEndMsgs.join("; ")}`;
   return msg;
@@ -322,7 +327,7 @@ function finishPlayerTurn(state: GameState, playerId: string, suffix = "ended th
 function advanceRound(state: GameState): string {
   const endedRound = state.round;
   tickRoundCountdowns(state);
-  tickBrands(state);
+  runRoundAdvance(state);
   tickProvokeRangeGear(state);
   resetEnemyExhaustion(state);
   if (state.combat) {
@@ -447,7 +452,7 @@ export function applyPhaseAction(
     recordTurn(state, { role: "gm", gmPhase: "countdownTags" });
     state.roundPhase = "countdownTags";
     state.turn = { role: "gm" };
-    return applyStainwalkGmTurnEnd(state);
+    return runGmTurnEnd(state);
   };
 
   switch (action) {
@@ -466,9 +471,9 @@ export function applyPhaseAction(
       return `GM ended turn — ${msg}`;
     }
     case "countdownTags": {
-      const stainwalkMsgs = enterCountdownTags();
+      const gmTurnEndMsgs = enterCountdownTags();
       let msg = "GM started tag countdown";
-      if (stainwalkMsgs.length) msg += `. ${stainwalkMsgs.join("; ")}`;
+      if (gmTurnEndMsgs.length) msg += `. ${gmTurnEndMsgs.join("; ")}`;
       return msg;
     }
     case "endRound":
@@ -506,9 +511,9 @@ export function applyPhaseAction(
             const msg = enterPlayersChoice(state);
             return `GM ended turn — ${msg}`;
           }
-          const stainwalkMsgs = enterCountdownTags();
+          const gmTurnEndMsgs = enterCountdownTags();
           let msg = "GM ended turn — countdown tags";
-          if (stainwalkMsgs.length) msg += `. ${stainwalkMsgs.join("; ")}`;
+          if (gmTurnEndMsgs.length) msg += `. ${gmTurnEndMsgs.join("; ")}`;
           return msg;
         }
         case "countdownTags":
@@ -677,10 +682,8 @@ export function getPlayerMaxHp(player: Player): number {
 }
 
 export function getEnemyMaxHp(enemy: Enemy): number {
-  if (isTowerEnemy(enemy)) {
-    const def = getYadathanTowerDef(enemy.name ?? "");
-    if (def) return def.hp;
-  }
+  const override = runEnemyMaxHpOverride(enemy);
+  if (override != null) return override;
   return getEnemyMaxHpByName(enemy.name);
 }
 
@@ -1041,14 +1044,14 @@ export function addEnemy(state: GameState, enemy: Enemy): string | null {
   });
   const added = state.enemies[state.enemies.length - 1]!;
   initializeUnitElevation(state, added);
-  applyStainwalkMovement(state, added);
+  runEnemyAdded(state, added);
   reconcileSwarmHp(state, prev);
   return null;
 }
 
 export function removeAllEnemies(state: GameState): number {
-  const count = state.enemies.filter((e) => !isTowerEnemy(e)).length;
-  state.enemies = state.enemies.filter((e) => isTowerEnemy(e));
+  const count = state.enemies.filter((e) => !runIsPersistentEnemy(e)).length;
+  state.enemies = state.enemies.filter((e) => runIsPersistentEnemy(e));
   if (state.combat) {
     const active = state.combat.activeEnemyId;
     if (active && !state.enemies.some((e) => e.id === active)) {
@@ -1397,8 +1400,11 @@ export function normalizeGameState(state: GameState, map?: GameMap): GameState {
   ) {
     state.combat = createDefaultCombatState(state.players.length);
   }
-  if (state.combat && !state.combat.swarmChipResolvedIds) {
-    state.combat.swarmChipResolvedIds = [];
+  if (state.combat) {
+    migrateCombatStateFields(state.combat);
+    if (!state.combat.swarmChipResolvedIds) {
+      state.combat.swarmChipResolvedIds = [];
+    }
   }
   const playerTurn = state.turn?.role === "player" ? state.turn : null;
   if (state.roundPhase === "playerTurn" && playerTurn) {

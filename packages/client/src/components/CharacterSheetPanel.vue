@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { isHylicAnnihilationCorridor, isHylicRejectionField, isThoughtGuidingRedirectionCircuits, isTransientForceProjection, YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
+import { YADATHAN_ARMOR_NAME } from "@vtt-core/hellpiercers-content/combat-ui";
+import { boardModeForEquipment } from "../client-content-pack.js";
 import type { CharacterSheet, PlayerProfile } from "@vtt-core/shared";
 import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, HEAVEN_BURNING_MAX_LEVEL, isHeavenBurningWeaponName, isSabaothWeaponName, SABAOTH_MAX_CHARGES } from "@vtt-core/shared";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
@@ -146,7 +147,7 @@ const {
 } = useCombatModeActions({ playerClass, playerId: () => boardPlayerId.value });
 
 const equipmentActionActive = computed(() => {
-  const boardMode = form.value.equipment ? equipmentBoardMode(form.value.equipment) : null;
+  const boardMode = form.value.equipment ? boardModeForEquipment(form.value.equipment) : null;
   return boardMode != null && mode.value === boardMode;
 });
 
@@ -271,17 +272,9 @@ function selectWeaponVariant(index: number) {
   sendPlayerAction({ action: "selectWeaponVariant", index });
 }
 
-function equipmentBoardMode(equipmentName: string) {
-  if (isHylicAnnihilationCorridor(equipmentName)) return "equipmentCorridor";
-  if (isHylicRejectionField(equipmentName)) return "equipmentCover";
-  if (isTransientForceProjection(equipmentName)) return "equipmentForceProjection";
-  if (isThoughtGuidingRedirectionCircuits(equipmentName)) return "equipmentRedirect";
-  return null;
-}
-
 function useEquipmentItem() {
   if (!form.value.equipment) return;
-  const boardMode = equipmentBoardMode(form.value.equipment);
+  const boardMode = boardModeForEquipment(form.value.equipment);
   if (boardMode) {
     if (mode.value === boardMode) clearMode();
     else {

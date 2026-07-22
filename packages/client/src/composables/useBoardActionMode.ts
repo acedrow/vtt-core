@@ -4,6 +4,7 @@ import type { PatternDirection } from "@vtt-core/shared";
 
 import { clearActiveTool } from "./useGmTools.js";
 
+// Pack board-mode plugins may register additional string ids (e.g. kopisMark).
 export type BoardActionMode =
   | "move"
   | "attack"
@@ -18,19 +19,13 @@ export type BoardActionMode =
   | "towerTeleport"
   | "kataptyPick"
   | "rez"
-  | "kopisMark"
-  | "chrysaorBrand"
-  | "sharurAttractor"
-  | "hephaestusSynesis"
-  | "hephaestusRestore"
-  | "harpeTrap"
-  | "varunastraBorrow"
   | "assistedLaunch"
   | "equipmentCorridor"
   | "equipmentCover"
   | "equipmentForceProjection"
   | "equipmentRedirect"
   | "gmEnemyAttack"
+  | (string & {})
   | null;
 
 export type OmnistrikeStep = "selectBombs" | "placeFirst" | "placeSecond" | "confirm";

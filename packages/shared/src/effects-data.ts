@@ -9,6 +9,8 @@ export type RuleEffect = {
   stacking?: EffectStacking;
   icon: string;
   iconFill?: boolean;
+  displayName?: string;
+  presenceOnly?: boolean;
 };
 
 export const UNIT_EFFECTS: RuleEffect[] = [];
@@ -18,13 +20,6 @@ export const RULE_EFFECTS: RuleEffect[] = [];
 
 const effectById = new Map<string, RuleEffect>();
 const effectIds = new Set<string>();
-
-const TILE_EFFECT_DISPLAY_NAMES: Record<string, string> = {
-  Stained: "Stained",
-  AnnihilationCorridor: "Annihilation Corridor",
-};
-
-const TILE_EFFECTS_WITHOUT_STACK_DISPLAY = new Set(Object.keys(TILE_EFFECT_DISPLAY_NAMES));
 
 function rebuildEffectIndexes(): void {
   effectById.clear();
@@ -59,11 +54,11 @@ export function replaceEffectsCatalog(input: {
 }
 
 export function tileEffectDisplayName(id: string): string {
-  return TILE_EFFECT_DISPLAY_NAMES[id] ?? id;
+  return effectById.get(id)?.displayName ?? id;
 }
 
 export function tileEffectShowsStackCount(id: string): boolean {
-  return !TILE_EFFECTS_WITHOUT_STACK_DISPLAY.has(id);
+  return !effectById.get(id)?.presenceOnly;
 }
 
 export function formatTileEffectTooltipLabel(id: string, stacks: number): string {

@@ -60,8 +60,11 @@ function clearCombatCounters(state: GameState): void {
   state.combat.attractors = [];
   state.combat.attractorPulledEnemyIds = [];
   state.combat.gearCheckGrants = {};
+  state.combat.marks = {};
+  state.combat.brands = {};
   state.combat.kopisMarks = {};
   state.combat.chrysaorBrands = {};
+  state.combat.pack = {};
   state.combat.countdownKinds = {};
   delete state.combat.passedEnemyIdsByPlayer;
 }

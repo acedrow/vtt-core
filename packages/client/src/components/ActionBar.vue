@@ -99,7 +99,8 @@ const boardObjectLegend = computed(() => {
   if ((combat.thrownTraps ?? []).length) items.push("Trap");
   if ((combat.boardTokens ?? []).length) items.push("Token");
   if ((combat.attractors ?? []).length) items.push("Attractor");
-  if (combat.kopisMarks && Object.keys(combat.kopisMarks).length) items.push("Marked");
+  const marks = combat.marks ?? combat.kopisMarks;
+  if (marks && Object.keys(marks).length) items.push("Marked");
   return items;
 });
 

@@ -3,17 +3,9 @@ import type { StructuredArmorAction } from "@vtt-core/shared";
 import { isRangeTargetAttack, isSabaothWeaponName, isWarhookWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
 import { computed, ref, type Ref } from "vue";
 
+import { boardModeForClass } from "../client-content-pack.js";
 import { useBoardActionMode, type BoardActionMode } from "./useBoardActionMode.js";
 import { useCombatActions } from "./useCombatActions.js";
-
-const CLASS_MODE_BY_NAME: Record<string, BoardActionMode> = {
-  HARPE: "harpeTrap",
-  KOPIS: "kopisMark",
-  CHRYSAOR: "chrysaorBrand",
-  SHARUR: "sharurAttractor",
-  HEPHAESTUS: "hephaestusSynesis",
-  VARUNASTRA: "varunastraBorrow",
-};
 
 export function useCombatModeActions(opts?: {
   playerClass?: Ref<string | undefined>;
@@ -52,10 +44,7 @@ export function useCombatModeActions(opts?: {
   const epeusBagInitialSlot = ref<"weapon" | "armor" | null>(null);
   const harpeRecallOpen = ref(false);
 
-  const classMode = computed(() => {
-    const cls = playerClass.value;
-    return cls ? (CLASS_MODE_BY_NAME[cls] ?? null) : null;
-  });
+  const classMode = computed(() => boardModeForClass(playerClass.value) as BoardActionMode | null);
 
   const classModeActive = computed(() => {
     const m = classMode.value;

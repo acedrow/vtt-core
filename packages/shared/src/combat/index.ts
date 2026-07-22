@@ -21,6 +21,8 @@ export * from "./elevation.js";
 export * from "./agnosia.js";
 export * from "./pending-confirm.js";
 export * from "./provoke-retaliation.js";
+export * from "./combat-lifecycle.js";
+export * from "./weapon-active.js";
 export * from "./enemy-attack-resolve.js";
 export * from "./special-id.js";
 export * from "./countdown.js";

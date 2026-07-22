@@ -14,11 +14,7 @@ function stubModule(): object {
             const enemy = args[0] as { hp?: number; maxHp?: number } | undefined;
             return enemy?.maxHp ?? enemy?.hp ?? 1;
           }
-          if (
-            prop === "clearAnnihilationCorridorTileEffects" ||
-            prop === "applyStainwalkGmTurnEnd" ||
-            prop === "applyStainwalkMovement"
-          ) {
+          if (prop === "clearAnnihilationCorridorTileEffects") {
             return undefined;
           }
           if (
@@ -28,7 +24,6 @@ function stubModule(): object {
           ) {
             return false;
           }
-          if (prop === "stainwalkDamageAdjustment") return 0;
           if (prop === "reversalTriggerSatisfied") return true;
           if (
             prop === "isMalakbelArmorName" ||

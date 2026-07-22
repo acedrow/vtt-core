@@ -121,81 +121,7 @@ These rules exist because these mistakes have been made before:
 - **Static game data** — JSON under content `src/data/`; registered via `@vtt-core/hellpiercers-content/register` at product boot. Engine reads catalogs through the ContentPack registry only.
 - **Dev backend wiring** — the client reads `import.meta.env.DEV` and `VITE_CF_DEV` to pick a backend (`useApi.apiBase`, `useGameSocket.gameWsUrl`): plain `npm run dev` targets Express on `:3001`; `npm run dev:cf` sets `VITE_CF_DEV=1` so the client uses same-origin paths and Vite (`vite.config.ts` proxy) forwards `/api` + `/ws` to the wrangler Worker on `:8787`. In `dev:cf`, the client is served by Vite (HMR) — **not** rebuilt by wrangler: `scripts/cf-wrangler-build.sh` is a deliberate no-op under `WRANGLER_COMMAND=dev`, and `wrangler.toml` `watch_dir` excludes `client/src`. Don't reintroduce a full client `vite build` into the dev build path (it kills HMR). Open `http://localhost:5173` for both dev flows.
 
-## Content / rules sources
-
-When clarifying Hellpiercers mechanics or transcribing data into code, consult in order (all under the **content** package / checkout `/Users/lindenholt/code/hellpiercers-content`):
-
-1. **`HELLPIERCERS v1.02.pdf`** (gitignored at the **content** repo root) — primary rulebook text.
-2. **`rulebook/errata.md`** — official errata (local copy of [hellpiercers.com/#errata](https://hellpiercers.com/#errata)). Overrides or amends book text where they conflict.
-3. **`rulebook/developer-clarifications.md`** — Sandy Pug developer answers from the itch.io forum. Use for edge cases not covered by the errata; does not duplicate errata entries.
-4. **`rulebook/house-rules.md`** — table-specific house rules for this implementation. Overrides RAW and developer clarifications where they conflict.
-
-Edit rulebook/data/assets in the content git checkout, bump/tag, then bump the engine semver range if needed.
-
-Don't guess stats or mechanics from memory — check these sources first. Prefer engine-generic designs over new Hellpiercers hardcodes when touching shared combat/types. IP / licensing: [ADR 007](docs/adr/007-ip-and-licensing.md).
-
-## Rulebook PDF workflow
-
-Engine `npm run rulebook` / `rulebook:setup` are thin wrappers around content `rulebook/` tooling ([`scripts/rulebook.mjs`](scripts/rulebook.mjs)).
-
-One-time setup (creates content `rulebook/.venv` with `pypdf`):
-
-```bash
-npm run rulebook:setup
-```
-
-The PDF must live at the **content** repo root: `HELLPIERCERS v1.02.pdf`. It is gitignored there; each developer keeps their own copy. (A leftover engine-root PDF is also gitignored but unused by the wrappers.)
-
-Extract text with:
-
-```bash
-# Page count
-npm run rulebook -- --pages
-
-# Single page (book page number, 1-indexed)
-npm run rulebook -- --page 200
-
-# Page range
-npm run rulebook -- --from-page 196 --to-page 200
-
-# Search all pages
-npm run rulebook -- --search "Stain Flower"
-npm run rulebook -- --search "fortification" --context 200
-```
-
-Many weapon/enemy **attack patterns are embedded images**, not extractable as text. Decode them with the same script (requires Pillow — re-run `npm run rulebook:setup` after pulling if image commands fail):
-
-```bash
-# List embedded images on a page (name, dimensions, filter type)
-npm run rulebook -- --page 22 --list-images
-
-# Extract pattern diagrams to PNG (default: content rulebook/out/page-N/, gitignored)
-# By default skips full-page backgrounds; keeps images ≤600px wide/tall
-npm run rulebook -- --page 22 --extract-images
-npm run rulebook -- --from-page 21 --to-page 22 --extract-images
-
-# Include full-page scan/background images
-npm run rulebook -- --page 22 --extract-images --all-images
-
-# Custom output directory
-npm run rulebook -- --page 22 --extract-images --out /tmp/patterns
-```
-
-Open the PNGs to read tile layouts. Orange squares are attack tiles; green (when present) is the origin/player tile. Transcribe relative coordinates into `tiles` arrays in content `src/data/` (see sibling weapon entries for `anchorTile`, `healTiles`, `boundsTiles`).
-
-**Do not** write raw `obj.get_data()` bytes to disk — FlateDecode images need decoding via Pillow (`RGB` for `width×height×3` bytes; JPEG `/DCTDecode` via `Image.open`). The script handles this.
-
-**Agent workflow when transcribing rules:**
-
-1. Check content `rulebook/errata.md`, `developer-clarifications.md`, and `house-rules.md` for overrides or edge cases.
-2. Run `npm run rulebook:setup` if the content rulebook `.venv` is missing.
-3. Search or pull the relevant page(s) from the PDF. For attack patterns, also run `--list-images` / `--extract-images` on those pages.
-4. Add data in the content repo `src/data/`, commit/tag, refresh the engine install if the semver range requires it.
-5. Match existing JSON field names and tag casing in sibling entries.
-
-```bash
-npm run rulebook -- --page 200
-```
+Hellpiercers rule sources, PDF extract workflow, and tile-asset import live in the content checkout’s [`AGENTS.md`](https://github.com/acedrow/hellpiercers-content/blob/main/AGENTS.md) (local: `/Users/lindenholt/code/hellpiercers-content`). Engine `npm run rulebook` / `rulebook:setup` wrap content `rulebook/` tooling ([`scripts/rulebook.mjs`](scripts/rulebook.mjs)).
 
 ## Where to change things
 
@@ -217,45 +143,6 @@ npm run rulebook -- --page 200
 
 When adding a client message or game action, update `types.ts`, shared validators/appliers, **and** both server implementations.
 
-## Importing board tile appearances
-
-GM paintbrush **appearances** are **JPG** under content `assets/tiles/{setId}/` (e.g. `basic/`, `paracletus/`). Do **not** commit appearance PNGs — JPG only. Content `bundledTileAppearances.ts` glob-discovers them; `public/tiles/` is a mirror (`sync-content-assets.mjs` via `predev` / `prebuild`).
-
-**All imported appearance tiles must be exactly 32×32 JPG.** Upscale or downscale with nearest-neighbor (`Image.Resampling.NEAREST`) so pixel art stays crisp. Save with high JPEG quality and `subsampling=0` (e.g. Pillow `quality=95, subsampling=0`). JPG has no alpha — matte gutters/rounded corners to black (or leave sheet black) before save. Do not leave source sheets or other resolutions in the assets folders.
-
-### Layout
-
-| Path | Gallery | Paint behavior |
-|------|---------|----------------|
-| `tiles/{setId}/{name}.jpg` | One entry named `{name}` | Places that exact JPG |
-| `tiles/{setId}/{groupId}/*.jpg` | One entry named `{groupId}` | Each paint picks a **random** member JPG |
-
-Example: content `assets/tiles/paracletus/sand-light/1.jpg` … `16.jpg` → gallery shows **sand-light**; placed tiles store concrete keys like `tiles/paracletus/sand-light/7.jpg`.
-
-Brush group keys are `tiles/{setId}/{groupId}` (no extension). They are never persisted on map tiles — only resolved member keys are.
-
-### Splitting AI tileset sheets
-
-ChatGPT / similar generators often produce a single square sheet (e.g. ~1254×1254) with an **N×N grid** of tiles on a **black background**, sometimes with gutters and rounded corners. Workflow:
-
-1. Save the source sheet under `tmp/` (gitignored preferred) — do not commit the sheet.
-2. Use Pillow from the content rulebook venv (`npm run rulebook:setup` if missing).
-3. Detect content runs on non-black rows/cols (ignore noise runs shorter than ~40px). Expect equal-sized cells and consistent gutters.
-4. Crop each cell; force near-black gutters/rounded-corner pixels (e.g. RGB channels below 18) to **black** (JPG has no transparency).
-5. Resize each crop to **32×32** with nearest-neighbor.
-6. Write **`.jpg`** into the content set folder (single) or a **group subfolder** (randomized): e.g. `assets/tiles/paracletus/sand-dark/1.jpg` … `16.jpg` (`quality=95, subsampling=0`).
-7. Refresh the engine content install if needed, then `npm run sync-tile-assets -w @vtt-core/client` (or rely on the next `dev`/`build` `pre*` hook).
-
-No code change is needed for new files in an existing set or group — the glob picks them up. Adding a **new set folder** also requires a label in content `src/client/hellpiercers-client-content.ts` (`tileSetLabels`) and including that folder in the glob in content `src/client/tiles/bundledTileAppearances.ts` (features/overlays: matching `bundledTile*.ts`).
-
-### Feature sets
-
-Feature overlays (trenches, ruins, etc.) stay **PNG** (alpha) under content `assets/tiles/features/{setId}/` with the same single/group layout as appearances. Keys are `tiles/features/{setId}/...`. New feature sets need labels + glob updates in the content package. The paintbrush Viewer dropdown filters the feature gallery per set.
-
-### Overlay sets
-
-Tile overlays (stains, etc.) are **PNG** (alpha) under content `assets/tiles/overlays/{setId}/` with the same single/group layout. Keys are `tiles/overlays/{setId}/...`. On the board, layers stack **Color → Base → Overlay → Feature**.
-
 ## Client conventions
 
 - Vue 3 `<script setup lang="ts">`, Composition API.
@@ -265,7 +152,7 @@ Tile overlays (stains, etc.) are **PNG** (alpha) under content `assets/tiles/ove
 - CSS design tokens and utilities live in `packages/client/src/style.css` (`var(--color-*)`, `.panel`, `.list-card`, `.stepper`, etc.). Avoid hardcoding `#30363d`-style palette in new scoped styles.
 - `GameBoard` is performance-sensitive: precompute cell state, avoid per-cell scans in templates, use `BoardCell` + `v-memo`.
 - **Tile tooltips** — show effect name (and stack count only when stacks matter). Never append `summary` or `description` text in board tile tooltips. Presence-only tile effects (e.g. Stained, Annihilation Corridor) use a display name with no stack value. Prefer `TILE_EFFECT_IMAGE_URLS` overlays for board markers when an icon asset exists.
-- **Bundled tile appearances** — every appearance under content `assets/tiles/{setId}/` must be **32×32 JPG** (features under `features/` stay PNG; see Importing board tile appearances).
+- **Bundled tile appearances** — every appearance under content `assets/tiles/{setId}/` must be **32×32 JPG** (features under `features/` stay PNG; see content checkout `AGENTS.md` — Importing board tile appearances).
 
 ## Code style
 

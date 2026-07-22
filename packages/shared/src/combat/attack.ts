@@ -37,7 +37,7 @@ import { clampHp, getEnemyMaxHp, getPlayerMaxHp, getEffectiveEnemyMaxHp, removeE
 import { maybeTriggerAgnosia } from "./agnosia.js";
 import { tryChalazaorDamageNegation } from "./content-modules-api.js";
 import { hasSpecialIdHandler } from "./special-id.js";
-import { stainwalkDamageAdjustment } from "./content-modules-api.js";
+import { runEnemyDamageAdjustment } from "./combat-lifecycle.js";
 import {
   countSwarmTilesAdjacentTo,
   getSwarmMemberHp,
@@ -123,7 +123,6 @@ export function enemiesInRange(
     .map((e) => ({ enemyId: e.id, x: e.x, y: e.y }));
 }
 
-export const SABAOTH_WEAPON_NAME = "Sabaoth-Class Obliteration Charges";
 export const SABAOTH_MAX_CHARGES = 5;
 
 type HeavenBurningModule = {
@@ -228,7 +227,6 @@ function sethian(): SethianModule {
   return combatMod("sethian") as SethianModule;
 }
 
-export const HEAVEN_BURNING_SWORD_NAME = "Heaven Burning Sword";
 export const HEAVEN_BURNING_MIN_LEVEL = 1;
 export const HEAVEN_BURNING_MAX_LEVEL = 3;
 
@@ -560,7 +558,7 @@ export function applyDamageToEnemy(
         state,
         piercing: opts?.piercing,
       },
-    ) + (state ? stainwalkDamageAdjustment(state, enemy) : 0),
+    ) + (state ? runEnemyDamageAdjustment(state, enemy) : 0),
   );
   consumeBrokenStack(enemy);
   const newHp = clampHp(before - adjusted, maxHp);

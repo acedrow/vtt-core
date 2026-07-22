@@ -942,7 +942,7 @@ const attractorPreviewZoneOnlyKeys = computed(() => {
 });
 
 const boardTokensByKey = computed(() => {
-  const map = new Map<string, { id: string; ownerId: string; kind: "kopis" }[]>();
+  const map = new Map<string, { id: string; ownerId: string; kind: string }[]>();
   for (const t of gameState.value?.combat?.boardTokens ?? []) {
     const key = coordKey(t.x, t.y);
     const list = map.get(key) ?? [];
@@ -990,7 +990,7 @@ const attractorZoneOnlyKeys = computed(() => {
 });
 
 const kopisMarkedEnemyIds = computed(() => {
-  const marks = gameState.value?.combat?.kopisMarks ?? {};
+  const marks = gameState.value?.combat?.marks ?? gameState.value?.combat?.kopisMarks ?? {};
   return new Set(Object.values(marks));
 });
 
@@ -2738,7 +2738,7 @@ function effectTooltipLabel(id: string, stacks: number): string {
   return `${id}: ${stacks}`;
 }
 
-function boardTokenTooltipLabel(token: { ownerId: string; kind: "kopis" }): string {
+function boardTokenTooltipLabel(token: { ownerId: string; kind: string }): string {
   const owner = gameState.value?.players.find((p) => p.id === token.ownerId);
   const ownerName = owner ? playerLabel(owner) : token.ownerId;
   const yours = token.ownerId === yourPlayerId.value;

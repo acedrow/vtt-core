@@ -32,6 +32,14 @@ export type ClientCombatBoard = {
   towerModal?: Component;
 };
 
+export type ClientBoardModePlugin = {
+  id: string;
+  activateForClass?: string;
+  activateForArmor?: string;
+  activateForEquipment?: (equipmentName: string) => boolean;
+  hint?: string;
+};
+
 export type ClientBranding = {
   landingPrefix: string;
   landingAccent: string;
@@ -50,6 +58,7 @@ export type ClientContribution = {
   mainSections: ClientMainSection[];
   detailPanels?: ClientDetailPanels;
   combatBoard?: ClientCombatBoard;
+  boardModes?: ClientBoardModePlugin[];
 };
 
 let registered: ClientContribution | null = null;
@@ -70,6 +79,7 @@ let tileSetLabels: ClientTileSetLabels = {
 let mainSections: ClientMainSection[] = [];
 let detailPanels: ClientDetailPanels = {};
 let combatBoard: ClientCombatBoard = {};
+let boardModes: ClientBoardModePlugin[] = [];
 
 function applyContribution(pack: ClientContribution): void {
   themes = pack.themes.slice();
@@ -85,6 +95,7 @@ function applyContribution(pack: ClientContribution): void {
   mainSections = pack.mainSections.slice();
   detailPanels = { ...(pack.detailPanels ?? {}) };
   combatBoard = { ...(pack.combatBoard ?? {}) };
+  boardModes = (pack.boardModes ?? []).slice();
 }
 
 function clearContribution(): void {
@@ -97,6 +108,7 @@ function clearContribution(): void {
   mainSections = [];
   detailPanels = {};
   combatBoard = {};
+  boardModes = [];
 }
 
 export function registerClientContentPack(pack: ClientContribution): void {
@@ -184,4 +196,20 @@ export function getClientDetailPanels(): ClientDetailPanels {
 export function getClientCombatBoard(): ClientCombatBoard {
   if (!registered) return {};
   return combatBoard;
+}
+
+export function listClientBoardModes(): ClientBoardModePlugin[] {
+  if (!registered) return [];
+  return boardModes;
+}
+
+export function boardModeForClass(className: string | undefined): string | null {
+  if (!className) return null;
+  const plugin = boardModes.find((m) => m.activateForClass === className);
+  return plugin?.id ?? null;
+}
+
+export function boardModeForEquipment(equipmentName: string): string | null {
+  const plugin = boardModes.find((m) => m.activateForEquipment?.(equipmentName));
+  return plugin?.id ?? null;
 }
