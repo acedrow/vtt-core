@@ -18,14 +18,39 @@ import type { EnemyAttackSpec } from "./types.js";
 import { parseAndRollDamage } from "./damage.js";
 import { applyEffectStacks, applyEnemyEffectStacks } from "./effects.js";
 import { trackCountdownKinds } from "./countdown.js";
-import {
-  chrysaorImmuneToAreaEffects,
-  maybeOfferBrandStrip,
-} from "./content-modules-api.js";
+import { combatMod } from "../combat-modules.js";
 import { applyPullToward } from "./pull.js";
 import { applyPushFromOrigin } from "./push.js";
-import { stainMapTile } from "./content-modules-api.js";
-import { swarmGroupForEnemy } from "./content-modules-api.js";
+import { swarmGroupForEnemy } from "./swarm.js";
+
+type ChrysaorModule = {
+  chrysaorImmuneToAreaEffects: (unit: Player | Enemy) => boolean;
+  maybeOfferBrandStrip: (state: GameState, player: Player) => void;
+};
+
+function chrysaor(): ChrysaorModule {
+  return combatMod("chrysaor") as ChrysaorModule;
+}
+
+function chrysaorImmuneToAreaEffects(unit: Player | Enemy): boolean {
+  return chrysaor().chrysaorImmuneToAreaEffects(unit);
+}
+
+function maybeOfferBrandStrip(state: GameState, player: Player): void {
+  chrysaor().maybeOfferBrandStrip(state, player);
+}
+
+type StainwalkModule = {
+  stainMapTile: (state: GameState, x: number, y: number) => boolean;
+};
+
+function stainwalk(): StainwalkModule {
+  return combatMod("stainwalk") as StainwalkModule;
+}
+
+function stainMapTile(state: GameState, x: number, y: number): boolean {
+  return stainwalk().stainMapTile(state, x, y);
+}
 
 function applyStacks(
   state: GameState,

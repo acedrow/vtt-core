@@ -15,8 +15,8 @@ import {
   pickSwarmMoveMember,
   swarmGroupForEnemy,
   swarmTilePositions,
-} from "./content-modules-api.js";
-import { isTowerEnemy } from "./content-modules-api.js";
+} from "./swarm.js";
+import { isTowerEnemy } from "./yadathan.js";
 import { createDefaultCombatState } from "./types.js";
 import { enemyHasFlyingTag } from "./elevation.js";
 import { getProvokeRetaliationHandler } from "./provoke-retaliation.js";

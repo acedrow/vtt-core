@@ -1,7 +1,30 @@
+import type { PatternDirection } from "../pattern-data.js";
 import type { GameState, Player } from "../types.js";
-import type { PlayerAction } from "./types.js";
 
-export type WeaponActiveAction = Extract<PlayerAction, { action: "weaponActive" }>;
+export type WeaponActiveAction = {
+  action: "pack";
+  kind: "weaponActive";
+  detail?: {
+    detail?: string;
+    targetEnemyIds?: string[];
+    targetPlayerIds?: string[];
+    direction?: PatternDirection;
+    omnistrike?: {
+      bombIndices: [number, number];
+      anchors: [{ x: number; y: number }, { x: number; y: number }];
+      direction: PatternDirection;
+    };
+    warhook?: {
+      targetEnemyId?: string;
+      targetX: number;
+      targetY: number;
+      landingX: number;
+      landingY: number;
+      damageRoll?: number;
+      useBreaker?: boolean;
+    };
+  };
+};
 
 export type WeaponActiveHandler = {
   id: string;

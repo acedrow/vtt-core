@@ -458,6 +458,7 @@ export type ClientMessage =
   | { type: "setAttackPreview"; preview: AttackPreviewState | null }
   | { type: "gmEnemyAction"; action: GmEnemyAction }
   | { type: "applyAssistedOutcome"; outcome: AssistedOutcome }
+  | { type: "packCombat"; kind: string; detail?: Record<string, unknown> }
   | { type: "triggerReversal"; extraLines?: { allyId: string; anchor?: "tower" }[] }
   | { type: "declineReversal" }
   | {

@@ -25,7 +25,7 @@ import {
   collectEquipmentPatternTiles,
   getEquipmentAttackSpec,
   isHylicAnnihilationCorridor,
-} from "./content-modules-api.js";
+} from "./equipment.js";
 import {
   evaluateAnchoredPatternPlacement,
   isHealAttackSpec,
@@ -172,8 +172,9 @@ function computeOmnistrikeHighlights(
   preview: AttackPreviewState,
 ): AttackPreviewHighlights {
   const player = state.players.find((p) => p.id === playerId);
-  const indices = preview.omnistrikeBombIndices;
-  const step = preview.omnistrikeStep;
+  const pack = preview.pack ?? {};
+  const indices = pack.omnistrikeBombIndices as [number, number] | undefined;
+  const step = pack.omnistrikeStep as "placeFirst" | "placeSecond" | "confirm" | undefined;
   if (!player?.weapon || !indices || !step) return EMPTY;
   const [indexA, indexB] = indices;
   const bombA = resolveBombAttackSpec(player.weapon, indexA);
@@ -183,7 +184,9 @@ function computeOmnistrikeHighlights(
   if (!combinedSpan) return EMPTY;
 
   const direction = preview.direction ?? "n";
-  const anchors = preview.omnistrikeAnchors ?? [null, null];
+  const anchors = (pack.omnistrikeAnchors as
+    | [{ x: number; y: number } | null, { x: number; y: number } | null]
+    | undefined) ?? [null, null];
 
   if (step === "confirm") {
     const anchorA = anchors[0];

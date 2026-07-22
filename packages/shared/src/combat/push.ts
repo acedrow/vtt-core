@@ -5,13 +5,13 @@ import {
   reconcileSwarmHp,
   snapshotSwarmGroups,
   swarmGroupForEnemy,
-} from "./content-modules-api.js";
+} from "./swarm.js";
 import { coordKey, isInBounds, isWalkable, tileAt } from "../map.js";
 import { enemyFootprintTiles, getEnemyScale } from "../enemy-data.js";
 import { enemyLabel, playerLabel } from "../console.js";
 import { applyDamageToEnemy, applyDamageToPlayer } from "./attack.js";
 import { applyVoidTileDefeat, enemyFullyOnVoid, isVoidTile } from "./void-tile.js";
-import { isTowerEnemy } from "./content-modules-api.js";
+import { isTowerEnemy } from "./yadathan.js";
 import { syncUnitElevationOnTile } from "./elevation.js";
 
 export type PushUnitKind = "player" | "enemy";

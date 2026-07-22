@@ -11,7 +11,7 @@
     "sync-maps:local": "node scripts/sync-maps.mjs --local"
   },
   "dependencies": {
-    "@vtt-core/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.10",
+    "@vtt-core/hellpiercers-content": "git+https://github.com/acedrow/hellpiercers-content.git#semver:^0.0.11",
     "@vtt-core/shared": "*"
   },
   "devDependencies": {

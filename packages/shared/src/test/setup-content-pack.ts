@@ -17,13 +17,6 @@ function stubModule(): object {
           if (prop === "clearAnnihilationCorridorTileEffects") {
             return undefined;
           }
-          if (
-            prop === "tileIsStained" ||
-            prop === "enemyOnStainedTile" ||
-            prop === "isSoaringBombardier"
-          ) {
-            return false;
-          }
           if (prop === "reversalTriggerSatisfied") return true;
           if (
             prop === "isMalakbelArmorName" ||
@@ -52,16 +45,12 @@ function stubModule(): object {
 
 const moduleKeys = [
   "chalazaor",
-  "gorgenaut",
   "stainwalk",
   "swarm",
   "classAbilities",
   "chrysaor",
-  "kopis",
   "equipment",
   "yadathan",
-  "stainGeyser",
-  "lurkingFreak",
   "provoke",
   "heavenBurning",
   "reversals",

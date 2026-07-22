@@ -22,7 +22,7 @@ import {
   validateFlyingMask,
 } from "./aegis.js";
 import { canUseActionTier, spendActionTierOrHaste, spendMovement } from "./actions.js";
-import { swarmGroupForEnemy } from "./content-modules-api.js";
+import { swarmGroupForEnemy } from "./swarm.js";
 import { combatMod } from "../combat-modules.js";
 import { createDefaultActionBudget, type ActionBudget } from "./types.js";
 import { enemyHasFlyingTag, isUnitFalling, syncUnitElevationOnTile } from "./elevation.js";

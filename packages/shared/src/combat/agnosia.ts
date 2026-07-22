@@ -3,7 +3,7 @@ import { enemyLabel } from "../console.js";
 import { getEnemyListingByName } from "../enemy-data.js";
 import { isSandboxMode } from "../game.js";
 import { isInBounds } from "../map.js";
-import { swarmGroupForEnemy } from "./content-modules-api.js";
+import { swarmGroupForEnemy } from "./swarm.js";
 
 export type AgnosiaHandler = (state: GameState, enemy: Enemy) => string[];
 

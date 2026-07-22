@@ -254,7 +254,11 @@ const canConfirmWeaponVariant = computed(() => {
 });
 
 function useHeavenBurningUnfold() {
-  sendPlayerAction({ action: "weaponActive", detail: "heaven_burning_unfold" });
+  sendPlayerAction({
+    action: "pack",
+    kind: "weaponActive",
+    detail: { detail: "heaven_burning_unfold" },
+  });
 }
 
 function runSheetChromeAction(action: string | undefined) {

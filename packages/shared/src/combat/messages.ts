@@ -6,6 +6,7 @@ import type {
   GmEnemyAction,
   PlayerAction,
 } from "./types.js";
+import { migrateAttackPreviewFields } from "./types.js";
 import type { ClientMessage, Enemy, GameState, Player, TerrainType, TileColorTint, TileImageRotation } from "../types.js";
 import { hasGmCapabilities, type AuthCapabilities } from "../auth-capabilities.js";
 import {
@@ -105,7 +106,7 @@ import {
   validateHylicCorridorAction,
   validateHylicRejectionField,
   validateRedirectionCircuits,
-} from "./content-modules-api.js";
+} from "./equipment.js";
 import { applyEffectStacks, applyEnemyEffectStacks, applyTileEffectStacks, clearEffectStacks, clearEnemyEffectStacks, clearTileEffects, hasTileEffects, parseEffectToken, replaceTileEffects, tickUnitEndOfTurn } from "./effects.js";
 import { isKnownEffectId } from "../effects-data.js";
 import { createPendingAction, addPendingAction, applyAssistedOutcome } from "./pending.js";
@@ -127,7 +128,7 @@ import {
   snapshotSwarmGroups,
   swarmGroupForEnemy,
   validateSwarmChip,
-} from "./content-modules-api.js";
+} from "./swarm.js";
 import { enemyLabel, playerLabel } from "../console.js";
 import {
   isRangeTargetAttack,
@@ -152,7 +153,7 @@ import {
   validateSeedInteract,
   validateTowerTeleport,
   yadathanReversalEligible,
-} from "./content-modules-api.js";
+} from "./yadathan.js";
 import {
   computeAssistedLaunch,
   formatAssistedLaunchMessage,
@@ -177,13 +178,17 @@ import {
   validateClassActive,
   validateClassPassive,
   validateResolveClassReaction,
-} from "./content-modules-api.js";
+} from "./class-abilities.js";
 import { runEnemyDefeated } from "./combat-lifecycle.js";
-import { findWeaponActiveHandler } from "./weapon-active.js";
+import { findWeaponActiveHandler, type WeaponActiveAction } from "./weapon-active.js";
+import { normalizePlayerAction } from "./normalize-player-action.js";
+import { normalizeGmEnemyAction } from "./normalize-gm-enemy-action.js";
+import { normalizePackCombatMessage } from "./normalize-pack-combat-message.js";
 import { playerArmorGearName, validateRemoveAttractor, applyRemoveAttractor, applyAttractorEndOfTurnPulls, clearAttractorPullForEnemy } from "./attractor.js";
 import { applyTransferenceHeal } from "./transference.js";
 import { computePathCostWithFlying, resolveFlyingMask, spendAegisFlying } from "./aegis.js";
 import { spendMovement } from "./actions.js";
+import type { PatternDirection } from "../pattern-data.js";
 
 export type CombatMessageContext = AuthCapabilities & {
   playerId: string | null;
@@ -413,81 +418,103 @@ export function validatePlayerAction(
       if ((target.hp ?? 0) > 0) return "Ally is not down";
       return null;
     }
-    case "armorAction": {
-      if (action.kind === "tower_teleport") {
-        if (action.x == null || action.y == null) return "Select landing space";
-        return validateTowerTeleport(state, player, action.x, action.y, action.keraunoTargetEnemyId);
-      }
-      if (action.kind === "katapty_end_turn") {
-        return validateKataptyEndTurn(state, player, action.targetEnemyIds);
-      }
-      const blocked = actionTierBlocked(player, "support", state);
-      if (blocked) return blocked;
-      const armor = getArmorByName(player.armor ?? "");
-      const structured = armor?.armorActionStructured as StructuredArmorAction | undefined;
-      if (!structured) return "Armor action not structured — use assisted flow";
-      if (structured.kind === "teleport_adjacent") {
-        if (!action.targetEnemyId) return "Select adjacent enemy";
-        const enemy = state.enemies.find((e) => e.id === action.targetEnemyId);
-        if (!enemy) return "Unknown enemy";
-        if (!adjacentEnemies(state, player.x, player.y).includes(enemy.id)) return "Enemy not adjacent";
-        if (action.landingX === undefined || action.landingY === undefined) return "Select landing space";
-        const landing = { x: action.landingX, y: action.landingY };
-        const validLandings = formlessLandingTiles(state, playerId, action.targetEnemyId);
-        if (!validLandings.some((tile) => tile.x === landing.x && tile.y === landing.y)) {
-          return "Invalid landing space";
+    case "pack": {
+      const detail = action.detail ?? {};
+      switch (action.kind) {
+        case "assistedLaunch": {
+          const anchorX = detail.anchorX as number;
+          const anchorY = detail.anchorY as number;
+          return validateAssistedLaunch(state, playerId, anchorX, anchorY);
         }
-      }
-      if (structured.kind === "push_recoil") {
-        if (!action.targetEnemyId && !action.targetPlayerId) return "Select target";
-        const push = action.push ?? 1;
-        const maxPush = structured.push ?? 3;
-        if (!Number.isInteger(push) || push < 1 || push > maxPush) return "Invalid push distance";
-        if (action.targetEnemyId) {
-          if (!state.enemies.some((e) => e.id === action.targetEnemyId)) return "Unknown target";
-          if (!adjacentEnemies(state, player.x, player.y).includes(action.targetEnemyId)) {
-            return "Target must be adjacent";
+        case "armorAction": {
+          const kind = detail.kind as string | undefined;
+          const x = detail.x as number | undefined;
+          const y = detail.y as number | undefined;
+          const targetEnemyId = detail.targetEnemyId as string | undefined;
+          const targetPlayerId = detail.targetPlayerId as string | undefined;
+          const landingX = detail.landingX as number | undefined;
+          const landingY = detail.landingY as number | undefined;
+          const push = detail.push as 1 | 2 | 3 | undefined;
+          const keraunoTargetEnemyId = detail.keraunoTargetEnemyId as string | undefined;
+          const targetEnemyIds = detail.targetEnemyIds as string[] | undefined;
+          if (kind === "tower_teleport") {
+            if (x == null || y == null) return "Select landing space";
+            return validateTowerTeleport(state, player, x, y, keraunoTargetEnemyId);
           }
-        } else {
-          const target = state.players.find((p) => p.id === action.targetPlayerId);
-          if (!target) return "Unknown target";
-          if (!isOrthogonallyAdjacent({ x: player.x, y: player.y }, { x: target.x, y: target.y })) {
-            return "Target must be adjacent";
+          if (kind === "katapty_end_turn") {
+            return validateKataptyEndTurn(state, player, targetEnemyIds);
           }
+          const blocked = actionTierBlocked(player, "support", state);
+          if (blocked) return blocked;
+          const armor = getArmorByName(player.armor ?? "");
+          const structured = armor?.armorActionStructured as StructuredArmorAction | undefined;
+          if (!structured) return "Armor action not structured — use assisted flow";
+          if (structured.kind === "teleport_adjacent") {
+            if (!targetEnemyId) return "Select adjacent enemy";
+            const enemy = state.enemies.find((e) => e.id === targetEnemyId);
+            if (!enemy) return "Unknown enemy";
+            if (!adjacentEnemies(state, player.x, player.y).includes(enemy.id)) return "Enemy not adjacent";
+            if (landingX === undefined || landingY === undefined) return "Select landing space";
+            const landing = { x: landingX, y: landingY };
+            const validLandings = formlessLandingTiles(state, playerId, targetEnemyId);
+            if (!validLandings.some((tile) => tile.x === landing.x && tile.y === landing.y)) {
+              return "Invalid landing space";
+            }
+          }
+          if (structured.kind === "push_recoil") {
+            if (!targetEnemyId && !targetPlayerId) return "Select target";
+            const pushDist = push ?? 1;
+            const maxPush = structured.push ?? 3;
+            if (!Number.isInteger(pushDist) || pushDist < 1 || pushDist > maxPush) {
+              return "Invalid push distance";
+            }
+            if (targetEnemyId) {
+              if (!state.enemies.some((e) => e.id === targetEnemyId)) return "Unknown target";
+              if (!adjacentEnemies(state, player.x, player.y).includes(targetEnemyId)) {
+                return "Target must be adjacent";
+              }
+            } else {
+              const target = state.players.find((p) => p.id === targetPlayerId);
+              if (!target) return "Unknown target";
+              if (!isOrthogonallyAdjacent({ x: player.x, y: player.y }, { x: target.x, y: target.y })) {
+                return "Target must be adjacent";
+              }
+            }
+          }
+          if (structured.kind === "place_tower") {
+            if (x === undefined || y === undefined) return "Select placement tile";
+            return validatePlaceTower(state, player, x, y, structured.range);
+          }
+          return null;
         }
+        case "classActive": {
+          const tier = classActiveTierFor(player);
+          const blocked = actionTierBlocked(player, tier, state);
+          if (blocked) return blocked;
+          return validateClassActive(state, player, action);
+        }
+        case "classPassive": {
+          return validateClassPassive(state, player, action);
+        }
+        case "weaponActive": {
+          const weaponAction = action as WeaponActiveAction;
+          const weaponHandler = findWeaponActiveHandler(player, weaponAction);
+          if (weaponHandler) {
+            const tier = weaponAction.detail?.detail === "heaven_burning_unfold" ? "aux" : "main";
+            const blocked = actionTierBlocked(player, tier, state);
+            if (blocked) return blocked;
+            return weaponHandler.validate(state, player, weaponAction);
+          }
+          const blocked = actionTierBlocked(player, "main", state);
+          if (blocked) return blocked;
+          return null;
+        }
+        default:
+          return "Unknown pack action";
       }
-      if (structured.kind === "place_tower") {
-        if (action.x === undefined || action.y === undefined) return "Select placement tile";
-        return validatePlaceTower(state, player, action.x, action.y, structured.range);
-      }
-      return null;
-    }
-    case "assistedLaunch": {
-      return validateAssistedLaunch(state, playerId, action.anchorX, action.anchorY);
-    }
-    case "classActive": {
-      const tier = classActiveTierFor(player);
-      const blocked = actionTierBlocked(player, tier, state);
-      if (blocked) return blocked;
-      return validateClassActive(state, player, action);
-    }
-    case "classPassive": {
-      return validateClassPassive(state, player, action);
     }
     case "resolveClassReaction": {
       return validateResolveClassReaction(state, playerId, action);
-    }
-    case "weaponActive": {
-      const weaponHandler = findWeaponActiveHandler(player, action);
-      if (weaponHandler) {
-        const tier = action.detail === "heaven_burning_unfold" ? "aux" : "main";
-        const blocked = actionTierBlocked(player, tier, state);
-        if (blocked) return blocked;
-        return weaponHandler.validate(state, player, action);
-      }
-      const blocked = actionTierBlocked(player, "main", state);
-      if (blocked) return blocked;
-      return null;
     }
     case "useEquipment": {
       const blocked = actionTierBlocked(player, "support", state);
@@ -730,107 +757,148 @@ export function applyPlayerAction(
       target.hp = getPlayerMaxHp(target);
       return `${playerLabel(player)} rezzed ${playerLabel(target)}`;
     }
-    case "armorAction": {
-      if (action.kind === "tower_teleport" && action.x != null && action.y != null) {
-        const msg = applyTowerTeleport(state, player, action.x, action.y, action.keraunoTargetEnemyId);
-        return `${playerLabel(player)} ${msg}`;
-      }
-      if (action.kind === "katapty_end_turn") {
-        const tower = getPlayerTower(state, player.id)!;
-        const resolved = resolveKataptyTargetIds(state, player.id, action.targetEnemyIds);
-        if ("error" in resolved) return resolved.error;
-        const strikeMsg = applyKataptyStrike(state, tower, resolved.ids);
-        if (!player.counters) player.counters = {};
-        player.counters.kataptyResolved = 1;
-        return `${playerLabel(player)} ${strikeMsg}`;
-      }
-      const armor = getArmorByName(player.armor ?? "")!;
-      const structured = armor.armorActionStructured as StructuredArmorAction;
-      if (structured.kind === "teleport_adjacent" && action.targetEnemyId) {
-        const landing = { x: action.landingX!, y: action.landingY! };
-        const triggers = previewSprintProvokes(state, playerId, landing.x, landing.y);
-        let provokeMsg = "";
-        if (triggers.length) {
-          provokeMsg = applyProvokeAndFormat(state, { kind: "player", player }, triggers);
-        }
-        player.x = landing.x;
-        player.y = landing.y;
-        maybeSpendActionTier(state, player, "support");
-        let msg = `${playerLabel(player)} used Formless`;
-        if (provokeMsg) msg = `${provokeMsg}; ${msg}`;
-        return msg;
-      }
-      if (structured.kind === "push_recoil") {
-        const push = action.push ?? 1;
-        const target = action.targetEnemyId
-          ? state.enemies.find((e) => e.id === action.targetEnemyId)
-          : state.players.find((p) => p.id === action.targetPlayerId);
-        if (!target) return "Unknown target";
-        const targetX = target.x;
-        const targetY = target.y;
-        const parts: string[] = [];
-        if (action.targetEnemyId) {
-          const enemy = target as Enemy;
-          parts.push(
-            applyPushFromOrigin(state, enemy, player.x, player.y, push, {
-              kind: "enemy",
-              excludePlayerId: playerId,
-            }),
-          );
-          if ((enemy.hp ?? 1) <= 0) {
-            const tokenMsg = runEnemyDefeated(state, enemy, playerId);
-            if (tokenMsg) parts.push(tokenMsg);
+    case "pack": {
+      const detail = action.detail ?? {};
+      switch (action.kind) {
+        case "assistedLaunch": {
+          const anchorX = detail.anchorX as number;
+          const anchorY = detail.anchorY as number;
+          const preview = computeAssistedLaunch(state, playerId, anchorX, anchorY)!;
+          const triggers = previewPathProvokes(state, playerId, preview.path);
+          let provokeMsg = "";
+          if (triggers.length) {
+            provokeMsg = applyProvokeAndFormat(state, { kind: "player", player }, triggers);
           }
-        } else {
-          parts.push(
-            applyPushFromOrigin(state, target as Player, player.x, player.y, push, {
-              kind: "player",
-              excludePlayerId: playerId,
+          const stepMessages: string[] = [];
+          for (const step of preview.path) {
+            player.x = step.x;
+            player.y = step.y;
+            stepMessages.push(...applyPostMovementHooks(state, player, "player").messages);
+            if ((player.hp ?? 0) <= 0) break;
+          }
+          if (!player.counters) player.counters = {};
+          player.counters.assistedLaunchUsed = 1;
+          recordPassedEnemiesOnPath(state, player, preview.path);
+          let msg = formatAssistedLaunchMessage(player, preview);
+          if (stepMessages.length) msg = `${stepMessages.join("; ")}; ${msg}`;
+          if (provokeMsg) msg = `${provokeMsg}; ${msg}`;
+          return msg;
+        }
+        case "armorAction": {
+          const kind = detail.kind as string | undefined;
+          const x = detail.x as number | undefined;
+          const y = detail.y as number | undefined;
+          const targetEnemyId = detail.targetEnemyId as string | undefined;
+          const targetPlayerId = detail.targetPlayerId as string | undefined;
+          const landingX = detail.landingX as number | undefined;
+          const landingY = detail.landingY as number | undefined;
+          const push = detail.push as 1 | 2 | 3 | undefined;
+          const keraunoTargetEnemyId = detail.keraunoTargetEnemyId as string | undefined;
+          const targetEnemyIds = detail.targetEnemyIds as string[] | undefined;
+          if (kind === "tower_teleport" && x != null && y != null) {
+            const msg = applyTowerTeleport(state, player, x, y, keraunoTargetEnemyId);
+            return `${playerLabel(player)} ${msg}`;
+          }
+          if (kind === "katapty_end_turn") {
+            const tower = getPlayerTower(state, player.id)!;
+            const resolved = resolveKataptyTargetIds(state, player.id, targetEnemyIds);
+            if ("error" in resolved) return resolved.error;
+            const strikeMsg = applyKataptyStrike(state, tower, resolved.ids);
+            if (!player.counters) player.counters = {};
+            player.counters.kataptyResolved = 1;
+            return `${playerLabel(player)} ${strikeMsg}`;
+          }
+          const armor = getArmorByName(player.armor ?? "")!;
+          const structured = armor.armorActionStructured as StructuredArmorAction;
+          if (structured.kind === "teleport_adjacent" && targetEnemyId) {
+            const landing = { x: landingX!, y: landingY! };
+            const triggers = previewSprintProvokes(state, playerId, landing.x, landing.y);
+            let provokeMsg = "";
+            if (triggers.length) {
+              provokeMsg = applyProvokeAndFormat(state, { kind: "player", player }, triggers);
+            }
+            player.x = landing.x;
+            player.y = landing.y;
+            maybeSpendActionTier(state, player, "support");
+            let msg = `${playerLabel(player)} used Formless`;
+            if (provokeMsg) msg = `${provokeMsg}; ${msg}`;
+            return msg;
+          }
+          if (structured.kind === "push_recoil") {
+            const pushDist = push ?? 1;
+            const target = targetEnemyId
+              ? state.enemies.find((e) => e.id === targetEnemyId)
+              : state.players.find((p) => p.id === targetPlayerId);
+            if (!target) return "Unknown target";
+            const targetX = target.x;
+            const targetY = target.y;
+            const parts: string[] = [];
+            if (targetEnemyId) {
+              const enemy = target as Enemy;
+              parts.push(
+                applyPushFromOrigin(state, enemy, player.x, player.y, pushDist, {
+                  kind: "enemy",
+                  excludePlayerId: playerId,
+                }),
+              );
+              if ((enemy.hp ?? 1) <= 0) {
+                const tokenMsg = runEnemyDefeated(state, enemy, playerId);
+                if (tokenMsg) parts.push(tokenMsg);
+              }
+            } else {
+              parts.push(
+                applyPushFromOrigin(state, target as Player, player.x, player.y, pushDist, {
+                  kind: "player",
+                  excludePlayerId: playerId,
+                }),
+              );
+            }
+            parts.push(applyRecoilFromTarget(state, player, targetX, targetY, pushDist));
+            maybeSpendActionTier(state, player, "support");
+            const detailMsg = parts.filter(Boolean).join("; ");
+            return `${playerLabel(player)} used Hasaphet's Palm — ${detailMsg}`;
+          }
+          maybeSpendActionTier(state, player, "support");
+          if (structured.kind === "place_tower" && x != null && y != null) {
+            const result = applyPlaceTower(state, player, x, y);
+            if ("error" in result) return result.error;
+            return `${playerLabel(player)} ${result.message}`;
+          }
+          return `${playerLabel(player)} used armor action`;
+        }
+        case "classActive": {
+          const tier = classActiveTierFor(player);
+          maybeSpendActionTier(state, player, tier);
+          return applyClassActive(state, playerId, action);
+        }
+        case "classPassive": {
+          return applyClassPassive(state, playerId, action);
+        }
+        case "weaponActive": {
+          const weaponAction = action as WeaponActiveAction;
+          const weaponHandler = findWeaponActiveHandler(player, weaponAction);
+          if (weaponHandler) {
+            const tier = weaponAction.detail?.detail === "heaven_burning_unfold" ? "aux" : "main";
+            maybeSpendActionTier(state, player, tier);
+            return weaponHandler.apply(state, player, weaponAction);
+          }
+          maybeSpendActionTier(state, player, "main");
+          const weapon = getWeaponByName(player.weapon ?? "");
+          addPendingAction(
+            state,
+            createPendingAction("weaponActive", `${weapon?.name ?? "Weapon"} active`, {
+              actorPlayerId: playerId,
+              detail: weapon?.name ?? weaponAction.detail?.detail,
+              targetEnemyIds: weaponAction.detail?.targetEnemyIds,
+              targetPlayerIds: weaponAction.detail?.targetPlayerIds,
+              direction: weaponAction.detail?.direction as PatternDirection | undefined,
             }),
           );
+          return `${playerLabel(player)} used weapon active (pending GM)`;
         }
-        parts.push(applyRecoilFromTarget(state, player, targetX, targetY, push));
-        maybeSpendActionTier(state, player, "support");
-        const detail = parts.filter(Boolean).join("; ");
-        return `${playerLabel(player)} used Hasaphet's Palm — ${detail}`;
+        default:
+          return "Unknown pack action";
       }
-      maybeSpendActionTier(state, player, "support");
-      if (structured.kind === "place_tower" && action.x != null && action.y != null) {
-        const result = applyPlaceTower(state, player, action.x, action.y);
-        if ("error" in result) return result.error;
-        return `${playerLabel(player)} ${result.message}`;
-      }
-      return `${playerLabel(player)} used armor action`;
-    }
-    case "assistedLaunch": {
-      const preview = computeAssistedLaunch(state, playerId, action.anchorX, action.anchorY)!;
-      const triggers = previewPathProvokes(state, playerId, preview.path);
-      let provokeMsg = "";
-      if (triggers.length) {
-        provokeMsg = applyProvokeAndFormat(state, { kind: "player", player }, triggers);
-      }
-      const stepMessages: string[] = [];
-      for (const step of preview.path) {
-        player.x = step.x;
-        player.y = step.y;
-        stepMessages.push(...applyPostMovementHooks(state, player, "player").messages);
-        if ((player.hp ?? 0) <= 0) break;
-      }
-      if (!player.counters) player.counters = {};
-      player.counters.assistedLaunchUsed = 1;
-      recordPassedEnemiesOnPath(state, player, preview.path);
-      let msg = formatAssistedLaunchMessage(player, preview);
-      if (stepMessages.length) msg = `${stepMessages.join("; ")}; ${msg}`;
-      if (provokeMsg) msg = `${provokeMsg}; ${msg}`;
-      return msg;
-    }
-    case "classActive": {
-      const tier = classActiveTierFor(player);
-      maybeSpendActionTier(state, player, tier);
-      return applyClassActive(state, playerId, action);
-    }
-    case "classPassive": {
-      return applyClassPassive(state, playerId, action);
     }
     case "resolveClassReaction": {
       const reaction = state.combat?.pendingClassReaction;
@@ -838,27 +906,6 @@ export function applyPlayerAction(
         maybeSpendActionTier(state, player, "support");
       }
       return applyResolveClassReaction(state, playerId, action);
-    }
-    case "weaponActive": {
-      const weaponHandler = findWeaponActiveHandler(player, action);
-      if (weaponHandler) {
-        const tier = action.detail === "heaven_burning_unfold" ? "aux" : "main";
-        maybeSpendActionTier(state, player, tier);
-        return weaponHandler.apply(state, player, action);
-      }
-      maybeSpendActionTier(state, player, "main");
-      const weapon = getWeaponByName(player.weapon ?? "");
-      addPendingAction(
-        state,
-        createPendingAction("weaponActive", `${weapon?.name ?? "Weapon"} active`, {
-          actorPlayerId: playerId,
-          detail: weapon?.name ?? action.detail,
-          targetEnemyIds: action.targetEnemyIds,
-          targetPlayerIds: action.targetPlayerIds,
-          direction: action.direction,
-        }),
-      );
-      return `${playerLabel(player)} used weapon active (pending GM)`;
     }
     case "useEquipment": {
       maybeSpendActionTier(state, player, "support");
@@ -951,8 +998,16 @@ export function validateGmEnemyAction(state: GameState, action: GmEnemyAction): 
       }
       return null;
     }
-    case "swarmChip":
-      return validateSwarmChip(state, action.enemyId, action.targetPlayerIds);
+    case "pack": {
+      if (action.kind === "swarmChip") {
+        const targetPlayerIds = action.detail?.targetPlayerIds;
+        if (!Array.isArray(targetPlayerIds) || !targetPlayerIds.every((id) => typeof id === "string")) {
+          return "Invalid swarm chip targets";
+        }
+        return validateSwarmChip(state, action.enemyId, targetPlayerIds);
+      }
+      return "Unknown pack action";
+    }
     case "attack": {
       const chipErr = requireSwarmChipResolved(state, action.enemyId);
       if (chipErr) return chipErr;
@@ -1035,21 +1090,25 @@ export function applyGmEnemyAction(state: GameState, action: GmEnemyAction): str
       setActiveEnemy(state, action.enemyId);
       return `${enemyLabel(enemy)} moved to (${dest.x}, ${dest.y})`;
     }
-    case "swarmChip": {
-      clearAttractorPullForEnemy(state, action.enemyId);
-      const group = swarmGroupForEnemy(state, action.enemyId);
-      const hits: string[] = [];
-      for (const id of action.targetPlayerIds) {
-        const player = state.players.find((p) => p.id === id);
-        if (!player) continue;
-        applyDamageToPlayer(player, 1, state);
-        hits.push(playerLabel(player));
+    case "pack": {
+      if (action.kind === "swarmChip") {
+        clearAttractorPullForEnemy(state, action.enemyId);
+        const group = swarmGroupForEnemy(state, action.enemyId);
+        const targetPlayerIds = (action.detail?.targetPlayerIds as string[] | undefined) ?? [];
+        const hits: string[] = [];
+        for (const id of targetPlayerIds) {
+          const player = state.players.find((p) => p.id === id);
+          if (!player) continue;
+          applyDamageToPlayer(player, 1, state);
+          hits.push(playerLabel(player));
+        }
+        markSwarmChipResolved(state, action.enemyId);
+        setActiveEnemy(state, group?.canonicalId ?? action.enemyId);
+        const label = enemyLabel(enemy);
+        if (!hits.length) return `${label} swarm chip (no targets)`;
+        return `${label} swarm chip → ${hits.join(", ")}`;
       }
-      markSwarmChipResolved(state, action.enemyId);
-      setActiveEnemy(state, group?.canonicalId ?? action.enemyId);
-      const label = enemyLabel(enemy);
-      if (!hits.length) return `${label} swarm chip (no targets)`;
-      return `${label} swarm chip → ${hits.join(", ")}`;
+      return "Unknown pack action";
     }
     case "attack": {
       clearAttractorPullForEnemy(state, enemy.id);
@@ -1849,6 +1908,7 @@ export function validateSetAttackPreview(
 
 export function applySetAttackPreview(state: GameState, preview: AttackPreviewState | null) {
   if (!state.combat) return;
+  if (preview) migrateAttackPreviewFields(preview);
   state.combat.attackPreview = preview;
 }
 
@@ -1899,9 +1959,11 @@ export function handleCombatMessage(
     }
     case "playerAction": {
       if (!ctx.playerId) return { handled: true, error: "Only players can act" };
-      const err = validatePlayerAction(state, ctx.playerId, parsed.action);
+      const normalized = normalizePlayerAction(parsed.action);
+      if ("error" in normalized) return { handled: true, error: normalized.error };
+      const err = validatePlayerAction(state, ctx.playerId, normalized);
       if (err) return { handled: true, error: err };
-      return { handled: true, message: applyPlayerAction(state, ctx.playerId, parsed.action) };
+      return { handled: true, message: applyPlayerAction(state, ctx.playerId, normalized) };
     }
     case "restorePlayerActionTier": {
       if (!hasGmCapabilities(ctx)) return { handled: true, error: "Only GM can do that" };
@@ -1914,9 +1976,11 @@ export function handleCombatMessage(
     }
     case "gmEnemyAction": {
       if (!hasGmCapabilities(ctx)) return { handled: true, error: "Only GM can do that" };
-      const err = validateGmEnemyAction(state, parsed.action);
+      const normalized = normalizeGmEnemyAction(parsed.action);
+      if ("error" in normalized) return { handled: true, error: normalized.error };
+      const err = validateGmEnemyAction(state, normalized);
       if (err) return { handled: true, error: err };
-      return { handled: true, message: applyGmEnemyAction(state, parsed.action) };
+      return { handled: true, message: applyGmEnemyAction(state, normalized) };
     }
     case "applyAssistedOutcome": {
       const err = validateAssistedOutcome(state, parsed.outcome, ctx);
@@ -2022,20 +2086,38 @@ export function handleCombatMessage(
       if (err) return { handled: true, error: err };
       return { handled: true, message: applyRemoveAttractor(state, parsed.x, parsed.y) };
     }
-    case "triggerReversal": {
-      if (!ctx.playerId) return { handled: true, error: "Only players can trigger reversal" };
-      const err = validateTriggerReversal(state, ctx.playerId);
-      if (err) return { handled: true, error: err };
-      return {
-        handled: true,
-        message: applyTriggerReversal(state, ctx.playerId, parsed.extraLines ?? []),
-      };
-    }
+    case "packCombat":
+    case "triggerReversal":
     case "declineReversal": {
-      if (!ctx.playerId) return { handled: true, error: "Only players can decline reversal" };
-      const err = validateDeclineReversal(state, ctx.playerId);
-      if (err) return { handled: true, error: err };
-      return { handled: true, message: applyDeclineReversal(state, ctx.playerId) };
+      const normalized = normalizePackCombatMessage(parsed);
+      if ("error" in normalized) return { handled: true, error: normalized.error };
+      if (!ctx.playerId) {
+        return {
+          handled: true,
+          error:
+            normalized.kind === "declineReversal"
+              ? "Only players can decline reversal"
+              : "Only players can trigger reversal",
+        };
+      }
+      if (normalized.kind === "triggerReversal") {
+        const err = validateTriggerReversal(state, ctx.playerId);
+        if (err) return { handled: true, error: err };
+        const extraLines = normalized.detail?.extraLines;
+        const lines = Array.isArray(extraLines)
+          ? (extraLines as { allyId: string; anchor?: "tower" }[])
+          : [];
+        return {
+          handled: true,
+          message: applyTriggerReversal(state, ctx.playerId, lines),
+        };
+      }
+      if (normalized.kind === "declineReversal") {
+        const err = validateDeclineReversal(state, ctx.playerId);
+        if (err) return { handled: true, error: err };
+        return { handled: true, message: applyDeclineReversal(state, ctx.playerId) };
+      }
+      return { handled: true, error: `Unknown pack combat: ${normalized.kind}` };
     }
     case "setAttackPreview": {
       const err = validateSetAttackPreview(state, parsed.preview, ctx);

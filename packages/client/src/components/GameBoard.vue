@@ -464,7 +464,7 @@ function onSwarmChipConfirm(targetPlayerIds: string[]) {
   if (!enemyId) return;
   send({
     type: "gmEnemyAction",
-    action: { action: "swarmChip", enemyId, targetPlayerIds },
+    action: { action: "pack", kind: "swarmChip", enemyId, detail: { targetPlayerIds } },
   });
   swarmChipOpen.value = false;
 }
@@ -991,7 +991,7 @@ const attractorZoneOnlyKeys = computed(() => {
 });
 
 const kopisMarkedEnemyIds = computed(() => {
-  const marks = gameState.value?.combat?.marks ?? gameState.value?.combat?.kopisMarks ?? {};
+  const marks = gameState.value?.combat?.marks ?? {};
   return new Set(Object.values(marks));
 });
 
@@ -1593,12 +1593,14 @@ function buildLocalAttackPreview(): AttackPreviewState | null {
       playerId,
       mode: "omnistrike",
       direction: attackDirection.value,
-      omnistrikeStep: step,
-      omnistrikeBombIndices: [indexA, indexB],
-      omnistrikeAnchors: [
-        omnistrikeAnchors.value[0] ? { ...omnistrikeAnchors.value[0] } : null,
-        omnistrikeAnchors.value[1] ? { ...omnistrikeAnchors.value[1] } : null,
-      ],
+      pack: getCombatBoardHelpers().buildOmnistrikeAttackPreviewPack({
+        omnistrikeStep: step,
+        omnistrikeBombIndices: [indexA, indexB],
+        omnistrikeAnchors: [
+          omnistrikeAnchors.value[0] ? { ...omnistrikeAnchors.value[0] } : null,
+          omnistrikeAnchors.value[1] ? { ...omnistrikeAnchors.value[1] } : null,
+        ],
+      }),
       hoverX: previewHoverCell.value?.x,
       hoverY: previewHoverCell.value?.y,
     };
@@ -2867,9 +2869,12 @@ function handleKataptyPick(enemyId: string): boolean {
   }
   if (kataptyTargetIds.value.length === 3) {
     sendPlayerAction({
-      action: "armorAction",
-      kind: "katapty_end_turn",
-      targetEnemyIds: [...kataptyTargetIds.value],
+      action: "pack",
+      kind: "armorAction",
+      detail: {
+        kind: "katapty_end_turn",
+        targetEnemyIds: [...kataptyTargetIds.value],
+      },
     });
     clearBoardActionMode();
   }
@@ -3549,12 +3554,15 @@ function submitBorrowClassActive(opts?: {
   const allyId = borrowAllyId.value;
   if (!allyId) return;
   sendPlayerAction({
-    action: "classActive",
-    kind: "borrowing_this",
-    allyPlayerId: allyId,
-    direction: opts?.direction ?? attackDirection.value,
-    anchorX: opts?.anchorX,
-    anchorY: opts?.anchorY,
+    action: "pack",
+    kind: "classActive",
+    detail: {
+      kind: "borrowing_this",
+      allyPlayerId: allyId,
+      direction: opts?.direction ?? attackDirection.value,
+      anchorX: opts?.anchorX,
+      anchorY: opts?.anchorY,
+    },
   });
   clearBoardActionMode();
 }
@@ -3678,13 +3686,16 @@ function commitWarhook(landing: { x: number; y: number }) {
   gateProvoke(triggers, () => {
     startTeleport(me.id, { x: me.x, y: me.y }, landing);
     sendPlayerAction({
-      action: "weaponActive",
-      warhook: {
-        targetEnemyId: target.enemyId,
-        targetX: target.x,
-        targetY: target.y,
-        landingX: landing.x,
-        landingY: landing.y,
+      action: "pack",
+      kind: "weaponActive",
+      detail: {
+        warhook: {
+          targetEnemyId: target.enemyId,
+          targetX: target.x,
+          targetY: target.y,
+          landingX: landing.x,
+          landingY: landing.y,
+        },
       },
     });
     clearBoardActionMode();
@@ -3779,11 +3790,14 @@ function handleOmnistrikeCellClick(x: number, y: number): boolean {
       const anchorB = omnistrikeAnchors.value[1];
       if (!anchorA || !anchorB) return false;
       sendPlayerAction({
-        action: "weaponActive",
-        omnistrike: {
-          bombIndices: [ctx.indexA, ctx.indexB],
-          anchors: [anchorA, anchorB],
-          direction: attackDirection.value,
+        action: "pack",
+        kind: "weaponActive",
+        detail: {
+          omnistrike: {
+            bombIndices: [ctx.indexA, ctx.indexB],
+            anchors: [anchorA, anchorB],
+            direction: attackDirection.value,
+          },
         },
       });
       clearBoardActionMode();
@@ -3967,24 +3981,21 @@ function handleCombatCellClick(x: number, y: number): boolean {
     if (!s || !id) return true;
     gateProvoke(previewSprintProvokes(s, id, x, y), () => {
       startTeleport(me.id, { x: me.x, y: me.y }, { x, y });
-      sendPlayerAction({
-        action: "armorAction",
-        targetEnemyId: pendingTargetEnemyId.value!,
+      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: pendingTargetEnemyId.value!,
         landingX: x,
-        landingY: y,
-      });
+        landingY: y } });
       clearBoardActionMode();
     });
     return true;
   }
   if (m === "armorPush") {
     if (enemy && armorPushTargetKeys.value.has(coordKey(x, y))) {
-      sendPlayerAction({ action: "armorAction", targetEnemyId: enemy.id, push: armorPush.value });
+      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: enemy.id, push: armorPush.value } });
       clearBoardActionMode();
       return true;
     }
     if (player && player.id !== me.id && Math.abs(x - me.x) + Math.abs(y - me.y) === 1) {
-      sendPlayerAction({ action: "armorAction", targetPlayerId: player.id, push: armorPush.value });
+      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetPlayerId: player.id, push: armorPush.value } });
       clearBoardActionMode();
       return true;
     }
@@ -3993,31 +4004,31 @@ function handleCombatCellClick(x: number, y: number): boolean {
   if (m === "armorPlaceTower") {
     const key = coordKey(x, y);
     if (!armorPlaceTowerKeys.value.has(key)) return true;
-    sendPlayerAction({ action: "armorAction", x, y });
+    sendPlayerAction({ action: "pack", kind: "armorAction", detail: { x, y } });
     clearBoardActionMode();
     return true;
   }
   if (m === "sharurAttractor") {
     const key = coordKey(x, y);
     if (!classAbilitySecondaryKeys.value.has(key) || sharurAttractorInvalidKeys.value.has(key)) return true;
-    sendPlayerAction({ action: "classActive", kind: "back_up", x, y });
+    sendPlayerAction({ action: "pack", kind: "classActive", detail: { kind: "back_up", x, y } });
     clearBoardActionMode();
     return true;
   }
   if (m === "harpeTrap") {
     const key = coordKey(x, y);
     if (!classAbilitySecondaryKeys.value.has(key) || harpeTrapInvalidKeys.value.has(key)) return true;
-    sendPlayerAction({ action: "classActive", kind: "weapon_trap", x, y });
+    sendPlayerAction({ action: "pack", kind: "classActive", detail: { kind: "weapon_trap", x, y } });
     clearBoardActionMode();
     return true;
   }
   if (m === "hephaestusRestore" && player && player.id !== me.id) {
-    sendPlayerAction({ action: "classPassive", kind: "baseline_communism", targetPlayerId: player.id });
+    sendPlayerAction({ action: "pack", kind: "classPassive", detail: { kind: "baseline_communism", targetPlayerId: player.id } });
     clearBoardActionMode();
     return true;
   }
   if (m === "kopisMark" && enemy) {
-    sendPlayerAction({ action: "classActive", kind: "mag_dump", targetEnemyIds: [enemy.id] });
+    sendPlayerAction({ action: "pack", kind: "classActive", detail: { kind: "mag_dump", targetEnemyIds: [enemy.id] } });
     clearBoardActionMode();
     return true;
   }
@@ -4025,30 +4036,27 @@ function handleCombatCellClick(x: number, y: number): boolean {
     const key = coordKey(x, y);
     if (!classAbilityPrimaryKeys.value.has(key)) return true;
     if (enemy) {
-      sendPlayerAction({ action: "classActive", kind: "soul_branding", targetEnemyIds: [enemy.id] });
+      sendPlayerAction({ action: "pack", kind: "classActive", detail: { kind: "soul_branding", targetEnemyIds: [enemy.id] } });
       clearBoardActionMode();
       return true;
     }
     if (player) {
-      sendPlayerAction({
-        action: "classActive",
-        kind: "soul_branding",
-        targetPlayerIds: [player.id],
-      });
+      sendPlayerAction({ action: "pack", kind: "classActive", detail: { kind: "soul_branding",
+        targetPlayerIds: [player.id] } });
       clearBoardActionMode();
       return true;
     }
     const s = gameState.value;
     const tile = s ? tileAt(s.tiles, x, y) : undefined;
     if (tile && isObstacleTile(tile)) {
-      sendPlayerAction({ action: "classActive", kind: "soul_branding", x, y });
+      sendPlayerAction({ action: "pack", kind: "classActive", detail: { kind: "soul_branding", x, y } });
       clearBoardActionMode();
       return true;
     }
     return true;
   }
   if (m === "hephaestusSynesis" && enemy && classAbilityPrimaryKeys.value.has(coordKey(x, y))) {
-    sendPlayerAction({ action: "classActive", kind: "synesis_conversion", targetEnemyIds: [enemy.id] });
+    sendPlayerAction({ action: "pack", kind: "classActive", detail: { kind: "synesis_conversion", targetEnemyIds: [enemy.id] } });
     clearBoardActionMode();
     return true;
   }
@@ -4057,13 +4065,10 @@ function handleCombatCellClick(x: number, y: number): boolean {
     if (!s) return true;
     const key = coordKey(x, y);
     if (towerTeleportStep.value === "selectKeraunoTarget" && enemy) {
-      sendPlayerAction({
-        action: "armorAction",
-        kind: "tower_teleport",
+      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { kind: "tower_teleport",
         x: towerTeleportLanding.value!.x,
         y: towerTeleportLanding.value!.y,
-        keraunoTargetEnemyId: enemy.id,
-      });
+        keraunoTargetEnemyId: enemy.id } });
       clearBoardActionMode();
       return true;
     }
@@ -4077,7 +4082,7 @@ function handleCombatCellClick(x: number, y: number): boolean {
         return true;
       }
     }
-    sendPlayerAction({ action: "armorAction", kind: "tower_teleport", x, y });
+    sendPlayerAction({ action: "pack", kind: "armorAction", detail: { kind: "tower_teleport", x, y } });
     clearBoardActionMode();
     return true;
   }
@@ -4109,7 +4114,7 @@ function handleCombatCellClick(x: number, y: number): boolean {
     const preview = computeAssistedLaunch(s, id, anchor.x, anchor.y);
     if (!preview) return true;
     gateProvoke(previewPathProvokes(s, id, preview.path), () => {
-      sendPlayerAction({ action: "assistedLaunch", anchorX: anchor.x, anchorY: anchor.y });
+      sendPlayerAction({ action: "pack", kind: "assistedLaunch", detail: { anchorX: anchor.x, anchorY: anchor.y } });
       clearBoardActionMode();
     });
     return true;

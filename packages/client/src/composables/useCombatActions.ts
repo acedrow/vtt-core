@@ -324,13 +324,17 @@ export function useCombatActions(playerId?: () => string | null) {
   }
 
   function triggerReversal(extraLines: { allyId: string; anchor?: "tower" }[] = []) {
-    send({ type: "triggerReversal", extraLines: extraLines.length ? extraLines : undefined });
+    send({
+      type: "packCombat",
+      kind: "triggerReversal",
+      ...(extraLines.length ? { detail: { extraLines } } : {}),
+    });
     reversalExtraAllyIds.value = [];
     reversalTowerAnchorAllyIds.value = [];
   }
 
   function declineReversal() {
-    send({ type: "declineReversal" });
+    send({ type: "packCombat", kind: "declineReversal" });
     reversalExtraAllyIds.value = [];
     reversalTowerAnchorAllyIds.value = [];
   }

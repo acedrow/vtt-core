@@ -35,7 +35,7 @@ import { applyLoadoutToPlayer, getClassMaxHp, getArmorSpeed } from "./player-dat
 import { ensureGameStateContentPack } from "./sheet-persistence.js";
 import { coordKey, createInitialStateFromMap, isFootprintInBounds, isInBounds, isWalkable, tileAt } from "./map.js";
 import { isOrthogonallyAdjacent } from "./patterns.js";
-import { kataptyNeedsTargetPick } from "./combat/content-modules-api.js";
+import { kataptyNeedsTargetPick } from "./combat/yadathan.js";
 import { enterTaccom, exitTaccom, resetTaccomEncounter } from "./combat/taccom-reset.js";
 import {
   reconcileSwarmHp,
@@ -49,7 +49,7 @@ import {
   enemyHasSwarmTrait,
   getEffectiveEnemyMaxHp,
   requireSwarmChipResolved,
-} from "./combat/content-modules-api.js";
+} from "./combat/swarm.js";
 import {
   applyProvokeAndFormat,
   previewEnemyMoveProvokes,
@@ -57,7 +57,7 @@ import {
   tickProvokeRangeGear,
 } from "./combat/provoke.js";
 import { grantVarunastraGearCheck, applyAttractorEndOfTurnPulls, checkSharurEmergencyDefenses } from "./combat/attractor.js";
-import { applyPostMovementHooks } from "./combat/content-modules-api.js";
+import { applyPostMovementHooks } from "./combat/class-abilities.js";
 
 export type BoardOccupancy = {
   playerByKey: Map<string, Player>;
@@ -1402,9 +1402,6 @@ export function normalizeGameState(state: GameState, map?: GameMap): GameState {
   }
   if (state.combat) {
     migrateCombatStateFields(state.combat);
-    if (!state.combat.swarmChipResolvedIds) {
-      state.combat.swarmChipResolvedIds = [];
-    }
   }
   const playerTurn = state.turn?.role === "player" ? state.turn : null;
   if (state.roundPhase === "playerTurn" && playerTurn) {

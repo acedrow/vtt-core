@@ -35,7 +35,6 @@ import {
 import { checkSharurEmergencyDefenses } from "./attractor.js";
 import { clampHp, getEnemyMaxHp, getPlayerMaxHp, getEffectiveEnemyMaxHp, removeEnemy } from "../game.js";
 import { maybeTriggerAgnosia } from "./agnosia.js";
-import { tryChalazaorDamageNegation } from "./content-modules-api.js";
 import { hasSpecialIdHandler } from "./special-id.js";
 import { runEnemyDamageAdjustment } from "./combat-lifecycle.js";
 import {
@@ -48,7 +47,7 @@ import {
   swarmCanonicalDisplayId,
   swarmMembersHitByTiles,
   weaponHasBreakerTag,
-} from "./content-modules-api.js";
+} from "./swarm.js";
 import { isOrthogonallyAdjacent } from "../patterns.js";
 
 export type AttackTarget = {
@@ -139,6 +138,24 @@ type HeavenBurningModule = {
 
 function heavenBurning(): HeavenBurningModule {
   return combatMod("heavenBurning") as HeavenBurningModule;
+}
+
+type ChalazaorModule = {
+  tryChalazaorDamageNegation: (
+    state: GameState,
+    enemy: Enemy,
+  ) => { negated: true; dealt: 0 } | null;
+};
+
+function chalazaor(): ChalazaorModule {
+  return combatMod("chalazaor") as ChalazaorModule;
+}
+
+function tryChalazaorDamageNegation(
+  state: GameState,
+  enemy: Enemy,
+): { negated: true; dealt: 0 } | null {
+  return chalazaor().tryChalazaorDamageNegation(state, enemy);
 }
 
 type SabaothModule = {

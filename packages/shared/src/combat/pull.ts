@@ -5,7 +5,7 @@ import {
   reconcileSwarmHp,
   snapshotSwarmGroups,
   swarmGroupForEnemy,
-} from "./content-modules-api.js";
+} from "./swarm.js";
 import { coordKey, isInBounds, isWalkable, tileAt } from "../map.js";
 import { enemyLabel, playerLabel } from "../console.js";
 import { enemyFootprintTiles, getEnemyScale } from "../enemy-data.js";

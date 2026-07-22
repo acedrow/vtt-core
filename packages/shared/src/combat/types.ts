@@ -207,9 +207,8 @@ export type AttackPreviewState = {
   borrowAllyId?: string;
   forceProjectionX?: number;
   forceProjectionY?: number;
-  omnistrikeStep?: "placeFirst" | "placeSecond" | "confirm";
-  omnistrikeBombIndices?: [number, number];
-  omnistrikeAnchors?: [{ x: number; y: number } | null, { x: number; y: number } | null];
+  /** Pack-owned opaque preview extras (e.g. omnistrikeStep / BombIndices / Anchors). */
+  pack?: Record<string, unknown>;
   enemyId?: string;
   attackIndex?: number;
 };
@@ -221,26 +220,34 @@ export type CombatState = {
   pendingClassReaction: PendingClassReaction | null;
   activeEnemyId: string | null;
   attackPreview?: AttackPreviewState | null;
-  swarmChipResolvedIds?: string[];
   passedEnemyIdsByPlayer?: Record<string, string[]>;
   thrownTraps?: ThrownTrap[];
   boardTokens?: BoardToken[];
   attractors?: AttractorTile[];
   attractorPulledEnemyIds?: string[];
   gearCheckGrants?: Record<string, string>;
-  // Generic mark map (enemyId → owner player id). Prefer over legacy kopisMarks.
+  // Generic mark map (enemyId → owner player id).
   marks?: Record<string, string>;
-  // Brand target key (unit id or `obs:x,y`) → owner player id. Prefer over chrysaorBrands.
+  // Brand target key (unit id or `obs:x,y`) → owner player id.
   brands?: Record<string, string>;
-  /** @deprecated Use marks */
-  kopisMarks?: Record<string, string>;
-  /** @deprecated Use brands */
-  chrysaorBrands?: Record<string, string>;
-  /** Pack-owned opaque combat extras. */
+  /** Pack-owned opaque combat extras (e.g. swarmChipResolvedIds). */
   pack?: Record<string, unknown>;
   countdownKinds?: Record<string, string>;
   equipmentTerrainSnapshots?: { x: number; y: number; terrain: TerrainType[] }[];
   sideEffectMessages?: string[];
+};
+
+// Legacy keys dual-read only inside migrators (persisted rooms / in-flight WS).
+type LegacyCombatBag = CombatState & {
+  swarmChipResolvedIds?: string[];
+  kopisMarks?: Record<string, string>;
+  chrysaorBrands?: Record<string, string>;
+};
+
+type LegacyAttackPreviewBag = AttackPreviewState & {
+  omnistrikeStep?: "placeFirst" | "placeSecond" | "confirm";
+  omnistrikeBombIndices?: [number, number];
+  omnistrikeAnchors?: [{ x: number; y: number } | null, { x: number; y: number } | null];
 };
 
 export type PlayerAction =
@@ -264,42 +271,7 @@ export type PlayerAction =
   | { action: "weaponSwap" }
   | { action: "selectWeaponVariant"; index: number }
   | { action: "rez"; targetPlayerId: string }
-  | {
-      action: "armorAction";
-      kind?: "tower_teleport" | "katapty_end_turn" | string;
-      targetEnemyId?: string;
-      targetPlayerId?: string;
-      landingX?: number;
-      landingY?: number;
-      push?: 1 | 2 | 3;
-      x?: number;
-      y?: number;
-      keraunoTargetEnemyId?: string;
-      targetEnemyIds?: string[];
-    }
-  | { action: "assistedLaunch"; anchorX: number; anchorY: number }
-  | {
-      action: "classActive";
-      kind?: ClassActiveKind;
-      harpeRecall?: boolean;
-      harpeEquipWeapon?: string;
-      targetEnemyIds?: string[];
-      targetPlayerIds?: string[];
-      x?: number;
-      y?: number;
-      allyPlayerId?: string;
-      direction?: PatternDirection;
-      anchorX?: number;
-      anchorY?: number;
-      followUpMaxDamage?: boolean;
-      gearSlot?: "weapon" | "armor";
-      gearName?: string;
-    }
-  | {
-      action: "classPassive";
-      kind: "baseline_communism";
-      targetPlayerId: string;
-    }
+  | { action: "pack"; kind: string; detail?: Record<string, unknown> }
   | {
       action: "resolveClassReaction";
       pullDistance?: number;
@@ -309,27 +281,6 @@ export type PlayerAction =
       targetPlayerId?: string;
       x?: number;
       y?: number;
-    }
-  | {
-      action: "weaponActive";
-      detail?: string;
-      targetEnemyIds?: string[];
-      targetPlayerIds?: string[];
-      direction?: PatternDirection;
-      omnistrike?: {
-        bombIndices: [number, number];
-        anchors: [{ x: number; y: number }, { x: number; y: number }];
-        direction: PatternDirection;
-      };
-      warhook?: {
-        targetEnemyId?: string;
-        targetX: number;
-        targetY: number;
-        landingX: number;
-        landingY: number;
-        damageRoll?: number;
-        useBreaker?: boolean;
-      };
     }
   | {
       action: "useEquipment";
@@ -367,7 +318,7 @@ export type GmEnemyAction =
       destY?: number;
       swarmStrikes?: number;
     }
-  | { action: "swarmChip"; enemyId: string; targetPlayerIds: string[] }
+  | { action: "pack"; kind: string; enemyId: string; detail?: Record<string, unknown> }
   | { action: "assisted"; enemyId: string; label: string; detail?: string; damage?: number; targetPlayerId?: string; effects?: string[] }
   | { action: "exhaust"; enemyId: string };
 
@@ -398,27 +349,54 @@ export function createDefaultCombatState(playerCount: number): CombatState {
     pendingReaction: null,
     pendingClassReaction: null,
     activeEnemyId: null,
-    swarmChipResolvedIds: [],
     thrownTraps: [],
     boardTokens: [],
     attractors: [],
     gearCheckGrants: {},
     marks: {},
     brands: {},
-    pack: {},
+    pack: { swarmChipResolvedIds: [] },
     countdownKinds: {},
   };
 }
 
-// Lift legacy IP-named maps onto generic bags (and keep aliases in sync for readers).
-export function migrateCombatStateFields(combat: CombatState): void {
-  if (!combat.marks) combat.marks = { ...(combat.kopisMarks ?? {}) };
-  else if (combat.kopisMarks) Object.assign(combat.marks, combat.kopisMarks);
-  combat.kopisMarks = combat.marks;
+export function migrateAttackPreviewFields(preview: AttackPreviewState): void {
+  const legacy = preview as LegacyAttackPreviewBag;
+  if (!preview.pack) preview.pack = {};
+  const pack = preview.pack;
 
-  if (!combat.brands) combat.brands = { ...(combat.chrysaorBrands ?? {}) };
-  else if (combat.chrysaorBrands) Object.assign(combat.brands, combat.chrysaorBrands);
-  combat.chrysaorBrands = combat.brands;
+  if (pack.omnistrikeStep == null && legacy.omnistrikeStep != null) {
+    pack.omnistrikeStep = legacy.omnistrikeStep;
+  }
+  if (pack.omnistrikeBombIndices == null && legacy.omnistrikeBombIndices != null) {
+    pack.omnistrikeBombIndices = legacy.omnistrikeBombIndices;
+  }
+  if (pack.omnistrikeAnchors == null && legacy.omnistrikeAnchors != null) {
+    pack.omnistrikeAnchors = legacy.omnistrikeAnchors;
+  }
+
+  delete legacy.omnistrikeStep;
+  delete legacy.omnistrikeBombIndices;
+  delete legacy.omnistrikeAnchors;
+}
+
+// Lift legacy IP-named / first-class bags onto generic marks/brands and combat.pack.
+export function migrateCombatStateFields(combat: CombatState): void {
+  const legacy = combat as LegacyCombatBag;
+
+  if (!combat.marks) combat.marks = { ...(legacy.kopisMarks ?? {}) };
+  else if (legacy.kopisMarks) Object.assign(combat.marks, legacy.kopisMarks);
+  delete legacy.kopisMarks;
+
+  if (!combat.brands) combat.brands = { ...(legacy.chrysaorBrands ?? {}) };
+  else if (legacy.chrysaorBrands) Object.assign(combat.brands, legacy.chrysaorBrands);
+  delete legacy.chrysaorBrands;
 
   if (!combat.pack) combat.pack = {};
+  if (combat.pack.swarmChipResolvedIds == null) {
+    combat.pack.swarmChipResolvedIds = legacy.swarmChipResolvedIds ?? [];
+  }
+  delete legacy.swarmChipResolvedIds;
+
+  if (combat.attackPreview) migrateAttackPreviewFields(combat.attackPreview);
 }

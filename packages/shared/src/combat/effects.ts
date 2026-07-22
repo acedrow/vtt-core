@@ -4,7 +4,7 @@ import { buildBoardOccupancy, clampHp, getEnemyMaxHp, getPlayerMaxHp, isSandboxM
 import { coordKey, tileAt } from "../map.js";
 import { clampAssistedAscensionAegis, hasAssistedAscensionGear } from "./aegis.js";
 import { tickFallingStartOfTurn } from "./elevation.js";
-import { swarmGroupForEnemy, swarmTilePositions } from "./content-modules-api.js";
+import { swarmGroupForEnemy, swarmTilePositions } from "./swarm.js";
 
 export { tickRoundCountdowns } from "./countdown.js";
 

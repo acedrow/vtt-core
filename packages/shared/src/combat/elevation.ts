@@ -8,7 +8,7 @@ import {
 } from "../game.js";
 import { coordKey, isInBounds, isWalkable, tileAt } from "../map.js";
 import { getEnemyListingByName } from "../enemy-data.js";
-import { isTowerEnemy } from "./content-modules-api.js";
+import { isTowerEnemy } from "./yadathan.js";
 
 const ELEV_MIN = -3;
 const ELEV_MAX = 3;

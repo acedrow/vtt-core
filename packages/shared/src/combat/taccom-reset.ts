@@ -3,9 +3,9 @@ import { getEffectiveEnemyMaxHp, getPlayerMaxHp } from "../game.js";
 import { getArmorByName } from "../player-data.js";
 import { applyResetToStartingState } from "../map.js";
 import { initHeavenBurningLevel, initSabaothCharges } from "./attack.js";
-import { clearAnnihilationCorridorTileEffects, clearEquipmentTerrainSnapshots } from "./content-modules-api.js";
+import { clearAnnihilationCorridorTileEffects, clearEquipmentTerrainSnapshots } from "./equipment.js";
 import { createDefaultCombatState } from "./types.js";
-import { isTowerEnemy } from "./content-modules-api.js";
+import { isTowerEnemy } from "./yadathan.js";
 
 export function resetUnitCombatState(player: Player): void {
   const maxHp = getPlayerMaxHp(player);
@@ -54,7 +54,6 @@ function clearCombatCounters(state: GameState): void {
   state.combat.pendingReaction = null;
   state.combat.pendingClassReaction = null;
   state.combat.activeEnemyId = null;
-  state.combat.swarmChipResolvedIds = [];
   state.combat.thrownTraps = [];
   state.combat.boardTokens = [];
   state.combat.attractors = [];
@@ -62,9 +61,7 @@ function clearCombatCounters(state: GameState): void {
   state.combat.gearCheckGrants = {};
   state.combat.marks = {};
   state.combat.brands = {};
-  state.combat.kopisMarks = {};
-  state.combat.chrysaorBrands = {};
-  state.combat.pack = {};
+  state.combat.pack = { swarmChipResolvedIds: [] };
   state.combat.countdownKinds = {};
   delete state.combat.passedEnemyIdsByPlayer;
 }

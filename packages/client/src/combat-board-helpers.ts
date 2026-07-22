@@ -51,6 +51,18 @@ export type ClientCombatBoardHelpers = {
   swarmMembersHitByTiles: (...args: any[]) => any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
   maxSwarmStrikesAgainstTarget: (...args: any[]) => number;
+  buildOmnistrikeAttackPreviewPack: (fields: {
+    omnistrikeStep: "placeFirst" | "placeSecond" | "confirm";
+    omnistrikeBombIndices: [number, number];
+    omnistrikeAnchors: [{ x: number; y: number } | null, { x: number; y: number } | null];
+  }) => Record<string, unknown>;
+  readOmnistrikeAttackPreviewFields: (preview: {
+    pack?: Record<string, unknown>;
+  }) => {
+    omnistrikeStep?: "placeFirst" | "placeSecond" | "confirm";
+    omnistrikeBombIndices?: [number, number];
+    omnistrikeAnchors?: [{ x: number; y: number } | null, { x: number; y: number } | null];
+  };
   isTowerEnemy: (enemy: Enemy) => boolean;
   getPlayerTower: (state: GameState, playerId: string) => Enemy | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
@@ -112,6 +124,8 @@ function stubHelpers(): ClientCombatBoardHelpers {
     swarmChipPromptRequired: () => false,
     swarmMembersHitByTiles: () => [],
     maxSwarmStrikesAgainstTarget: () => 0,
+    buildOmnistrikeAttackPreviewPack: () => ({}),
+    readOmnistrikeAttackPreviewFields: () => ({}),
     isTowerEnemy: () => false,
     getPlayerTower: () => undefined,
     getSeedAt: () => undefined,

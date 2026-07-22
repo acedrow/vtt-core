@@ -13,8 +13,8 @@ Track A registered catalogs via `ContentPack`. Combat still used import-time Hel
 1. **Optional `combat` on `ContentPack`** — `CombatHookContribution` may supply `specialIdHandlers`, `countdownHandlers`, and `agnosiaHandlers`. Applied inside `registerContentPack` after catalogs; `resetContentPackForTests` clears combat Maps.
 2. **`specialId` is first-class validate/apply** — Engine dispatches `GmEnemyAction.attack` via `getSpecialIdHandler(spec.specialId)`. No new `===` branches for content abilities.
 3. **Countdown and agnosia owned by the pack** — Existing Map registries remain; Hellpiercers (not module load) registers handlers. Gorgenaut interactive agnosia (`confirmGorgenautAgnosia`) stays a grandfathered hybrid until WS nesting lands.
-4. **WS / protocol policy** — Prefer nesting content behavior under `playerAction` / `gmEnemyAction`. New top-level `ClientMessage` types require a follow-on (generic confirm-flow or pack message contribution). Not invented here.
-5. **Combat modules on the pack** — Named implementations register via `CombatHookContribution.modules` (opaque string keys) applied inside `registerContentPack`. Shared engine call sites dispatch through `combatMod(key)` / `content-modules-api` (no IP-named facade files).
+4. **WS / protocol policy** — Prefer nesting content behavior under `playerAction` / `gmEnemyAction`. New top-level `ClientMessage` types require a follow-on (generic confirm-flow or pack message contribution). End state: opaque `pack` / `packCombat` envelopes per [ADR 009](009-opaque-combat-protocol.md) (replaces named nesting as the long-term contract).
+5. **Combat modules on the pack** — Named implementations register via `CombatHookContribution.modules` (opaque string keys) applied inside `registerContentPack`. Shared engine call sites dispatch through local typed `combatMod(key)` helpers (e.g. `assisted-launch.ts`, `swarm.ts`) — no mega-façade.
 
 ## Remaining migrations
 
@@ -25,7 +25,7 @@ Track A registered catalogs via `ContentPack`. Combat still used import-time Hel
 | **Provoke name gates** | Done — content `provoke-rules.ts`; shared still has interim string constant exports |
 | **Kopis retaliation body** | Done — `onProvokeRetaliation` hook; body in content `kopis.ts` |
 | **Gorgenaut agnosia block** | Done — content + `pendingConfirmHandlers` / `confirmPending` |
-| **WS nesting** | Done — nested `armorAction` / `weaponActive` only; legacy `heavenBurningUnfold` / `towerTeleport` / `kataptyEndTurn` / `confirmGorgenautAgnosia` removed |
+| **WS nesting** | Done (interim) — nested `armorAction` / `weaponActive` only; legacy top-level messages removed. Opaque envelopes: [ADR 009](009-opaque-combat-protocol.md) |
 | **Facade retirement** | Done — IP-named shared facade files deleted; `ContentCombatKey` install bridge removed; modules on `CombatHookContribution` |
 
 Also still content-owned: stainwalk kind maps, class/weapon/equipment plugins, client board-mode plugins.

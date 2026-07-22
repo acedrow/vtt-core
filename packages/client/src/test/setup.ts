@@ -18,16 +18,12 @@ function stubModule(): object {
 
 const moduleKeys = [
   "chalazaor",
-  "gorgenaut",
   "stainwalk",
   "swarm",
   "classAbilities",
   "chrysaor",
-  "kopis",
   "equipment",
   "yadathan",
-  "stainGeyser",
-  "lurkingFreak",
   "provoke",
   "heavenBurning",
 ];

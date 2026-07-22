@@ -1,7 +1,7 @@
 import type { GameState } from "../types.js";
 import { getEnemyListingByName } from "../enemy-data.js";
 import { runEnemyRoundReset } from "./combat-lifecycle.js";
-import { reconcileSwarmMovement } from "./content-modules-api.js";
+import { reconcileSwarmMovement } from "./swarm.js";
 import { tickUnitStartOfTurn } from "./effects.js";
 
 export function bossActionsForEncounter(
@@ -37,7 +37,10 @@ export function resetEnemyExhaustion(state: GameState): void {
     runEnemyRoundReset(state, enemy);
   }
   reconcileSwarmMovement(state);
-  if (state.combat) state.combat.swarmChipResolvedIds = [];
+  if (state.combat) {
+    if (!state.combat.pack) state.combat.pack = {};
+    state.combat.pack.swarmChipResolvedIds = [];
+  }
 }
 
 export function resetGmTurnActions(state: GameState): void {
@@ -45,7 +48,8 @@ export function resetGmTurnActions(state: GameState): void {
   if (state.combat) {
     state.combat.pendingActions = state.combat.pendingActions.filter((p) => !p.actorEnemyId);
     state.combat.activeEnemyId = null;
-    state.combat.swarmChipResolvedIds = [];
+    if (!state.combat.pack) state.combat.pack = {};
+    state.combat.pack.swarmChipResolvedIds = [];
   }
 }
 

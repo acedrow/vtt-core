@@ -112,7 +112,7 @@ export function useCombatModeActions(opts?: {
     }
     const m = classMode.value;
     if (!m) {
-      sendPlayerAction({ action: "classActive" });
+      sendPlayerAction({ action: "pack", kind: "classActive" });
       return;
     }
     toggleMode(m);
@@ -132,16 +132,23 @@ export function useCombatModeActions(opts?: {
   }
 
   function onEpeusBagConfirm(slot: "weapon" | "armor", gearName: string) {
-    sendPlayerAction({ action: "classActive", kind: "bag_of_tricks", gearSlot: slot, gearName });
+    sendPlayerAction({
+      action: "pack",
+      kind: "classActive",
+      detail: { kind: "bag_of_tricks", gearSlot: slot, gearName },
+    });
     epeusBagOpen.value = false;
   }
 
   function onHarpeRecallConfirm(equipWeapon?: string) {
     sendPlayerAction({
-      action: "classActive",
-      kind: "weapon_trap",
-      harpeRecall: true,
-      harpeEquipWeapon: equipWeapon,
+      action: "pack",
+      kind: "classActive",
+      detail: {
+        kind: "weapon_trap",
+        harpeRecall: true,
+        harpeEquipWeapon: equipWeapon,
+      },
     });
     harpeRecallOpen.value = false;
   }
@@ -157,10 +164,14 @@ export function useCombatModeActions(opts?: {
       return;
     }
     if (isHeavenBurningWeaponName(name)) {
-      sendPlayerAction({ action: "weaponActive", detail: "heaven_burning_unfold" });
+      sendPlayerAction({
+        action: "pack",
+        kind: "weaponActive",
+        detail: { detail: "heaven_burning_unfold" },
+      });
       return;
     }
-    sendPlayerAction({ action: "weaponActive" });
+    sendPlayerAction({ action: "pack", kind: "weaponActive" });
   }
 
   function toggleWeaponAttack() {
@@ -170,9 +181,12 @@ export function useCombatModeActions(opts?: {
   function confirmKatapty() {
     if (kataptyTargetIds.value.length !== 3) return;
     sendPlayerAction({
-      action: "armorAction",
-      kind: "katapty_end_turn",
-      targetEnemyIds: [...kataptyTargetIds.value],
+      action: "pack",
+      kind: "armorAction",
+      detail: {
+        kind: "katapty_end_turn",
+        targetEnemyIds: [...kataptyTargetIds.value],
+      },
     });
     clearMode();
   }
