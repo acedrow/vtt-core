@@ -8,8 +8,10 @@ import {
 } from "@vtt-core/shared";
 import { computed, type Ref } from "vue";
 
-import { listClientBoardModes } from "../client-content-pack.js";
+import { clientBoardMode } from "../client-content-pack.js";
+import type { BoardModeContext } from "../client-content-pack.js";
 import { useBoardActionMode } from "./useBoardActionMode.js";
+import { useGameState } from "./useGameState.js";
 
 const DEFAULT_ATTACK_HINT =
   "Click a highlighted tile to aim, press R to rotate, then click the attack area to confirm";
@@ -18,6 +20,7 @@ export function useCombatModeHints(opts: {
   player: Ref<Player | null | undefined>;
   weaponName: Ref<string | undefined | null>;
 }) {
+  const { gameState } = useGameState();
   const {
     mode,
     rangeAttackTargetIds,
@@ -27,15 +30,18 @@ export function useCombatModeHints(opts: {
     towerTeleportStep,
     kataptyTargetIds,
     assistedLaunchStep,
-    equipmentCoverTiles,
-    forceProjectionStep,
-    redirectStep,
+    packUi,
+    attackDirection,
+    attackAimed,
+    attackAnchor,
   } = useBoardActionMode();
 
+  const isPackEquipmentAttack = computed(
+    () => clientBoardMode(mode.value) != null && packUi.value.equipmentUse === true,
+  );
+
   const attackHint = computed(() => {
-    const attackMode =
-      mode.value === "attack" ||
-      (mode.value === "equipmentForceProjection" && forceProjectionStep.value === "attack");
+    const attackMode = mode.value === "attack" || isPackEquipmentAttack.value;
     if (!attackMode || !opts.player.value || !opts.weaponName.value) {
       return DEFAULT_ATTACK_HINT;
     }
@@ -121,71 +127,69 @@ export function useCombatModeHints(opts: {
 
   const assistedLaunchHint = computed(() => {
     if (mode.value !== "assistedLaunch") return null;
-    if (assistedLaunchStep.value === "selectAnchor") return "Select impassable terrain, an obstacle, or an ally to launch from";
+    if (assistedLaunchStep.value === "selectAnchor") {
+      return "Select impassable terrain, an obstacle, or an ally to launch from";
+    }
     return "Click the highlighted landing tile to launch";
-  });
-
-  const equipmentCorridorHint = computed(() => {
-    if (mode.value !== "equipmentCorridor") return null;
-    return "Hover to preview, click to place the corridor anywhere on the map, press R to rotate, then click to confirm";
-  });
-
-  const equipmentCoverHint = computed(() => {
-    if (mode.value !== "equipmentCover") return null;
-    return `Select 3 connected tiles within range (${equipmentCoverTiles.value.length}/3). Click a selected tile to deselect.`;
-  });
-
-  const equipmentForceProjectionHint = computed(() => {
-    if (mode.value !== "equipmentForceProjection") return null;
-    if (forceProjectionStep.value === "selectSquare") {
-      return "Click an empty square within Range:3, then make your weapon attack from that square";
-    }
-    return attackHint.value;
-  });
-
-  const equipmentRedirectHint = computed(() => {
-    if (mode.value !== "equipmentRedirect") return null;
-    switch (redirectStep.value) {
-      case "selectSource":
-        return "Click an enemy within Range:5 to redirect its attack";
-      case "selectAttack":
-        return "Press R to cycle attacks, then click the source enemy again to confirm";
-      case "selectTarget":
-        return "Click a valid enemy target for the redirected attack";
-      case "confirmPattern":
-        return "Press R to rotate the pattern, then click the highlighted area to confirm";
-      default:
-        return null;
-    }
   });
 
   const packModeHint = computed(() => {
     const id = mode.value;
-    if (!id) return null;
-    const plugin = listClientBoardModes().find((m) => m.id === id);
-    return plugin?.hint ?? null;
+    const s = gameState.value;
+    const player = opts.player.value;
+    if (!id || !s || !player) return null;
+    const plugin = clientBoardMode(id);
+    if (!plugin?.hint) return null;
+    if (typeof plugin.hint === "string") return plugin.hint;
+    const ctx: BoardModeContext = {
+      gameState: s,
+      yourPlayerId: player.id,
+      mode: id,
+      previewHoverCell: null,
+      packUi: packUi.value,
+      aim: {
+        direction: attackDirection.value,
+        aimed: attackAimed.value,
+        anchor: attackAnchor.value,
+      },
+      rangeAttackTargetIds: rangeAttackTargetIds.value,
+      rangeAttackObstacleCoords: rangeAttackObstacleCoords.value,
+    };
+    return plugin.hint(ctx);
   });
 
   const boardHintRows = computed(() => {
     const rows: { key: string; text: string }[] = [];
-    if (mode.value === "attack") rows.push({ key: "attack", text: attackHint.value });
-    if (omnistrikeHint.value) rows.push({ key: "omnistrike", text: omnistrikeHint.value });
-    if (equipmentCorridorHint.value) rows.push({ key: "equipmentCorridor", text: equipmentCorridorHint.value });
-    if (equipmentCoverHint.value) rows.push({ key: "equipmentCover", text: equipmentCoverHint.value });
-    if (equipmentForceProjectionHint.value) {
-      rows.push({ key: "equipmentForceProjection", text: equipmentForceProjectionHint.value });
+    if (mode.value === "attack" || isPackEquipmentAttack.value) {
+      rows.push({ key: "attack", text: attackHint.value });
     }
-    if (equipmentRedirectHint.value) rows.push({ key: "equipmentRedirect", text: equipmentRedirectHint.value });
+    if (omnistrikeHint.value) rows.push({ key: "omnistrike", text: omnistrikeHint.value });
     if (warhookHint.value) rows.push({ key: "warhook", text: warhookHint.value });
     if (armorHint.value) rows.push({ key: "armor", text: armorHint.value });
     if (towerTeleportHint.value) rows.push({ key: "towerTeleport", text: towerTeleportHint.value });
     if (kataptyHint.value) rows.push({ key: "katapty", text: kataptyHint.value });
     if (assistedLaunchHint.value) rows.push({ key: "assistedLaunch", text: assistedLaunchHint.value });
     if (packModeHint.value && mode.value) {
-      rows.push({ key: mode.value, text: packModeHint.value });
+      const already = rows.some((r) => r.key === mode.value);
+      if (!already && !(isPackEquipmentAttack.value && packModeHint.value === attackHint.value)) {
+        rows.push({ key: mode.value, text: packModeHint.value });
+      }
     }
     return rows;
   });
+
+  const equipmentCorridorHint = computed(() =>
+    mode.value === "equipmentCorridor" ? packModeHint.value : null,
+  );
+  const equipmentCoverHint = computed(() =>
+    mode.value === "equipmentCover" ? packModeHint.value : null,
+  );
+  const equipmentForceProjectionHint = computed(() =>
+    mode.value === "equipmentForceProjection" ? packModeHint.value : null,
+  );
+  const equipmentRedirectHint = computed(() =>
+    mode.value === "equipmentRedirect" ? packModeHint.value : null,
+  );
 
   return {
     attackHint,

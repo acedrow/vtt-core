@@ -1258,7 +1258,7 @@ function maybeSetEnemyAttackReversal(
   incomingDamage: number,
 ): void {
   if (!state.combat) return;
-  if (!isCampaignFeatureUnlocked("reversals", state.campaign?.constructedBaseUpgrades ?? [])) return;
+  if (!isCampaignFeatureUnlocked("reversals", state.campaign?.unlockedUpgrades ?? [])) return;
   const target = state.players.find((p) => p.id === targetPlayerId);
   const enemy = state.enemies.find((e) => e.id === sourceEnemyId);
   if (!target || !enemy) return;
@@ -1793,7 +1793,7 @@ export function validateAssistedOutcome(_state: GameState, _outcome: AssistedOut
 export { applyAssistedOutcome };
 
 export function validateTriggerReversal(state: GameState, playerId: string): string | null {
-  if (!isCampaignFeatureUnlocked("reversals", state.campaign?.constructedBaseUpgrades ?? [])) {
+  if (!isCampaignFeatureUnlocked("reversals", state.campaign?.unlockedUpgrades ?? [])) {
     return "Reversals disabled";
   }
   const reaction = state.combat?.pendingReaction;
@@ -1835,7 +1835,7 @@ export function applyTriggerReversal(
 }
 
 export function validateDeclineReversal(state: GameState, playerId: string): string | null {
-  if (!isCampaignFeatureUnlocked("reversals", state.campaign?.constructedBaseUpgrades ?? [])) {
+  if (!isCampaignFeatureUnlocked("reversals", state.campaign?.unlockedUpgrades ?? [])) {
     return "Reversals disabled";
   }
   const reaction = state.combat?.pendingReaction;

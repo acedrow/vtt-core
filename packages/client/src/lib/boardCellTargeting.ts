@@ -21,10 +21,6 @@ export const BOARD_CELL_TARGETING_MODES = [
   "kataptyPick",
   "rez",
   "assistedLaunch",
-  "equipmentCorridor",
-  "equipmentCover",
-  "equipmentForceProjection",
-  "equipmentRedirect",
 ] as const;
 
 const targetingModes = new Set<string>(BOARD_CELL_TARGETING_MODES);

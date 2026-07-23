@@ -314,25 +314,31 @@ export type FactionCampaignAction =
 /** Pack-owned campaign runtime; engine owns the shape, pack owns values. */
 export type CampaignRuntimeState = {
   partyResources?: PartyResources;
-  constructedBaseUpgrades?: string[];
-  gmIchor?: number;
-  overworldRegions?: OverworldRegion[];
-  overworldParty?: OverworldParty;
-  overworldLocations?: OverworldLocation[];
-  overworldConvoys?: OverworldConvoy[];
+  unlockedUpgrades?: string[];
+  gmResource?: number;
+  mapRegions?: OverworldRegion[];
+  mapParty?: OverworldParty;
+  mapLocations?: OverworldLocation[];
+  mapConvoys?: OverworldConvoy[];
   factionStates?: FactionStates;
 };
 
-/** Pre-nesting wire fields; only used by liftLegacyCampaignFields. */
+/** Pre-nesting / pre-rename wire fields; dual-read by lift + migrateCampaignRuntimeKeys. */
 export type LegacyCampaignGameStateFields = {
   partyResources?: PartyResources;
+  unlockedUpgrades?: string[];
+  gmResource?: number;
+  mapRegions?: OverworldRegion[];
+  mapParty?: OverworldParty;
+  mapLocations?: OverworldLocation[];
+  mapConvoys?: OverworldConvoy[];
+  factionStates?: FactionStates;
   constructedBaseUpgrades?: string[];
   gmIchor?: number;
   overworldRegions?: OverworldRegion[];
   overworldParty?: OverworldParty;
   overworldLocations?: OverworldLocation[];
   overworldConvoys?: OverworldConvoy[];
-  factionStates?: FactionStates;
 };
 
 export type ContentPackStamp = {

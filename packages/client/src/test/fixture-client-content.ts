@@ -33,6 +33,10 @@ export function createFixtureClientContribution(): ClientContribution {
     mainSections: [
       { id: "fixture-section", label: "Fixture Section", component: FixturePanel },
     ],
+    combatBoard: {
+      cellOverlays: [],
+      pieceDecorations: [],
+    },
     boardModes: [
       { id: "kopisMark", hint: "Fixture kopis hint" },
       { id: "chrysaorBrand", hint: "Fixture brand hint" },

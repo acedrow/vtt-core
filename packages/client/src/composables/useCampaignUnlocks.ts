@@ -13,7 +13,7 @@ import { useGameState } from "./useGameState.js";
 export function useCampaignUnlocks() {
   const { gameState } = useGameState();
 
-  const constructedIds = computed(() => gameState.value?.campaign?.constructedBaseUpgrades ?? []);
+  const constructedIds = computed(() => gameState.value?.campaign?.unlockedUpgrades ?? []);
   const unlockedSets = computed(() => getUnlockedOptionSets(constructedIds.value));
   const features = computed(() => getUnlockedFeatures(constructedIds.value));
 

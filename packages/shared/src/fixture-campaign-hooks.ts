@@ -53,7 +53,7 @@ export function createFixtureCampaignHooks(): CampaignHookContribution {
         }
       }
     }
-    if (!campaign.constructedBaseUpgrades) campaign.constructedBaseUpgrades = [];
+    if (!campaign.unlockedUpgrades) campaign.unlockedUpgrades = [];
   };
 
   const defaultOverworldRegions = (): OverworldRegion[] =>
@@ -84,14 +84,14 @@ export function createFixtureCampaignHooks(): CampaignHookContribution {
     ensure(state) {
       ensureCampaignState(state);
       const campaign = ensureCampaignBag(state);
-      if (!campaign.overworldRegions?.length) {
-        campaign.overworldRegions = defaultOverworldRegions();
+      if (!campaign.mapRegions?.length) {
+        campaign.mapRegions = defaultOverworldRegions();
       }
-      if (!campaign.overworldParty) campaign.overworldParty = defaultOverworldParty();
-      if (!campaign.overworldLocations) campaign.overworldLocations = [];
-      if (!campaign.overworldConvoys) campaign.overworldConvoys = [];
+      if (!campaign.mapParty) campaign.mapParty = defaultOverworldParty();
+      if (!campaign.mapLocations) campaign.mapLocations = [];
+      if (!campaign.mapConvoys) campaign.mapConvoys = [];
       ensureFactionStates(state);
-      if (typeof campaign.gmIchor !== "number") campaign.gmIchor = 0;
+      if (typeof campaign.gmResource !== "number") campaign.gmResource = 0;
     },
     defaultPartyResources,
     ensureCampaignState,
@@ -110,10 +110,10 @@ export function createFixtureCampaignHooks(): CampaignHookContribution {
     defaultGmIchor: () => 0,
     ensureGmIchor: (state) => {
       const campaign = ensureCampaignBag(state);
-      if (typeof campaign.gmIchor !== "number" || !Number.isFinite(campaign.gmIchor)) {
-        campaign.gmIchor = 0;
+      if (typeof campaign.gmResource !== "number" || !Number.isFinite(campaign.gmResource)) {
+        campaign.gmResource = 0;
       }
-      return campaign.gmIchor;
+      return campaign.gmResource;
     },
     ensureFactionStates,
     isFactionUpgradeUnlocked: (faction, name) => faction.unlockedUpgrades.includes(name),
@@ -126,29 +126,29 @@ export function createFixtureCampaignHooks(): CampaignHookContribution {
     defaultOverworldRegions,
     ensureOverworldRegions: (state) => {
       const campaign = ensureCampaignBag(state);
-      campaign.overworldRegions = defaultOverworldRegions();
-      return campaign.overworldRegions;
+      campaign.mapRegions = defaultOverworldRegions();
+      return campaign.mapRegions;
     },
     validateSetOverworldRegionImage: () => unsupported(),
     applySetOverworldRegionImage: () => unsupported(),
     defaultOverworldParty,
     ensureOverworldParty: (state) => {
       const campaign = ensureCampaignBag(state);
-      if (!campaign.overworldParty) campaign.overworldParty = defaultOverworldParty();
-      return campaign.overworldParty;
+      if (!campaign.mapParty) campaign.mapParty = defaultOverworldParty();
+      return campaign.mapParty;
     },
     regionIdForQuarter: () => listOverworldRegionIds()[0] ?? "west",
     ensureOverworldLocations: (state) => {
       const campaign = ensureCampaignBag(state);
-      if (!campaign.overworldLocations) campaign.overworldLocations = [];
-      return campaign.overworldLocations;
+      if (!campaign.mapLocations) campaign.mapLocations = [];
+      return campaign.mapLocations;
     },
     isLocationInfoVisibleToPlayers: (loc) => loc.infoVisibleToPlayers !== false,
     locationAtQuarter: () => undefined,
     ensureOverworldConvoys: (state) => {
       const campaign = ensureCampaignBag(state);
-      if (!campaign.overworldConvoys) campaign.overworldConvoys = [];
-      return campaign.overworldConvoys;
+      if (!campaign.mapConvoys) campaign.mapConvoys = [];
+      return campaign.mapConvoys;
     },
     convoyAtQuarter: () => undefined,
     listOverworldConvoyDestinations: () => [],

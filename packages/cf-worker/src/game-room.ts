@@ -197,7 +197,7 @@ export class GameRoom {
     }
     if (url.pathname === "/internal/campaign-unlocks") {
       return Response.json({
-        constructedBaseUpgrades: this.gameState.campaign?.constructedBaseUpgrades ?? [],
+        unlockedUpgrades: this.gameState.campaign?.unlockedUpgrades ?? [],
       });
     }
 

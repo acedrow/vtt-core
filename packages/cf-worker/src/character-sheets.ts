@@ -128,8 +128,8 @@ async function getConstructedBaseUpgrades(env: Env): Promise<string[]> {
   const roomId = env.GAME_ROOM.idFromName("default");
   const stub = env.GAME_ROOM.get(roomId);
   const res = await stub.fetch("http://internal/internal/campaign-unlocks");
-  const data = (await res.json()) as { constructedBaseUpgrades: string[] };
-  return data.constructedBaseUpgrades ?? [];
+  const data = (await res.json()) as { unlockedUpgrades: string[] };
+  return data.unlockedUpgrades ?? [];
 }
 
 async function loadAndPersistSheet(

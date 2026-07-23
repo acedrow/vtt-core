@@ -143,6 +143,7 @@ const {
   onDualBombIndices,
   onDualBombComplete,
   clearMode,
+  classModeActive,
 } = useCombatModeActions({ playerClass, playerId: () => boardPlayerId.value });
 
 const equipmentActionActive = computed(() => {
@@ -768,14 +769,7 @@ onUnmounted(() => {
           >
             <template v-if="showSheetCombatActions && selectedClass" #actions>
               <SheetActionButton
-                :active="
-                  mode === 'harpeTrap' ||
-                  mode === 'kopisMark' ||
-                  mode === 'chrysaorBrand' ||
-                  mode === 'sharurAttractor' ||
-                  mode === 'hephaestusSynesis' ||
-                  mode === 'varunastraBorrow'
-                "
+                :active="classModeActive"
                 :disabled="!canUseClassActive"
                 @click="useClassActive"
               >

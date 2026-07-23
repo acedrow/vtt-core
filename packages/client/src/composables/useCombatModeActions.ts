@@ -36,7 +36,7 @@ export function useCombatModeActions(opts?: {
     kataptyTargetIds,
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
-    forceProjectionStep,
+    packUi,
     setMode,
     clearMode,
     confirmRangeAttack,
@@ -192,10 +192,7 @@ export function useCombatModeActions(opts?: {
   }
 
   const canConfirmRangeAttack = computed(() => {
-    const attackMode =
-      mode.value === "attack" ||
-      (mode.value === "equipmentForceProjection" && forceProjectionStep.value === "attack");
-    if (!attackMode) return false;
+    if (!(mode.value === "attack" || packUi.value.equipmentUse === true)) return false;
     const p = activePlayer.value;
     const weapon = p?.weapon;
     if (!p || !weapon) return false;

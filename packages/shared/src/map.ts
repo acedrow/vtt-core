@@ -613,9 +613,9 @@ export function createInitialStateFromMap(map: GameMap): GameState {
     sandboxMode: false,
     campaign: {
       partyResources: defaultPartyResources(),
-      constructedBaseUpgrades: [],
-      overworldRegions: defaultOverworldRegions(),
-      overworldParty: defaultOverworldParty(),
+      unlockedUpgrades: [],
+      mapRegions: defaultOverworldRegions(),
+      mapParty: defaultOverworldParty(),
     },
   };
 }

@@ -311,7 +311,7 @@ app.get("/api/character-sheets", (req, res) => {
 app.post("/api/character-sheets", (req, res) => {
   const auth = parseAuth(req, res);
   if (!auth) return;
-  createSheetHandler(auth, req, res, hasProfile, gameState.campaign?.constructedBaseUpgrades ?? []);
+  createSheetHandler(auth, req, res, hasProfile, gameState.campaign?.unlockedUpgrades ?? []);
 });
 
 app.get("/api/character-sheets/:id", (req, res) => {
@@ -327,7 +327,7 @@ app.patch("/api/character-sheets/:id", (req, res) => {
     actor: actorForAuth(auth),
     sheetOnBoard: gameState.players.some((p) => p.characterSheetId === req.params.id),
     logConsole: appendConsole,
-    constructedIds: gameState.campaign?.constructedBaseUpgrades ?? [],
+    constructedIds: gameState.campaign?.unlockedUpgrades ?? [],
   });
 });
 

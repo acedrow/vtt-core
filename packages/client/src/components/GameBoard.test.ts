@@ -30,7 +30,7 @@ function makeTestGameState(width = 3, height = 3): GameState {
     sandboxMode: false,
     campaign: {
       partyResources: { scrap: 0 },
-      constructedBaseUpgrades: [],
+      unlockedUpgrades: [],
     },
   };
 }

@@ -8,7 +8,11 @@ import EffectIcon from "./EffectIcon.vue";
 import HpBar from "./HpBar.vue";
 import NoLosIcon from "./NoLosIcon.vue";
 import TerrainTypeIcon from "./TerrainTypeIcon.vue";
-import { getClientCombatBoard } from "../client-content-pack.js";
+import {
+  getClientCombatBoard,
+  type CellOverlaySpec,
+  type PieceDecorationSpec,
+} from "../client-content-pack.js";
 
 const combatBoard = getClientCombatBoard();
 
@@ -51,18 +55,8 @@ export type CellRenderState = {
   playerPortraitUrl?: string | null;
   enemyPortraitUrl?: string | null;
   enemyPortraitBg?: string | null;
-  hasSeed?: boolean;
-  kopisToken?: boolean;
-  kopisTokenMine?: boolean;
-  kopisMarked?: boolean;
-  trapLine?: boolean;
-  trapWeapon?: boolean;
-  attractorZone?: boolean;
-  attractorCenter?: boolean;
-  attractorVoid?: boolean;
-  attractorPreviewZone?: boolean;
-  attractorPreviewCenter?: boolean;
-  attractorPreviewVoid?: boolean;
+  overlays?: CellOverlaySpec[];
+  pieceDecorations?: PieceDecorationSpec[];
   towerOwnerHue?: number | null;
   tileEffects?: EffectStacks;
   outOfLineOfSight?: boolean;
@@ -200,6 +194,14 @@ function effectBadgeStyle(enemy: Enemy | undefined): Record<string, string> {
 }
 
 const stackedEnemyCount = computed(() => 1 + (props.cell.stackedEnemies?.length ?? 0));
+
+const pieceDecorationClasses = computed(() => {
+  const classes: Record<string, boolean> = {};
+  for (const dec of props.cell.pieceDecorations ?? []) {
+    if (dec.className) classes[dec.className] = true;
+  }
+  return classes;
+});
 
 const scaledEnemyEffects = computed(
   () => !!props.cell.enemyAnchor && getEnemyScale(props.cell.enemyAnchor) > 1 && effectEntries.value.length > 0,
@@ -382,29 +384,14 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       :style="{ backgroundColor: cell.tileBaseColor }"
       aria-hidden="true"
     />
-    <span v-if="cell.trapLine && !cell.trapWeapon" class="board-overlay trap-line" aria-hidden="true" />
-    <span v-if="cell.trapWeapon" class="board-overlay trap-weapon" title="Thrown weapon" />
     <span
-      v-if="cell.kopisToken"
-      class="board-overlay kopis-token"
-      :class="{ mine: cell.kopisTokenMine }"
-      title="Kopis token"
-    />
-    <span v-if="cell.attractorZone" class="board-overlay attractor-zone" aria-hidden="true" />
-    <span
-      v-if="cell.attractorCenter"
-      class="board-overlay attractor-center"
-      :class="{ 'attractor-void': cell.attractorVoid }"
-      title="Attractor"
-    />
-    <span v-if="cell.attractorPreviewZone" class="board-overlay attractor-zone attractor-zone-preview" aria-hidden="true" />
-    <span
-      v-if="cell.attractorPreviewCenter"
-      class="board-overlay attractor-center attractor-center-preview"
-      :class="{ 'attractor-void': cell.attractorPreviewVoid }"
+      v-for="overlay in cell.overlays ?? []"
+      :key="overlay.key"
+      class="board-overlay"
+      :class="overlay.className"
+      :title="overlay.title"
       aria-hidden="true"
     />
-    <span v-if="cell.hasSeed" class="seed-marker" title="Seed" />
     <div
       v-if="!cell.paintbrushPreview && (cell.tileAppearanceUrl || cell.tileOverlayUrl || cell.tileFeatureUrl)"
       class="tile-image-stack"
@@ -490,16 +477,18 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
     <span
       v-if="cell.enemyAnchor && !enemyAnimating"
       class="piece enemy"
-      :class="{
-        selected: isEnemySelected,
-        'turn-ended': cell.turnEnded,
-        'kopis-marked': cell.kopisMarked,
-        dying: enemyDying,
-        'tower-piece': cell.enemyAnchor.kind === 'tower',
-        'fortification-piece': isFortificationEnemy(cell.enemyAnchor),
-        'has-portrait': !!cell.enemyPortraitUrl && cell.enemyAnchor.kind !== 'tower',
-        stacked: stackedEnemyCount > 1,
-      }"
+      :class="[
+        {
+          selected: isEnemySelected,
+          'turn-ended': cell.turnEnded,
+          dying: enemyDying,
+          'tower-piece': cell.enemyAnchor.kind === 'tower',
+          'fortification-piece': isFortificationEnemy(cell.enemyAnchor),
+          'has-portrait': !!cell.enemyPortraitUrl && cell.enemyAnchor.kind !== 'tower',
+          stacked: stackedEnemyCount > 1,
+        },
+        pieceDecorationClasses,
+      ]"
       :style="[
         stackedEnemyCount > 1
           ? stackedPieceStyle(0, stackedEnemyCount)
@@ -530,6 +519,12 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
           :size="towerIconSize(cell.enemyAnchor)"
         />
       </span>
+      <component
+        :is="dec.component"
+        v-for="dec in (cell.pieceDecorations ?? []).filter((d) => d.component)"
+        :key="dec.key"
+        :title="dec.title"
+      />
       <span v-if="cell.turnEnded" class="turn-ended-shade" aria-hidden="true"></span>
       <span v-if="cell.turnEnded" class="turn-ended-zzz" aria-hidden="true">
         <span class="z z1">z</span><span class="z z2">z</span><span class="z z3">z</span>
@@ -1045,19 +1040,6 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   pointer-events: none;
 }
 
-.seed-marker {
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-success);
-  border: 1px solid var(--color-success-dark);
-  z-index: 4;
-  pointer-events: none;
-}
-
 .tile-glyphs {
   position: absolute;
   top: 1px;
@@ -1129,92 +1111,6 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   position: absolute;
   pointer-events: none;
   z-index: 2;
-}
-
-.trap-line {
-  inset: 3px;
-  border: 1px dashed var(--color-warning);
-  border-radius: 2px;
-  opacity: 0.75;
-}
-
-.trap-weapon {
-  top: 3px;
-  right: 3px;
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  background: var(--color-warning);
-  border: 1px solid var(--color-warning-outline);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
-}
-
-.kopis-token {
-  bottom: 2px;
-  right: 2px;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
-  border: 1.5px solid var(--color-accent);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  z-index: 5;
-}
-
-.kopis-token.mine {
-  background: color-mix(in srgb, var(--color-accent-bright) 45%, transparent);
-  border-color: var(--color-accent-bright);
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 0 5px color-mix(in srgb, var(--color-accent-bright) 55%, transparent);
-}
-
-.attractor-zone {
-  inset: 0;
-  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
-}
-
-.attractor-zone-preview {
-  z-index: 1;
-  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-  outline: 1px dashed color-mix(in srgb, var(--color-accent) 55%, transparent);
-  outline-offset: -1px;
-}
-
-.attractor-center {
-  top: 50%;
-  left: 50%;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
-  border-radius: 50%;
-  background: var(--color-accent);
-  border: 1px solid var(--color-accent-bright);
-}
-
-.attractor-center.attractor-void {
-  background: var(--color-danger);
-  border-color: var(--color-danger-muted-border);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--color-danger) 50%, transparent);
-}
-
-.attractor-center-preview {
-  z-index: 2;
-  opacity: 0.9;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 35%, transparent);
-}
-
-.piece.enemy.kopis-marked::before {
-  content: "✛";
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  font-size: 0.55rem;
-  line-height: 1;
-  color: var(--color-accent-bright);
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
-  pointer-events: none;
-  z-index: 6;
 }
 
 .out-of-los-shadow {

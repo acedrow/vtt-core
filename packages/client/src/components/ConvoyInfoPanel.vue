@@ -20,7 +20,7 @@ const { hasGmCapabilities } = useSession();
 const { selectOverworldConvoy } = useOverworldEntitySelection();
 
 const convoy = computed((): OverworldConvoy | null => {
-  return gameState.value?.campaign?.overworldConvoys?.find((c) => c.id === props.convoyId) ?? null;
+  return gameState.value?.campaign?.mapConvoys?.find((c) => c.id === props.convoyId) ?? null;
 });
 
 const typeInfo = computed(() => (convoy.value ? getConvoyTypeInfo(convoy.value.type) : undefined));

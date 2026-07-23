@@ -2,6 +2,7 @@ import { computed, ref } from "vue";
 import { nextPatternDirection } from "@vtt-core/shared";
 import type { PatternDirection } from "@vtt-core/shared";
 
+import type { PackBoardUi } from "../client-content-pack.js";
 import { clearActiveTool } from "./useGmTools.js";
 
 // Pack board-mode plugins may register additional string ids (e.g. kopisMark).
@@ -20,10 +21,6 @@ export type BoardActionMode =
   | "kataptyPick"
   | "rez"
   | "assistedLaunch"
-  | "equipmentCorridor"
-  | "equipmentCover"
-  | "equipmentForceProjection"
-  | "equipmentRedirect"
   | "gmEnemyAttack"
   | (string & {})
   | null;
@@ -32,8 +29,6 @@ export type OmnistrikeStep = "selectBombs" | "placeFirst" | "placeSecond" | "con
 export type WarhookStep = "selectTarget" | "selectLanding";
 export type TowerTeleportStep = "selectLanding" | "selectKeraunoTarget";
 export type AssistedLaunchStep = "selectAnchor" | "confirm";
-export type RedirectStep = "selectSource" | "selectAttack" | "selectTarget" | "confirmPattern";
-export type ForceProjectionStep = "selectSquare" | "attack";
 
 const mode = ref<BoardActionMode>(null);
 const attackDirection = ref<PatternDirection>("n");
@@ -60,15 +55,9 @@ const warhookLandingOptions = ref<{ x: number; y: number }[]>([]);
 const towerTeleportStep = ref<TowerTeleportStep>("selectLanding");
 const towerTeleportLanding = ref<{ x: number; y: number } | null>(null);
 const kataptyTargetIds = ref<string[]>([]);
-const borrowAllyId = ref<string | null>(null);
 const assistedLaunchStep = ref<AssistedLaunchStep>("selectAnchor");
 const assistedLaunchAnchor = ref<{ x: number; y: number } | null>(null);
-const equipmentCoverTiles = ref<{ x: number; y: number }[]>([]);
-const forceProjectionOrigin = ref<{ x: number; y: number } | null>(null);
-const forceProjectionStep = ref<ForceProjectionStep>("selectSquare");
-const redirectSourceEnemyId = ref<string | null>(null);
-const redirectAttackIndex = ref<number | null>(null);
-const redirectStep = ref<RedirectStep>("selectSource");
+const packUi = ref<PackBoardUi>({});
 const gmEnemyAttack = ref<{
   enemyId: string;
   attackIndex: number;
@@ -80,21 +69,6 @@ const gmEnemyAttack = ref<{
   targetEnemyId?: string;
 } | null>(null);
 const rangeAttackConfirmHandler = ref<(() => void) | null>(null);
-
-function resetEquipmentCoverState() {
-  equipmentCoverTiles.value = [];
-}
-
-function resetRedirectState() {
-  redirectSourceEnemyId.value = null;
-  redirectAttackIndex.value = null;
-  redirectStep.value = "selectSource";
-}
-
-function resetForceProjectionState() {
-  forceProjectionOrigin.value = null;
-  forceProjectionStep.value = "selectSquare";
-}
 
 function resetAssistedLaunchState() {
   assistedLaunchStep.value = "selectAnchor";
@@ -135,19 +109,20 @@ export function useBoardActionMode() {
     pendingTargetPlayerId.value = null;
     armorLanding.value = null;
     kataptyTargetIds.value = [];
-    borrowAllyId.value = null;
+    packUi.value = {};
     gmEnemyAttack.value = null;
     resetAssistedLaunchState();
     resetOmnistrikeState();
     resetWarhookState();
     resetTowerTeleportState();
-    resetEquipmentCoverState();
-    resetForceProjectionState();
-    resetRedirectState();
   }
 
   function clearMode() {
     setMode(null);
+  }
+
+  function patchPackUi(patch: Partial<PackBoardUi>) {
+    packUi.value = { ...packUi.value, ...patch };
   }
 
   function rotateAttackDirection() {
@@ -218,19 +193,14 @@ export function useBoardActionMode() {
     towerTeleportStep,
     towerTeleportLanding,
     kataptyTargetIds,
-    borrowAllyId,
     assistedLaunchStep,
     assistedLaunchAnchor,
-    equipmentCoverTiles,
-    forceProjectionOrigin,
-    forceProjectionStep,
-    redirectSourceEnemyId,
-    redirectAttackIndex,
-    redirectStep,
+    packUi,
     gmEnemyAttack,
     isActive,
     setMode,
     clearMode,
+    patchPackUi,
     startGmEnemyAttack,
     startGmSwarmAttack,
     registerRangeAttackConfirm,

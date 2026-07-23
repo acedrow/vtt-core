@@ -28,9 +28,9 @@ export function makeGameState(overrides: Partial<GameState> = {}): GameState {
   const height = overrides.height ?? 8;
   const campaign = {
     partyResources: defaultPartyResourcesFromPack(),
-    constructedBaseUpgrades: [] as string[],
-    overworldRegions: defaultOverworldRegions(),
-    overworldParty: defaultOverworldParty(),
+    unlockedUpgrades: [] as string[],
+    mapRegions: defaultOverworldRegions(),
+    mapParty: defaultOverworldParty(),
     ...overrides.campaign,
   };
   return {

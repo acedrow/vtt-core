@@ -30,7 +30,11 @@ import {
   ensureOverworldParty,
   ensureOverworldRegions,
 } from "./campaign-hooks.js";
-import { ensureCampaignBag, liftLegacyCampaignFields } from "./campaign-state.js";
+import {
+  ensureCampaignBag,
+  liftLegacyCampaignFields,
+  migrateCampaignRuntimeKeys,
+} from "./campaign-state.js";
 import { applyLoadoutToPlayer, getClassMaxHp, getArmorSpeed } from "./player-data.js";
 import { ensureGameStateContentPack } from "./sheet-persistence.js";
 import { coordKey, createInitialStateFromMap, isFootprintInBounds, isInBounds, isWalkable, tileAt } from "./map.js";
@@ -1375,18 +1379,19 @@ export function normalizeGameState(state: GameState, map?: GameMap): GameState {
       legacy.enforceTurns === false || legacy.enforceActionLimits === false;
   }
   liftLegacyCampaignFields(state);
+  migrateCampaignRuntimeKeys(ensureCampaignBag(state));
   ensureCampaignState(state);
   const campaign = ensureCampaignBag(state);
   if (!campaign.partyResources) {
     campaign.partyResources = defaultPartyResources();
   }
-  if (typeof campaign.gmIchor !== "number" || !Number.isFinite(campaign.gmIchor) || campaign.gmIchor < 0) {
-    campaign.gmIchor = 0;
+  if (typeof campaign.gmResource !== "number" || !Number.isFinite(campaign.gmResource) || campaign.gmResource < 0) {
+    campaign.gmResource = 0;
   } else {
-    campaign.gmIchor = Math.trunc(campaign.gmIchor);
+    campaign.gmResource = Math.trunc(campaign.gmResource);
   }
-  if (!campaign.overworldRegions || campaign.overworldRegions.length === 0) {
-    campaign.overworldRegions = defaultOverworldRegions();
+  if (!campaign.mapRegions || campaign.mapRegions.length === 0) {
+    campaign.mapRegions = defaultOverworldRegions();
   }
   ensureOverworldRegions(state);
   ensureOverworldParty(state);

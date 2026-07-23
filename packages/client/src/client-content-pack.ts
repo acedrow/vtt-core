@@ -1,9 +1,43 @@
 import type { Component } from "vue";
-import type { Player } from "@vtt-core/shared";
+import type { AttackPreviewState, GameState, PatternDirection, Player, PlayerAction } from "@vtt-core/shared";
 
 import type { ClientCombatBoardHelpers } from "./combat-board-helpers.js";
 
 export type { ClientCombatBoardHelpers } from "./combat-board-helpers.js";
+
+export type CellOverlaySpec = {
+  key: string;
+  className: string;
+  title?: string;
+  tooltipGroup?: string;
+};
+
+export type CellOverlayBoardContext = {
+  gameState: GameState;
+  yourPlayerId: string | null;
+  boardActionMode: string | null;
+  previewHoverCell: { x: number; y: number } | null;
+};
+
+export type CellOverlayPlugin = {
+  id: string;
+  resolveBoard: (ctx: CellOverlayBoardContext) => Map<string, CellOverlaySpec[]>;
+};
+
+export type PieceDecorationSpec = {
+  key: string;
+  className?: string;
+  title?: string;
+  component?: Component;
+};
+
+export type PieceDecorationPlugin = {
+  id: string;
+  resolvePieces: (ctx: {
+    gameState: GameState;
+    yourPlayerId: string | null;
+  }) => Map<string, PieceDecorationSpec[]>;
+};
 
 export type ClientThemeOption = {
   id: string;
@@ -36,6 +70,58 @@ export type ClientCombatBoard = {
   towerPicker?: Component;
   towerModal?: Component;
   helpers?: ClientCombatBoardHelpers;
+  cellOverlays?: CellOverlayPlugin[];
+  pieceDecorations?: PieceDecorationPlugin[];
+};
+
+export type PackBoardUi = {
+  allyPlayerId?: string;
+  coverTiles?: { x: number; y: number }[];
+  attackOrigin?: { x: number; y: number };
+  equipmentUse?: boolean;
+  step?: string;
+  sourceEnemyId?: string;
+  attackIndex?: number;
+};
+
+export type BoardModeContext = {
+  gameState: GameState;
+  yourPlayerId: string;
+  mode: string;
+  previewHoverCell: { x: number; y: number } | null;
+  packUi: PackBoardUi;
+  aim: {
+    direction: PatternDirection;
+    aimed: boolean;
+    anchor: { x: number; y: number } | null;
+  };
+  rangeAttackTargetIds: string[];
+  rangeAttackObstacleCoords: { x: number; y: number }[];
+};
+
+export type BoardModeHost = {
+  sendPlayerAction: (action: PlayerAction) => void;
+  clearMode: () => void;
+  showToast: (message: string) => void;
+  patchPackUi: (patch: Partial<PackBoardUi>) => void;
+  setAim: (patch: Partial<BoardModeContext["aim"]>) => void;
+  setRangeTargets: (patch: {
+    targetIds?: string[];
+    obstacleCoords?: { x: number; y: number }[];
+  }) => void;
+  runWeaponAttackClick: (x: number, y: number, targetEnemyId?: string) => boolean;
+};
+
+export type BoardModeClickContext = BoardModeContext & {
+  x: number;
+  y: number;
+  enemyId?: string;
+  playerId?: string;
+  host: BoardModeHost;
+};
+
+export type BoardModeRotateContext = BoardModeContext & {
+  host: BoardModeHost;
 };
 
 export type ClientBoardModePlugin = {
@@ -43,7 +129,14 @@ export type ClientBoardModePlugin = {
   activateForClass?: string;
   activateForArmor?: string;
   activateForEquipment?: (equipmentName: string) => boolean;
-  hint?: string;
+  /** Static string or dynamic (equipment steps, aimed state). */
+  hint?: string | ((ctx: BoardModeContext) => string | null);
+  highlightKeys?: (ctx: BoardModeContext) => { primary?: string[]; secondary?: string[] };
+  preview?: (ctx: BoardModeContext) => { primary?: string[]; secondary?: string[] } | null;
+  invalidKeys?: (ctx: BoardModeContext) => string[];
+  onCellClick?: (ctx: BoardModeClickContext) => boolean | void;
+  onRotate?: (ctx: BoardModeRotateContext) => boolean | void;
+  buildAttackPreview?: (ctx: BoardModeContext) => AttackPreviewState | null;
 };
 
 export type ClientSheetFieldWhen = {
@@ -258,9 +351,22 @@ export function getClientCombatBoard(): ClientCombatBoard {
   return combatBoard;
 }
 
+export function listClientCellOverlayPlugins(): CellOverlayPlugin[] {
+  return getClientCombatBoard().cellOverlays ?? [];
+}
+
+export function listClientPieceDecorationPlugins(): PieceDecorationPlugin[] {
+  return getClientCombatBoard().pieceDecorations ?? [];
+}
+
 export function listClientBoardModes(): ClientBoardModePlugin[] {
   if (!registered) return [];
   return boardModes;
+}
+
+export function clientBoardMode(id: string | null | undefined): ClientBoardModePlugin | undefined {
+  if (!id || !registered) return undefined;
+  return boardModes.find((m) => m.id === id);
 }
 
 export function boardModeForClass(className: string | undefined): string | null {
