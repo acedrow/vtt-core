@@ -1,6 +1,11 @@
-import type { Enemy, GameState } from "@vtt-core/shared";
+import type { Enemy, GameState, PhaseAction } from "@vtt-core/shared";
 
 import { getClientCombatBoard } from "./client-content-pack.js";
+
+export type PhaseActionGate = {
+  message: string;
+  boardMode?: string;
+};
 
 export type CombatBoardSwarmGroup = {
   canonicalId: string;
@@ -79,6 +84,11 @@ export type ClientCombatBoardHelpers = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
   keraunoAdjacentEnemyIds: (...args: any[]) => string[];
   kataptyNeedsTargetPick: (state: GameState, playerId: string) => boolean;
+  beforePhaseAction?: (
+    state: GameState,
+    action: PhaseAction,
+    playerId: string | null,
+  ) => PhaseActionGate | null;
   TOWER_IATROS: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
   getEquipmentAttackSpec: (...args: any[]) => any;
@@ -135,6 +145,7 @@ function stubHelpers(): ClientCombatBoardHelpers {
     kataptyTargetKeys: emptySet,
     keraunoAdjacentEnemyIds: () => [],
     kataptyNeedsTargetPick: () => false,
+    beforePhaseAction: () => null,
     TOWER_IATROS: "Iatrós",
     getEquipmentAttackSpec: () => null,
     collectEquipmentPatternTiles: emptyTiles,
@@ -154,5 +165,20 @@ function stubHelpers(): ClientCombatBoardHelpers {
 const stubs = stubHelpers();
 
 export function getCombatBoardHelpers(): ClientCombatBoardHelpers {
-  return getClientCombatBoard().helpers ?? stubs;
+  const pack = getClientCombatBoard().helpers;
+  if (!pack) return stubs;
+  if (pack.beforePhaseAction) return pack;
+  // Compat for content packs that still only expose kataptyNeedsTargetPick.
+  return {
+    ...pack,
+    beforePhaseAction: (state, action, playerId) => {
+      if (action === "endPlayerTurn" && playerId && pack.kataptyNeedsTargetPick(state, playerId)) {
+        return {
+          message: "Select exactly 3 Katapty targets, then end turn again",
+          boardMode: "kataptyPick",
+        };
+      }
+      return null;
+    },
+  };
 }

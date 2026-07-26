@@ -9,6 +9,7 @@ import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCharacterSheetSelection } from "../composables/useCharacterSheetSelection.js";
 import { activeTab } from "../composables/useGameConsole.js";
+import { useMapPreview } from "../composables/useMapPreview.js";
 import { useMapSelection } from "../composables/useMapSelection.js";
 import { useGameConnection } from "../composables/useGameConnection.js";
 import { gameWsUrl, useGameSocket } from "../composables/useGameSocket.js";
@@ -39,6 +40,7 @@ import GmActionBar from "./GmActionBar.vue";
 import ClassReactionPrompt from "./ClassReactionPrompt.vue";
 import GameBoard from "./GameBoard.vue";
 import GmToolsToolbar from "./GmToolsToolbar.vue";
+import MapPreviewBoard from "./MapPreviewBoard.vue";
 import RightPanel from "./RightPanel.vue";
 import SideNav from "./SideNav.vue";
 
@@ -48,7 +50,8 @@ const combatBoard = getClientCombatBoard();
 const router = useRouter();
 const { role, playerProfile, hasGmCapabilities, clearSession } = useSession();
 const { selectedSheetId, sheetsExpanded, selectSheet } = useCharacterSheetSelection();
-const { selectedMapId, mapsExpanded } = useMapSelection();
+const { selectedMapId, mapsExpanded, previewMapName } = useMapSelection();
+const { previewMapId } = useMapPreview();
 const { selectedFactionId, factionsExpanded } = useFactionSelection();
 const { selectedTableId, tablesExpanded } = useTableSelection();
 const { boardSelection, selectBoardPlayer, clearBoardSelection, selectSheetFromNav } = useBoardSelection();
@@ -133,6 +136,7 @@ const sandboxMode = computed(() => gameState.value != null && isSandboxMode(game
 
 const centerHeaderTitle = computed(() => {
   if (activePackSection.value) return activePackSection.value.label;
+  if (previewMapId.value) return previewMapName.value ?? previewMapId.value;
   return mapName.value;
 });
 
@@ -216,15 +220,17 @@ function onPhaseAction() {
     const player = gameState.value?.players.find((p) => p.id === yourPlayerId.value);
     if (player) selectBoardPlayer(player.id, player.characterSheetId);
   }
-  if (
-    action === "endPlayerTurn" &&
-    yourPlayerId.value &&
-    gameState.value &&
-    getCombatBoardHelpers().kataptyNeedsTargetPick(gameState.value, yourPlayerId.value)
-  ) {
-    setMode("kataptyPick");
-    showToast("Select exactly 3 Katapty targets, then end turn again");
-    return;
+  if (gameState.value) {
+    const gate = getCombatBoardHelpers().beforePhaseAction?.(
+      gameState.value,
+      action,
+      yourPlayerId.value,
+    );
+    if (gate) {
+      if (gate.boardMode) setMode(gate.boardMode);
+      showToast(gate.message);
+      return;
+    }
   }
   send({ type: "phaseAction", action });
 }
@@ -323,7 +329,19 @@ function selectMainTab(tab: MainSectionTab) {
             :aria-label="section.label"
             @click="selectMainTab(section.id)"
           >
-            <svg class="chrome-tab-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <component
+              :is="section.icon"
+              v-if="section.icon"
+              class="chrome-tab-icon"
+              aria-hidden="true"
+            />
+            <svg
+              v-else
+              class="chrome-tab-icon"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
               <rect
                 x="2.5"
                 y="2.5"
@@ -360,6 +378,7 @@ function selectMainTab(tab: MainSectionTab) {
         <p v-if="showTaccomWaiting" class="taccom-waiting">
           Waiting for the GM to start TACCOM.
         </p>
+        <MapPreviewBoard v-else-if="previewMapId" :map-id="previewMapId" />
         <template v-else>
           <GameBoard
             :role="role"
@@ -516,11 +535,6 @@ function selectMainTab(tab: MainSectionTab) {
   z-index: 2;
   flex-shrink: 0;
   margin-bottom: -1px;
-}
-
-.chrome-tab-icon-beaker {
-  width: 1.15rem;
-  height: 1.15rem;
 }
 
 .map-title {

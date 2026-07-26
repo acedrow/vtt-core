@@ -23,7 +23,7 @@ const persisted = readPersistedUi();
 const selectedSheetId = ref<string | null>(persisted.selectedSheetId);
 const sheetsExpanded = ref(persisted.sheetsExpanded);
 const sheetsVersion = ref(0);
-const gearPick = ref<GearPick | null>(null);
+export const gearPick = ref<GearPick | null>(null);
 
 export function useCharacterSheetSelection() {
   const { apiFetch } = useApi();

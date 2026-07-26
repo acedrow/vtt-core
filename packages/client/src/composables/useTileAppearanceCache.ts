@@ -1,17 +1,17 @@
-import type { GameState } from "@vtt-core/shared";
+import type { MapTile } from "@vtt-core/shared";
 import type { Ref } from "vue";
 import { computed, onUnmounted, ref, watch } from "vue";
 
 import { useApi } from "./useApi.js";
 
-export function useTileAppearanceCache(gameState: Ref<GameState | null>) {
+export function useTileAppearanceCache(tilesSource: Ref<{ tiles?: MapTile[] } | null>) {
   const { fetchTileAppearanceUrl } = useApi();
   const urls = ref<Record<string, string>>({});
   let loadGen = 0;
 
   const imageKeys = computed(() => {
     const keys = new Set<string>();
-    for (const tile of gameState.value?.tiles ?? []) {
+    for (const tile of tilesSource.value?.tiles ?? []) {
       if (tile.appearanceKey) keys.add(tile.appearanceKey);
       if (tile.overlayKey) keys.add(tile.overlayKey);
       if (tile.featureKey) keys.add(tile.featureKey);
@@ -22,7 +22,7 @@ export function useTileAppearanceCache(gameState: Ref<GameState | null>) {
   async function refresh() {
     const gen = ++loadGen;
     const needed = new Set<string>();
-    for (const tile of gameState.value?.tiles ?? []) {
+    for (const tile of tilesSource.value?.tiles ?? []) {
       if (tile.appearanceKey) needed.add(tile.appearanceKey);
       if (tile.overlayKey) needed.add(tile.overlayKey);
       if (tile.featureKey) needed.add(tile.featureKey);

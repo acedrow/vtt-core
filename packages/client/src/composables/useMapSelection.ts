@@ -14,6 +14,7 @@ const persisted = readPersistedUi();
 export const selectedMapId = ref<string | null>(persisted.selectedMapId);
 export const mapsExpanded = ref(persisted.mapsExpanded);
 export const mapsVersion = ref(0);
+export const previewMapName = ref<string | null>(null);
 
 export function useMapSelection() {
   const { selectSheet } = useCharacterSheetSelection();
@@ -43,6 +44,7 @@ export function useMapSelection() {
     selectedMapId,
     mapsExpanded,
     mapsVersion,
+    previewMapName,
     selectMap,
     notifyMapsChanged,
   };

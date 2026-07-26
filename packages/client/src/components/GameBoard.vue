@@ -6,6 +6,7 @@ import { boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coo
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
+import { BOARD_CELL_GAP, boardContentHeightPx, boardContentWidthPx } from "../lib/boardLayout.js";
 import { boardCellMetrics, buildElevationContourPaths } from "../lib/elevationContours.js";
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
@@ -345,7 +346,7 @@ const viewportEl = ref<HTMLElement | null>(null);
 const boardWidthPx = computed(() => {
   const s = gameState.value;
   if (!s) return 520;
-  return Math.max(s.width * 40, 280);
+  return boardContentWidthPx(s.width);
 });
 
 const hasGameState = computed(() => !!gameState.value);
@@ -355,7 +356,7 @@ const boardKey = computed(() =>
   gameState.value ? `${gameState.value.mapId}:${gameState.value.width}x${gameState.value.height}` : null,
 );
 const contentHeightPx = computed(() =>
-  boardWidthPx.value * (boardHeight.value / boardWidth.value),
+  boardContentHeightPx(boardWidth.value, boardHeight.value),
 );
 
 const overlayInsetPx = ref(0);
@@ -1565,8 +1566,6 @@ watch(
     }
   },
 );
-
-const BOARD_CELL_GAP = 3;
 
 const elevationContourPaths = computed(() => {
   if (!showElevationContours.value) return null;

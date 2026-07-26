@@ -1,7 +1,7 @@
 import type { ClientMessage, GameState } from "@vtt-core/shared";
 import { ref } from "vue";
 
-const gameState = ref<GameState | null>(null);
+export const gameState = ref<GameState | null>(null);
 const yourPlayerId = ref<string | null>(null);
 let sendFn: ((msg: ClientMessage) => void) | null = null;
 

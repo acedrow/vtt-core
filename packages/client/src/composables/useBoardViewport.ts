@@ -9,6 +9,10 @@ const ZOOM_OUT_MIN_FACTOR = 0.65;
 const PAN_MIN_VISIBLE_FRACTION = 0.2;
 const FOCUS_ANIM_MS = 350;
 
+export type BoardViewportOptions = {
+  interaction?: "full" | "lockedFit";
+};
+
 function clampPanAxis(pan: number, scaledSize: number, viewportSize: number): number {
   const minVisible = Math.min(
     scaledSize * PAN_MIN_VISIBLE_FRACTION,
@@ -24,7 +28,9 @@ export function useBoardViewport(
   isReady: Ref<boolean>,
   viewportKey: Ref<string | null>,
   topInsetPx: Ref<number> = ref(0),
+  options: BoardViewportOptions = {},
 ) {
+  const lockedFit = options.interaction === "lockedFit";
   const scale = ref(1);
   const panX = ref(0);
   const panY = ref(0);
@@ -112,7 +118,7 @@ export function useBoardViewport(
     fitScale.value = fit.scale;
     fitPanX.value = fit.panX;
     fitPanY.value = fit.panY;
-    if (animate) {
+    if (animate && !lockedFit) {
       animateViewportTo(fit.scale, fit.panX, fit.panY);
       return;
     }
@@ -147,6 +153,7 @@ export function useBoardViewport(
   }
 
   function focusOnRect(contentX: number, contentY: number, contentW: number, contentH: number, padding = 48) {
+    if (lockedFit) return;
     const el = viewportEl.value;
     const size = el ? viewportSize(el) : null;
     if (!el || !size || !isReady.value) return;
@@ -166,6 +173,7 @@ export function useBoardViewport(
   }
 
   function panToRect(contentX: number, contentY: number, contentW: number, contentH: number) {
+    if (lockedFit) return;
     const el = viewportEl.value;
     const size = el ? viewportSize(el) : null;
     if (!el || !size || !isReady.value) return;
@@ -184,6 +192,10 @@ export function useBoardViewport(
     const el = viewportEl.value;
     const key = viewportKey.value;
     if (!el || !isReady.value || !key) return;
+    if (lockedFit) {
+      fitToView();
+      return;
+    }
     updateFitState();
     const saved = readPersistedViewport(key);
     if (saved && saved.scale > 0) {
@@ -200,6 +212,7 @@ export function useBoardViewport(
   let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
   function persistViewport() {
+    if (lockedFit) return;
     const key = viewportKey.value;
     if (!key) return;
     if (persistTimer) clearTimeout(persistTimer);
@@ -217,7 +230,7 @@ export function useBoardViewport(
       resizeFrame = 0;
       const el = viewportEl.value;
       if (!el || !viewportSize(el)) return;
-      if (wasFit) fitToView();
+      if (lockedFit || wasFit) fitToView();
       else {
         updateFitState();
         clampView();
@@ -268,7 +281,7 @@ export function useBoardViewport(
   }
 
   function onWheel(e: WheelEvent) {
-    if (!viewportEl.value) return;
+    if (lockedFit || !viewportEl.value) return;
     cancelStageAnimation();
     e.preventDefault();
 
@@ -313,6 +326,10 @@ export function useBoardViewport(
   );
 
   watch(topInsetPx, () => {
+    if (lockedFit) {
+      fitToView();
+      return;
+    }
     const wasFit = !isTransformed.value;
     updateFitState();
     if (wasFit) fitToView();

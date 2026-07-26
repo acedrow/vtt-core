@@ -27,11 +27,11 @@ export {
 } from "./dataCategories.js";
 
 const persisted = readPersistedUi();
-const dataCategory = ref<DataCategory | null>(persisted.dataCategory);
-const dataFocus = ref<DataFocus | null>(persisted.dataFocus);
-const dataFocusReturnCategory = ref<DataCategory | null>(persisted.dataFocusReturnCategory);
-const dataCategoryReturnFactionId = ref<FactionId | null>(persisted.dataCategoryReturnFactionId);
-const dataExpanded = ref(persisted.dataExpanded);
+export const dataCategory = ref<DataCategory | null>(persisted.dataCategory);
+export const dataFocus = ref<DataFocus | null>(persisted.dataFocus);
+export const dataFocusReturnCategory = ref<DataCategory | null>(persisted.dataFocusReturnCategory);
+export const dataCategoryReturnFactionId = ref<FactionId | null>(persisted.dataCategoryReturnFactionId);
+export const dataExpanded = ref(persisted.dataExpanded);
 
 export function useInfoDataSelection() {
   const { clearPatternSelection } = usePatternSelection();

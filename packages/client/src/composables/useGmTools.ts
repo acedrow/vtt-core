@@ -60,7 +60,7 @@ export const GM_TILE_EFFECT_NONE = "";
 
 const persistedGm = readPersistedUi().gmTools;
 
-const activeTool = ref<GmTool | null>(persistedGm.activeTool);
+export const activeTool = ref<GmTool | null>(persistedGm.activeTool);
 const selectTargetKind = ref<GmSelectTargetKind>(persistedGm.selectTargetKind);
 const selectSameEnemyType = ref(persistedGm.selectSameEnemyType);
 const bulkSelection = ref<GmBulkSelection | null>(null);

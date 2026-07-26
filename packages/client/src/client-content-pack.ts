@@ -10,7 +10,7 @@ import type {
 
 import type { ClientCombatBoardHelpers } from "./combat-board-helpers.js";
 
-export type { ClientCombatBoardHelpers } from "./combat-board-helpers.js";
+export type { ClientCombatBoardHelpers, PhaseActionGate } from "./combat-board-helpers.js";
 
 export type CellOverlaySpec = {
   key: string;
@@ -56,6 +56,7 @@ export type ClientMainSection = {
   id: string;
   label: string;
   component: Component;
+  icon?: Component;
   pingChannel?: MapPingSurface;
   opensResources?: boolean;
 };
