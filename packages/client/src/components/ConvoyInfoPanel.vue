@@ -6,6 +6,7 @@ import {
 } from "@vtt-core/shared";
 import { computed } from "vue";
 
+import { listClientMainSections } from "../client-content-pack.js";
 import { useGameState } from "../composables/useGameState.js";
 import { useOverworldEntitySelection } from "../composables/useOverworldEntitySelection.js";
 import { useSession } from "../composables/useSession.js";
@@ -42,6 +43,11 @@ const subtitle = computed(() => {
   return faction.value.name;
 });
 
+const kicker = computed(() => {
+  const section = listClientMainSections().find((s) => s.pingChannel === "overworld");
+  return section?.label ?? "Map";
+});
+
 function onClose() {
   selectOverworldConvoy(null);
 }
@@ -60,7 +66,7 @@ function setInfoVisible(visible: boolean) {
     v-if="convoy"
     :title="title"
     :subtitle="subtitle"
-    kicker="Overworld"
+    :kicker="kicker"
     @close="onClose"
   >
     <template v-if="!showDetails">

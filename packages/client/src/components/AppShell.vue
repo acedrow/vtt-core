@@ -13,7 +13,12 @@ import { useMapSelection } from "../composables/useMapSelection.js";
 import { useGameConnection } from "../composables/useGameConnection.js";
 import { gameWsUrl, useGameSocket } from "../composables/useGameSocket.js";
 import { useGameState } from "../composables/useGameState.js";
-import { listClientMainSections, getClientCombatBoard } from "../client-content-pack.js";
+import {
+  getClientCombatBoard,
+  listClientMainSections,
+  mainSectionOpensResources,
+  mainSectionPingChannel,
+} from "../client-content-pack.js";
 import { useInfoDataSelection } from "../composables/useInfoDataSelection.js";
 import { activeMainTab } from "../composables/useMainSectionTab.js";
 import type { MainSectionTab } from "../composables/useMainSectionTab.js";
@@ -69,7 +74,11 @@ const showTaccomPingBadge = computed(
 );
 
 function sectionShowsPingBadge(sectionId: string): boolean {
-  return sectionId === "overworld" && remotePingOnOverworld.value && activeMainTab.value !== "overworld";
+  return (
+    mainSectionPingChannel(sectionId) === "overworld" &&
+    remotePingOnOverworld.value &&
+    activeMainTab.value !== sectionId
+  );
 }
 
 const playerProfileRef = computed(() => playerProfile.value ?? null);
@@ -105,7 +114,7 @@ onMounted(() => {
     applyGmTools: applyPersistedGmTools,
     gmToolsWatchSources,
   });
-  if (activeMainTab.value === "baseUpgrades") {
+  if (mainSectionOpensResources(activeMainTab.value)) {
     openResourcesPanel();
   }
   connect();
@@ -249,7 +258,7 @@ function openTaccomInfoPanel() {
 
 function selectMainTab(tab: MainSectionTab) {
   activeMainTab.value = tab;
-  if (tab === "baseUpgrades") {
+  if (mainSectionOpensResources(tab)) {
     openResourcesPanel();
   } else if (tab === "taccom") {
     openTaccomInfoPanel();

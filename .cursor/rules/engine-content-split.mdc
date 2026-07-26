@@ -24,7 +24,7 @@ Shared must not import the content package. Product packages side-effect-registe
 - Engine CI / shared Vitest target: fixture catalogs; content repo owns HP tests. Product/e2e registers Hellpiercers.
 - npm package scope is `@vtt-core/*`.
 - Nested `GameState.campaign` (parent #2) is done. Sheet/pack-version KV stamps + migrators (parent #7) are done in engine; content must ship `sheetDataKeys` (`@vtt-core/hellpiercers-content` ≥0.0.8).
-- Client content exports include `./combat-ui` (content-internal / optional product), `./combat-board-placement`, `./tiles`, `./register`, `./register-client`. Residual peel: combat UI is contribution-hosted; see residual peel plans.
+- Client content exports include `./combat-ui` (content-internal), `./combat-board-placement` (content-internal; engine uses `combatBoard.host` / extras slots — Opaque Peel U3), `./tiles`, `./register`, `./register-client`. Residual peel: combat UI is contribution-hosted.
 - ADRs: `docs/adr/001`–`008` (incl. package rename)
 ## Plans
 

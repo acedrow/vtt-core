@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
-import { getEnemyBossActionBudget, getEnemyListingByName, getEnemyScale, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@vtt-core/shared";
-import { computed } from "vue";
+import { getEnemyBossActionBudget, getEnemyListingByName, getEnemyScale, getEnemySpeed, isAutoResolvableEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@vtt-core/shared";
+import { computed, provide, toRef } from "vue";
 
+import { getClientCombatBoard } from "../client-content-pack.js";
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
@@ -11,9 +12,8 @@ import { useInfoDataSelection } from "../composables/useInfoDataSelection.js";
 import { useApi } from "../composables/useApi.js";
 import { useEnemySpawnSelection } from "../composables/useEnemySpawnSelection.js";
 import { useEnemyPortraitColors } from "../composables/useEnemyPortraitColors.js";
+import { enemyInfoExtrasKey } from "../composables/useEnemyInfoExtras.js";
 import { useSession } from "../composables/useSession.js";
-import { useStainGeyserPlacement } from "@vtt-core/hellpiercers-content/combat-board-placement";
-import { useGorgenautAgnosiaPlacement } from "@vtt-core/hellpiercers-content/combat-board-placement";
 import HpBar from "./HpBar.vue";
 import PanelShell from "./PanelShell.vue";
 import RuleText from "./RuleText.vue";
@@ -33,8 +33,16 @@ const { closeRightPanel, boardSelection } = useBoardSelection();
 const { startGmEnemyAttack, startGmSwarmAttack } = useBoardActionMode();
 const { goBackFromDataFocus } = useInfoDataSelection();
 const { selectedSpawnEnemyName, selectSpawnEnemy } = useEnemySpawnSelection();
-const { stainGeyserPlacementActive } = useStainGeyserPlacement();
-const { gorgenautAgnosiaPlacementActive } = useGorgenautAgnosiaPlacement();
+const combatBoard = getClientCombatBoard();
+
+provide(enemyInfoExtrasKey, {
+  enemyId: toRef(props, "enemyId"),
+  enemyName: toRef(props, "enemyName"),
+  hasGmCapabilities,
+  showGmCombatUi,
+  startGmSwarmAttack,
+  startGmEnemyAttack,
+});
 
 const activeEnemy = computed(() =>
   props.enemyId ? gameState.value?.enemies.find((e) => e.id === props.enemyId) : undefined,
@@ -133,18 +141,6 @@ const showUseAttack = computed(
 
 const isInSwarm = computed(() => (swarmGroup.value?.size ?? 0) > 1);
 
-const swarmDirectAttackIndex = computed(() => {
-  const attacks = listing.value?.attacks ?? [];
-  return attacks.findIndex((entry) => isDirectTargetEnemyAttack(entry.attack));
-});
-
-const showSwarmAttack = computed(
-  () =>
-    showUseAttack.value &&
-    isInSwarm.value &&
-    swarmDirectAttackIndex.value >= 0,
-);
-
 const spawnEnemyName = computed(
   () => listing.value?.name ?? activeEnemy.value?.name ?? props.enemyName ?? null,
 );
@@ -169,13 +165,6 @@ const enemySpeedLabel = computed(() => {
   const remaining = enemy.movementRemaining ?? max;
   return `${remaining}/${max}`;
 });
-
-function useSwarmAttack() {
-  const enemy = activeEnemy.value;
-  const index = swarmDirectAttackIndex.value;
-  if (!enemy || index < 0) return;
-  startGmSwarmAttack(enemy.id, index);
-}
 
 function attackIsResolvable(index: number): boolean {
   const attackSpec = listing.value?.attacks?.[index]?.attack;
@@ -257,10 +246,7 @@ function spawnUnit() {
           >
             {{ spawnSelected ? "Selected for spawn" : "Spawn unit" }}
           </button>
-          <p v-if="stainGeyserPlacementActive" class="spawn-hint">
-            Click to place the stain area (Esc to skip).
-          </p>
-          <p v-else-if="spawnSelected" class="spawn-hint">Click an empty walkable tile on the board.</p>
+          <p v-if="spawnSelected" class="spawn-hint">Click an empty walkable tile on the board.</p>
         </div>
 
         <div
@@ -271,24 +257,9 @@ function spawnUnit() {
             End turn
           </button>
         </div>
-
-        <div
-          v-if="showSwarmAttack"
-          class="swarm-attack-row"
-        >
-          <button type="button" class="use-attack-btn swarm-attack-btn" @click="useSwarmAttack">
-            Swarm attack
-          </button>
-          <p class="swarm-attack-hint">Select a target on the board, then choose how many strikes.</p>
-        </div>
-
-        <p v-if="isInSwarm && activeEnemy && !soloSwarmMember" class="swarm-member-hint">
-          Double-click a swarm tile to select a single member.
-        </p>
-        <p v-if="soloSwarmMember" class="swarm-member-hint">
-          Move this member to rearrange the swarm or break it away from the group.
-        </p>
       </template>
+
+      <component :is="combatBoard.enemyInfoExtras" />
 
       <div v-if="listing || towerDef" class="stats">
         <span v-if="hasGmCapabilities && !showHpBar" class="stat">
@@ -307,28 +278,18 @@ function spawnUnit() {
           v-if="activeEnemy?.exhausted && !getCombatBoardHelpers().isTowerEnemy(activeEnemy)"
           class="stat exhausted"
         >Exhausted</span>
-        <span v-if="hasGmCapabilities && listing?.agnosiaHp != null" class="stat">Agnosia HP: {{ listing.agnosiaHp }}</span>
-        <span v-if="activeEnemy?.agnosiaTriggered" class="stat">Agnosia triggered</span>
         <span v-if="activeEnemy?.burrowed" class="stat">Burrowed</span>
-        <p v-if="gorgenautAgnosiaPlacementActive" class="spawn-hint">
-          Move the 5×5 stain area, then click to confirm (Esc to recenter).
-        </p>
       </div>
 
-      <div v-if="listing?.tags?.length || towerDef?.tags" class="tags">
+      <div v-if="listing?.tags?.length" class="tags">
         <span v-for="tag in listing?.tags ?? []" :key="tag" class="tag">{{ tag }}</span>
-        <span v-if="towerDef?.tags" class="tag">{{ towerDef.tags }}</span>
       </div>
 
       <p v-if="listing?.codename" class="codename"><em>{{ listing.codename }}</em></p>
       <p v-if="listing?.description" class="item-description">
         <RuleText :text="listing.description" />
       </p>
-      <p v-else-if="towerDef?.special" class="ability">
-        <span class="ability-label">Special</span>
-        <RuleText :text="towerDef.special" />
-      </p>
-      <p v-else-if="!listing?.codename" class="muted">No description available.</p>
+      <p v-else-if="!listing?.codename && !towerDef" class="muted">No description available.</p>
 
       <template v-if="listing">
         <div v-for="(attack, i) in listing.attacks" :key="i" class="ability">
@@ -344,17 +305,9 @@ function spawnUnit() {
             </button>
           </div>
         </div>
-        <p v-if="listing.agnosia" class="ability">
-          <span class="ability-label">Agnosia</span>
-          <RuleText :text="listing.agnosia" />
-        </p>
         <p v-if="listing.special" class="ability">
           <span class="ability-label">Special</span>
           <RuleText :text="listing.special" />
-        </p>
-        <p v-if="listing.stainwalk" class="ability">
-          <span class="ability-label">Stainwalk</span>
-          <RuleText :text="listing.stainwalk" />
         </p>
       </template>
 
@@ -476,30 +429,6 @@ function spawnUnit() {
 
 .use-attack-btn:hover {
   background: var(--color-accent-hover-bg);
-}
-
-.swarm-attack-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.swarm-attack-btn {
-  align-self: flex-start;
-}
-
-.swarm-attack-hint {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--color-muted);
-  line-height: 1.4;
-}
-
-.swarm-member-hint {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--color-muted);
-  line-height: 1.4;
 }
 
 .position {

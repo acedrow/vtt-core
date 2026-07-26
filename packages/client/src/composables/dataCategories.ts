@@ -1,12 +1,13 @@
 import { factionHasEnemyListings } from "@vtt-core/shared";
 
+import { isClientDataCategoryId } from "../client-content-pack.js";
+
 export type EngineDataCategory =
   | "armor"
   | "classes"
   | "weapons"
   | "equipment"
   | "gear"
-  | "resources"
   | "effects"
   | "terrain"
   | "patterns";
@@ -25,7 +26,6 @@ export const ENGINE_DATA_CATEGORIES = new Set<string>([
   "weapons",
   "equipment",
   "gear",
-  "resources",
   "effects",
   "terrain",
   "patterns",
@@ -36,5 +36,9 @@ export function isEnemyDataCategory(category: string): boolean {
 }
 
 export function isDataCategory(category: string): boolean {
-  return ENGINE_DATA_CATEGORIES.has(category) || isEnemyDataCategory(category);
+  return (
+    ENGINE_DATA_CATEGORIES.has(category) ||
+    isClientDataCategoryId(category) ||
+    isEnemyDataCategory(category)
+  );
 }

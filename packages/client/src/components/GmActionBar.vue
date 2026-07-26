@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import { getEnemyListingByName, getEnemySpeed, isAutoResolvableEnemyAttack, isDirectTargetEnemyAttack, isPatternEnemyAttack, isSelectTargetEnemyAttack } from "@vtt-core/shared";
-import { computed, ref, watch } from "vue";
+import { computed, provide, ref, watch } from "vue";
 
+import { getClientCombatBoard } from "../client-content-pack.js";
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useGameState } from "../composables/useGameState.js";
+import { gmActionBarExtrasKey } from "../composables/useGmActionBarExtras.js";
 
 const { showGmCombatUi } = useCombatActions();
 const { selectedEnemyId } = useBoardSelection();
 const { gameState, send } = useGameState();
 const { mode, gmEnemyAttack, attackAimed, startGmEnemyAttack, startGmSwarmAttack, clearMode } =
   useBoardActionMode();
+const combatBoard = getClientCombatBoard();
 
 const attackIndex = ref(0);
 
@@ -123,6 +126,25 @@ const targetingFlowerbudPlant = computed(
   () => targetingAttack.value && (!!gmEnemyAttack.value?.plantFlowerbud || needsFlowerbudPlant.value),
 );
 
+function exhaustEnemy() {
+  const enemy = activeEnemy.value;
+  if (!enemy) return;
+  send({ type: "gmEnemyAction", action: { action: "exhaust", enemyId: enemy.id } });
+}
+
+provide(gmActionBarExtrasKey, {
+  activeEnemyId: selectedEnemyId,
+  swarmAttackActive: showSwarmAttack,
+  targetingAttack,
+  targetingSwarmAttack,
+  targetingStainDest,
+  targetingFlowerbudPlant,
+  needsStainTeleport,
+  startGmSwarmAttack,
+  startGmEnemyAttack,
+  exhaustEnemy,
+});
+
 watch(selectedEnemyId, () => {
   attackIndex.value = resolvableAttackIndices.value[0] ?? 0;
   clearMode();
@@ -137,13 +159,6 @@ watch(listing, () => {
 watch(attackIndex, () => {
   if (mode.value === "gmEnemyAttack") clearMode();
 });
-
-function runSwarmAttack() {
-  const enemy = activeEnemy.value;
-  const index = swarmDirectAttackIndex.value;
-  if (!enemy || index < 0) return;
-  startGmSwarmAttack(enemy.id, index);
-}
 
 function runAttack() {
   const enemy = activeEnemy.value;
@@ -162,12 +177,6 @@ function runAttack() {
     });
   }
 }
-
-function exhaustEnemy() {
-  const enemy = activeEnemy.value;
-  if (!enemy) return;
-  send({ type: "gmEnemyAction", action: { action: "exhaust", enemyId: enemy.id } });
-}
 </script>
 
 <template>
@@ -177,13 +186,8 @@ function exhaustEnemy() {
       <span v-if="activeEnemy.exhausted && !activeIsTower" class="chip spent">Exhausted</span>
       <span v-else-if="!activeIsTower" class="chip speed">Speed {{ speedLabel }}</span>
     </div>
-    <div v-if="showSwarmAttack" class="actions-row">
-      <button type="button" class="action-btn primary" @click="runSwarmAttack">
-        {{ targetingSwarmAttack ? "Targeting…" : "Swarm attack" }}
-      </button>
-      <button type="button" class="action-btn" @click="exhaustEnemy">Exhaust</button>
-    </div>
-    <div v-else-if="hasResolvableAttacks && !activeIsTower" class="actions-row">
+    <component :is="combatBoard.gmActionBarExtras" />
+    <div v-if="!showSwarmAttack && hasResolvableAttacks && !activeIsTower" class="actions-row">
       <select v-model="attackIndex" class="select">
         <option
           v-for="i in resolvableAttackIndices"
@@ -204,18 +208,16 @@ function exhaustEnemy() {
       </button>
       <button type="button" class="action-btn" @click="exhaustEnemy">Exhaust</button>
     </div>
-    <div v-else-if="!activeIsTower" class="actions-row">
+    <div v-else-if="!showSwarmAttack && !activeIsTower" class="actions-row">
       <button type="button" class="action-btn" @click="exhaustEnemy">Exhaust</button>
     </div>
-    <p v-if="targetingSwarmAttack" class="attack-hint">Click a highlighted player to attack</p>
-    <p v-else-if="targetingStainDest" class="attack-hint">Click a stained square to move the target</p>
-    <p v-else-if="targetingFlowerbudPlant" class="attack-hint">Click an adjacent empty square to plant a Flowerbud</p>
-    <p v-else-if="targetingAttack && needsStainTeleport" class="attack-hint">Click an adjacent unit, then a stained square</p>
-    <p v-else-if="targetingPatternAttack && !attackAimed" class="attack-hint">
+    <p v-if="targetingPatternAttack && !attackAimed" class="attack-hint">
       Click a pattern tile to aim, then click the pattern to attack
     </p>
     <p v-else-if="targetingPatternAttack" class="attack-hint">Click the highlighted pattern to attack</p>
-    <p v-else-if="targetingAttack" class="attack-hint">Click a highlighted unit to attack</p>
+    <p v-else-if="targetingAttack && !targetingSwarmAttack && !targetingStainDest && !targetingFlowerbudPlant && !needsStainTeleport" class="attack-hint">
+      Click a highlighted unit to attack
+    </p>
   </div>
 </template>
 
@@ -264,11 +266,6 @@ function exhaustEnemy() {
   color: inherit;
   font: inherit;
   cursor: pointer;
-}
-
-.action-btn.primary {
-  border-color: var(--color-accent);
-  background: var(--color-accent-subtle-bg);
 }
 
 .attack-hint {

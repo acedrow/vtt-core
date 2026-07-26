@@ -4,13 +4,19 @@ import { defineComponent } from "vue";
 import {
   getClientBranding,
   getClientContentPack,
+  getClientMainSection,
   getDefaultThemeId,
   getDocumentTitle,
   getTileSetLabel,
+  isClientDataCategoryId,
+  listClientDataCategories,
   listClientMainSections,
   listClientSheetChrome,
   listClientSheetFields,
+  listClientSideNavSections,
   listClientThemes,
+  mainSectionOpensResources,
+  mainSectionPingChannel,
   registerClientContentPack,
   requireClientContentPack,
   resetClientContentPackForTests,
@@ -46,7 +52,20 @@ function createOtherClientContribution(): ClientContribution {
       features: { base: "Other Base" },
       overlays: { stain: "Other Stain" },
     },
-    mainSections: [{ id: "other-section", label: "Other Section", component: OtherPanel }],
+    mainSections: [
+      {
+        id: "other-section",
+        label: "Other Section",
+        pingChannel: "overworld",
+        opensResources: true,
+        component: OtherPanel,
+      },
+    ],
+    sideNavSections: [
+      { id: "factions", label: "Factions", channel: "faction" },
+      { id: "tables", label: "Tables", channel: "table" },
+    ],
+    dataCategories: [{ id: "resources", label: "Resources" }],
     sheetFields: [
       {
         id: "extra",
@@ -86,6 +105,10 @@ describe("client content pack registry", () => {
     expect(listClientThemes().map((t) => t.id)).toEqual(["fixture-theme"]);
     expect(getTileSetLabel("appearances", "basic")).toBe("Fixture Basic");
     expect(listClientMainSections().map((s) => s.id)).toEqual(["fixture-section"]);
+    expect(listClientSideNavSections()).toEqual([]);
+    expect(listClientDataCategories()).toEqual([]);
+    expect(mainSectionPingChannel("fixture-section")).toBeUndefined();
+    expect(mainSectionOpensResources("fixture-section")).toBe(false);
     expect(listClientSheetFields()).toEqual([]);
     expect(listClientSheetChrome()).toEqual([]);
   });
@@ -128,5 +151,17 @@ describe("client content pack registry", () => {
     expect(sheetFieldsExtrasValid({ armor: "SPECIAL" }, { extraKey: "pick" })).toBe(true);
     expect(sheetFieldsExtrasValid({ armor: "OTHER" }, {})).toBe(true);
     expect(listClientSheetChrome().map((p) => p.id)).toEqual(["class-passive"]);
+  });
+
+  it("exposes sideNavSections, dataCategories, and mainSection metadata", () => {
+    resetClientContentPackForTests();
+    registerClientContentPack(createOtherClientContribution());
+    expect(getClientMainSection("other-section")?.label).toBe("Other Section");
+    expect(mainSectionPingChannel("other-section")).toBe("overworld");
+    expect(mainSectionOpensResources("other-section")).toBe(true);
+    expect(listClientSideNavSections().map((s) => s.channel)).toEqual(["faction", "table"]);
+    expect(listClientDataCategories()).toEqual([{ id: "resources", label: "Resources" }]);
+    expect(isClientDataCategoryId("resources")).toBe(true);
+    expect(isClientDataCategoryId("armor")).toBe(false);
   });
 });

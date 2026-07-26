@@ -1,5 +1,12 @@
 import type { Component } from "vue";
-import type { AttackPreviewState, GameState, PatternDirection, Player, PlayerAction } from "@vtt-core/shared";
+import type {
+  AttackPreviewState,
+  GameState,
+  MapPingSurface,
+  PatternDirection,
+  Player,
+  PlayerAction,
+} from "@vtt-core/shared";
 
 import type { ClientCombatBoardHelpers } from "./combat-board-helpers.js";
 
@@ -49,6 +56,19 @@ export type ClientMainSection = {
   id: string;
   label: string;
   component: Component;
+  pingChannel?: MapPingSurface;
+  opensResources?: boolean;
+};
+
+export type ClientSideNavSection = {
+  id: string;
+  label: string;
+  channel: "faction" | "table";
+};
+
+export type ClientDataCategoryPlugin = {
+  id: string;
+  label: string;
 };
 
 export type ClientTileSetLabels = {
@@ -72,6 +92,8 @@ export type ClientCombatBoard = {
   helpers?: ClientCombatBoardHelpers;
   cellOverlays?: CellOverlayPlugin[];
   pieceDecorations?: PieceDecorationPlugin[];
+  enemyInfoExtras?: Component;
+  gmActionBarExtras?: Component;
 };
 
 export type PackBoardUi = {
@@ -201,6 +223,8 @@ export type ClientContribution = {
   legacyThemeIds?: Record<string, string>;
   tileSetLabels: ClientTileSetLabels;
   mainSections: ClientMainSection[];
+  sideNavSections?: ClientSideNavSection[];
+  dataCategories?: ClientDataCategoryPlugin[];
   detailPanels?: ClientDetailPanels;
   combatBoard?: ClientCombatBoard;
   boardModes?: ClientBoardModePlugin[];
@@ -224,6 +248,8 @@ let tileSetLabels: ClientTileSetLabels = {
   overlays: {},
 };
 let mainSections: ClientMainSection[] = [];
+let sideNavSections: ClientSideNavSection[] = [];
+let dataCategories: ClientDataCategoryPlugin[] = [];
 let detailPanels: ClientDetailPanels = {};
 let combatBoard: ClientCombatBoard = {};
 let boardModes: ClientBoardModePlugin[] = [];
@@ -242,6 +268,8 @@ function applyContribution(pack: ClientContribution): void {
     overlays: { ...pack.tileSetLabels.overlays },
   };
   mainSections = pack.mainSections.slice();
+  sideNavSections = (pack.sideNavSections ?? []).slice();
+  dataCategories = (pack.dataCategories ?? []).slice();
   detailPanels = { ...(pack.detailPanels ?? {}) };
   combatBoard = { ...(pack.combatBoard ?? {}) };
   boardModes = (pack.boardModes ?? []).slice();
@@ -257,6 +285,8 @@ function clearContribution(): void {
   branding = { landingPrefix: "", landingAccent: "", faviconHref: "" };
   tileSetLabels = { appearances: {}, features: {}, overlays: {} };
   mainSections = [];
+  sideNavSections = [];
+  dataCategories = [];
   detailPanels = {};
   combatBoard = {};
   boardModes = [];
@@ -327,6 +357,34 @@ export function getTileSetLabel(
 export function listClientMainSections(): ClientMainSection[] {
   requireClientContentPack();
   return mainSections;
+}
+
+export function getClientMainSection(id: string): ClientMainSection | undefined {
+  if (!registered) return undefined;
+  return mainSections.find((section) => section.id === id);
+}
+
+export function mainSectionOpensResources(id: string): boolean {
+  return getClientMainSection(id)?.opensResources === true;
+}
+
+export function mainSectionPingChannel(id: string): MapPingSurface | undefined {
+  return getClientMainSection(id)?.pingChannel;
+}
+
+export function listClientSideNavSections(): ClientSideNavSection[] {
+  requireClientContentPack();
+  return sideNavSections;
+}
+
+export function listClientDataCategories(): ClientDataCategoryPlugin[] {
+  requireClientContentPack();
+  return dataCategories;
+}
+
+export function isClientDataCategoryId(id: string): boolean {
+  if (!registered) return false;
+  return dataCategories.some((category) => category.id === id);
 }
 
 export function isClientMainSectionId(id: string): boolean {

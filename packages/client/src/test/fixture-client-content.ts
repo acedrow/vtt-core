@@ -33,9 +33,12 @@ export function createFixtureClientContribution(): ClientContribution {
     mainSections: [
       { id: "fixture-section", label: "Fixture Section", component: FixturePanel },
     ],
+    sideNavSections: [],
+    dataCategories: [],
     combatBoard: {
       cellOverlays: [],
       pieceDecorations: [],
+      // enemyInfoExtras / gmActionBarExtras intentionally undefined (fixture)
     },
     boardModes: [
       { id: "kopisMark", hint: "Fixture kopis hint" },

@@ -3,7 +3,11 @@ import type { CharacterSheet, FactionId, GameMapSummary, PlayerProfile, ReconTab
 import { BOARD_HEIGHT, BOARD_WIDTH, FACTIONS, getFactionById, listEnemyFactionIds, listReconTables } from "@vtt-core/shared";
 import { computed, ref, watch } from "vue";
 
-import { sheetFieldsExtrasValid } from "../client-content-pack.js";
+import {
+  listClientDataCategories,
+  listClientSideNavSections,
+  sheetFieldsExtrasValid,
+} from "../client-content-pack.js";
 import { useApi } from "../composables/useApi.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCharacterSheetSelection } from "../composables/useCharacterSheetSelection.js";
@@ -32,6 +36,8 @@ const { dataCategory, dataExpanded, selectDataCategory } = useInfoDataSelection(
 
 const reconTables = listReconTables();
 const enemyFactionIds = listEnemyFactionIds();
+const sideNavSections = listClientSideNavSections();
+const packDataCategories = listClientDataCategories();
 
 function enemyFactionNavLabel(factionId: string): string {
   return getFactionById(factionId)?.name ?? factionId.charAt(0).toUpperCase() + factionId.slice(1);
@@ -158,13 +164,23 @@ function toggleTables() {
   tablesExpanded.value = !tablesExpanded.value;
 }
 
+function sideNavSectionExpanded(channel: "faction" | "table"): boolean {
+  return channel === "faction" ? factionsExpanded.value : tablesExpanded.value;
+}
+
+function toggleSideNavSection(channel: "faction" | "table") {
+  if (channel === "faction") toggleFactions();
+  else toggleTables();
+}
+
 const openDropdownCount = computed(() => {
   let count = 0;
   if (hasGmCapabilities.value && mapsExpanded.value) count += 1;
   if (sheetsExpanded.value) count += 1;
   if (dataExpanded.value) count += 1;
-  if (factionsExpanded.value) count += 1;
-  if (tablesExpanded.value) count += 1;
+  for (const section of sideNavSections) {
+    if (sideNavSectionExpanded(section.channel)) count += 1;
+  }
   return count;
 });
 
@@ -174,8 +190,8 @@ function collapseAll() {
   if (hasGmCapabilities.value) mapsExpanded.value = false;
   sheetsExpanded.value = false;
   dataExpanded.value = false;
-  factionsExpanded.value = false;
-  tablesExpanded.value = false;
+  if (sideNavSections.some((s) => s.channel === "faction")) factionsExpanded.value = false;
+  if (sideNavSections.some((s) => s.channel === "table")) tablesExpanded.value = false;
 }
 
 function onSelectSheet(sheetId: string) {
@@ -412,14 +428,6 @@ watch(sheetsVersion, () => {
       </button>
       <button
         class="sheet-item"
-        :class="{ selected: dataCategory === 'resources' }"
-        type="button"
-        @click="onSelectData('resources')"
-      >
-        <span class="sheet-name">Resources</span>
-      </button>
-      <button
-        class="sheet-item"
         :class="{ selected: dataCategory === 'effects' }"
         type="button"
         @click="onSelectData('effects')"
@@ -443,6 +451,16 @@ watch(sheetsVersion, () => {
         <span class="sheet-name">Patterns</span>
       </button>
       <button
+        v-for="category in packDataCategories"
+        :key="category.id"
+        class="sheet-item"
+        :class="{ selected: dataCategory === category.id }"
+        type="button"
+        @click="onSelectData(category.id)"
+      >
+        <span class="sheet-name">{{ category.label }}</span>
+      </button>
+      <button
         v-for="factionId in enemyFactionIds"
         :key="factionId"
         class="sheet-item"
@@ -454,51 +472,45 @@ watch(sheetsVersion, () => {
       </button>
     </div>
 
-    <button
-      class="nav-link nav-toggle"
-      :class="{ expanded: factionsExpanded }"
-      type="button"
-      @click="toggleFactions"
-    >
-      Factions
-      <span class="chevron" aria-hidden="true">{{ factionsExpanded ? "▾" : "▸" }}</span>
-    </button>
-
-    <div v-if="factionsExpanded" class="sheet-sublist">
+    <template v-for="section in sideNavSections" :key="section.id">
       <button
-        v-for="faction in FACTIONS"
-        :key="faction.id"
-        class="sheet-item"
-        :class="{ selected: selectedFactionId === faction.id }"
+        class="nav-link nav-toggle"
+        :class="{ expanded: sideNavSectionExpanded(section.channel) }"
         type="button"
-        @click="onSelectFaction(faction.id)"
+        @click="toggleSideNavSection(section.channel)"
       >
-        <span class="sheet-name">{{ faction.name }}</span>
+        {{ section.label }}
+        <span class="chevron" aria-hidden="true">{{
+          sideNavSectionExpanded(section.channel) ? "▾" : "▸"
+        }}</span>
       </button>
-    </div>
 
-    <button
-      class="nav-link nav-toggle"
-      :class="{ expanded: tablesExpanded }"
-      type="button"
-      @click="toggleTables"
-    >
-      Tables
-      <span class="chevron" aria-hidden="true">{{ tablesExpanded ? "▾" : "▸" }}</span>
-    </button>
+      <div v-if="section.channel === 'faction' && factionsExpanded" class="sheet-sublist">
+        <button
+          v-for="faction in FACTIONS"
+          :key="faction.id"
+          class="sheet-item"
+          :class="{ selected: selectedFactionId === faction.id }"
+          type="button"
+          @click="onSelectFaction(faction.id)"
+        >
+          <span class="sheet-name">{{ faction.name }}</span>
+        </button>
+      </div>
 
-    <div v-if="tablesExpanded" class="sheet-sublist">
-      <button
-        v-for="table in reconTables"
-        :key="table.id"
-        class="sheet-item"
-        :class="{ selected: selectedTableId === table.id }"
-        type="button"
-        @click="onSelectTable(table.id)"
-      >
-        <span class="sheet-name">{{ table.name }}</span>
-      </button>
-    </div>
+      <div v-else-if="section.channel === 'table' && tablesExpanded" class="sheet-sublist">
+        <button
+          v-for="table in reconTables"
+          :key="table.id"
+          class="sheet-item"
+          :class="{ selected: selectedTableId === table.id }"
+          type="button"
+          @click="onSelectTable(table.id)"
+        >
+          <span class="sheet-name">{{ table.name }}</span>
+        </button>
+      </div>
+    </template>
 
     <ModalDialog
       :open="showCreate"

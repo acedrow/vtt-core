@@ -2,7 +2,7 @@
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, MapTile, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, fixedPatternTilesInBounds, findPlayerMovementPath, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, agnosiaCenteredHover, getObstacleHp, getPlayerMaxHp, isMovementStepAdjacent, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, movementStepCost, stepMoveCost, enemyMoveStepCost, isFlyingStepReachable, aegisFlyingRemaining, playerAllowsDiagonalMovement, playerAttackDirectionsAt, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, fixedPatternTilesInBounds, findPlayerMovementPath, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isMovementStepAdjacent, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, movementStepCost, stepMoveCost, enemyMoveStepCost, isFlyingStepReachable, aegisFlyingRemaining, playerAllowsDiagonalMovement, playerAttackDirectionsAt, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
@@ -17,7 +17,6 @@ import { useEnemyMoveAnimation } from "../composables/useEnemyMoveAnimation.js";
 import { usePlayerTeleportAnimation } from "../composables/usePlayerTeleportAnimation.js";
 import { useCharacterSheets } from "../composables/useCharacterSheets.js";
 import { useEnemySpawnSelection } from "../composables/useEnemySpawnSelection.js";
-import { useStainGeyserPlacement, useGorgenautAgnosiaPlacement } from "@vtt-core/hellpiercers-content/combat-board-placement";
 import { clearActiveTool, useGmTools } from "../composables/useGmTools.js";
 import { gmToolCursor } from "../lib/gmToolCursors.js";
 import { showToast } from "../composables/useToasts.js";
@@ -44,7 +43,10 @@ import {
   type CellOverlaySpec,
   type PieceDecorationSpec,
 } from "../client-content-pack.js";
-import { combatBoardHostKey } from "../composables/useCombatBoardHost.js";
+import {
+  combatBoardHostKey,
+  type CombatBoardPlacementPreviewTile,
+} from "../composables/useCombatBoardHost.js";
 import BoardCell, { type CellRenderState } from "./BoardCell.vue";
 import BoardContextMenu, { type BoardContextMenuItem } from "./BoardContextMenu.vue";
 import AddEffectModal from "./AddEffectModal.vue";
@@ -104,26 +106,11 @@ const { enemyPortraitUrlForName } = useApi();
 const { portraitBackgroundFor } = useEnemyPortraitColors();
 const { dataCategory } = useInfoDataSelection();
 const { selectedSpawnEnemyName, clearSpawnEnemySelection } = useEnemySpawnSelection();
-const {
-  STAIN_GEYSER_NAME,
-  stainGeyserPlacementActive,
-  stainGeyserPreviewTiles,
-  stainGeyserPreviewKeys,
-  stainGeyserPreviewOverlayUrl,
-  beginStainGeyserPlacement,
-  clearStainGeyserPlacement,
-  setStainGeyserHover,
-  tryApplyStainGeyserPlacement,
-} = useStainGeyserPlacement();
-const {
-  pendingGorgenautAgnosiaEnemyId,
-  gorgenautAgnosiaPlacementActive,
-  gorgenautAgnosiaPreviewTiles,
-  gorgenautAgnosiaPreviewKeys,
-  gorgenautAgnosiaPreviewOverlayUrl,
-  setGorgenautAgnosiaHover,
-  tryApplyGorgenautAgnosiaPlacement,
-} = useGorgenautAgnosiaPlacement();
+const emptyPlacementKeys: ReadonlySet<string> = new Set();
+const placementActive = ref(false);
+const placementPrimaryKeys = shallowRef<ReadonlySet<string>>(emptyPlacementKeys);
+const placementSecondaryKeys = shallowRef<ReadonlySet<string>>(emptyPlacementKeys);
+const placementPreviewTiles = shallowRef<readonly CombatBoardPlacementPreviewTile[]>([]);
 const {
   activeTool: gmActiveTool,
   effectiveActiveTool: gmEffectiveActiveTool,
@@ -561,7 +548,7 @@ const swarmAttackModalProps = computed(() => {
 });
 
 const combatBoard = getClientCombatBoard();
-provide(combatBoardHostKey, {
+const combatBoardHostBridge = {
   breakerPromptOpen,
   breakerSethianHint,
   onBreakerConfirm,
@@ -575,7 +562,17 @@ provide(combatBoardHostKey, {
   swarmAttackModalProps,
   onSwarmAttackConfirm,
   onSwarmAttackClose,
-});
+  placementActive,
+  placementPrimaryKeys,
+  placementSecondaryKeys,
+  placementPreviewTiles,
+  tryConsumePlacementClick: (_x: number, _y: number) => false,
+  onPlacementHover: (_x: number, _y: number) => {},
+  onPlacementEscape: () => false,
+  clearPlacement: () => {},
+  onAfterAddEnemy: (_name: string, _x: number, _y: number) => {},
+};
+provide(combatBoardHostKey, combatBoardHostBridge);
 
 const teleportOverlayAtDest = ref(false);
 
@@ -1543,11 +1540,11 @@ watch(boardActionMode, (mode) => {
 });
 
 watch(gmActiveTool, (tool) => {
-  if (tool) clearStainGeyserPlacement();
+  if (tool) combatBoardHostBridge.clearPlacement();
 });
 
 watch(selectedSpawnEnemyName, (name) => {
-  if (name) clearStainGeyserPlacement();
+  if (name) combatBoardHostBridge.clearPlacement();
 });
 
 watch(
@@ -1773,9 +1770,9 @@ const cellStateByKey = computed(() => {
         canUseGmTools.value &&
         (gmSpawnableKeys.value.has(c.key) || gmForceMovableKeys.value.has(c.key)),
       patternPrimary:
-        patternPrimaryKeys.value.has(ck) || stainGeyserPreviewKeys.value.has(ck),
+        patternPrimaryKeys.value.has(ck) || placementPrimaryKeys.value.has(ck),
       patternSecondary:
-        patternSecondaryKeys.value.has(ck) || gorgenautAgnosiaPreviewKeys.value.has(ck),
+        patternSecondaryKeys.value.has(ck) || placementSecondaryKeys.value.has(ck),
       combatTargetPrimary: combatPrimary,
       combatTargetSecondary: combatSecondary,
       combatTargetHeal:
@@ -1971,40 +1968,15 @@ const cellStateByKey = computed(() => {
     if (stickyCell) stickyCell.paintbrushPreview = entry.preview;
   }
 
-  if (canUseGmTools.value && stainGeyserPlacementActive.value) {
-    const overlayUrl = stainGeyserPreviewOverlayUrl.value;
-    for (const t of stainGeyserPreviewTiles.value) {
+  if (canUseGmTools.value && placementActive.value) {
+    for (const t of placementPreviewTiles.value) {
       const previewCell = map.get(boardCellKey(t.x, t.y));
       if (!previewCell || previewCell.paintbrushPreview) continue;
       const tile = previewCell.tile;
       previewCell.paintbrushPreview = {
         baseColor: tile?.baseColor ?? null,
         appearanceUrl: previewCell.tileAppearanceUrl,
-        overlayUrl: overlayUrl ?? previewCell.tileOverlayUrl,
-        featureUrl: previewCell.tileFeatureUrl,
-        appearanceTint: tile?.appearanceTint ?? null,
-        overlayTint: tile?.overlayTint ?? null,
-        featureTint: tile?.featureTint ?? null,
-        appearanceRotation: tile?.appearanceRotation ?? 0,
-        appearanceFlip: !!tile?.appearanceFlip,
-        overlayRotation: tile?.overlayRotation ?? 0,
-        overlayFlip: !!tile?.overlayFlip,
-        featureRotation: tile?.featureRotation ?? 0,
-        featureFlip: !!tile?.featureFlip,
-      };
-    }
-  }
-
-  if (canUseGmTools.value && gorgenautAgnosiaPlacementActive.value) {
-    const overlayUrl = gorgenautAgnosiaPreviewOverlayUrl.value;
-    for (const t of gorgenautAgnosiaPreviewTiles.value) {
-      const previewCell = map.get(boardCellKey(t.x, t.y));
-      if (!previewCell || previewCell.paintbrushPreview) continue;
-      const tile = previewCell.tile;
-      previewCell.paintbrushPreview = {
-        baseColor: tile?.baseColor ?? null,
-        appearanceUrl: previewCell.tileAppearanceUrl,
-        overlayUrl: overlayUrl ?? previewCell.tileOverlayUrl,
+        overlayUrl: t.overlayUrl ?? previewCell.tileOverlayUrl,
         featureUrl: previewCell.tileFeatureUrl,
         appearanceTint: tile?.appearanceTint ?? null,
         overlayTint: tile?.overlayTint ?? null,
@@ -3837,8 +3809,7 @@ function onViewportPointerDown(e: PointerEvent) {
 function canStartMapPing(): boolean {
   if (boardActionMode.value != null) return false;
   if (canUseGmTools.value && gmActiveTool.value != null) return false;
-  if (stainGeyserPlacementActive.value) return false;
-  if (gorgenautAgnosiaPlacementActive.value) return false;
+  if (placementActive.value) return false;
   return true;
 }
 
@@ -3910,9 +3881,9 @@ function trySpawnEnemyAt(x: number, y: number): boolean {
     return false;
   }
   send({ type: "addEnemy", x, y, name: spawnName });
-  if (spawnName === STAIN_GEYSER_NAME) {
+  combatBoardHostBridge.onAfterAddEnemy(spawnName, x, y);
+  if (placementActive.value) {
     clearSpawnEnemySelection();
-    beginStainGeyserPlacement(x, y);
   }
   return true;
 }
@@ -3921,8 +3892,7 @@ function onGmCellClick(x: number, y: number) {
   const s = gameState.value;
   if (!s) return;
 
-  if (tryApplyStainGeyserPlacement(x, y)) return;
-  if (tryApplyGorgenautAgnosiaPlacement(x, y)) return;
+  if (combatBoardHostBridge.tryConsumePlacementClick(x, y)) return;
 
   if (gmEffectiveActiveTool.value === "paintbrush") {
     handlePaintbrushCellAction(x, y);
@@ -4027,8 +3997,7 @@ function onCellHover(x: number, y: number, key: string) {
   }
   hoveredKey.value = key;
   hoveredCell.value = { x, y };
-  setStainGeyserHover(x, y);
-  setGorgenautAgnosiaHover(x, y);
+  combatBoardHostBridge.onPlacementHover(x, y);
   setPatternHoverOrigin({ x, y });
 }
 
@@ -4496,25 +4465,7 @@ function onKeydown(e: KeyboardEvent) {
 
   if (canUseGmTools.value) {
     if (e.key === "Escape") {
-      if (stainGeyserPlacementActive.value) {
-        clearStainGeyserPlacement();
-        return;
-      }
-      if (gorgenautAgnosiaPlacementActive.value) {
-        const enemy = gameState.value?.enemies.find(
-          (e) => e.id === pendingGorgenautAgnosiaEnemyId.value,
-        );
-        if (enemy) {
-          const centered = agnosiaCenteredHover(
-            enemy.x,
-            enemy.y,
-            getEnemyScale(enemy),
-            getCombatBoardHelpers().GORGENAUT_AGNOSIA_BOX,
-          );
-          setGorgenautAgnosiaHover(centered.x, centered.y);
-        }
-        return;
-      }
+      if (combatBoardHostBridge.onPlacementEscape()) return;
       if (gmActiveTool.value === "forceMove" && (selectedPlayerId.value || selectedEnemyId.value)) {
         clearBoardSelection();
         return;

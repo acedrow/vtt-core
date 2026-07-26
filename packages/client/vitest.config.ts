@@ -21,7 +21,6 @@ export default defineConfig({
       "@vtt-core/hellpiercers-content/register-client",
       "@vtt-core/hellpiercers-content/tiles",
       "@vtt-core/hellpiercers-content/combat-ui",
-      "@vtt-core/hellpiercers-content/combat-board-placement",
     ],
   },
   resolve: {
@@ -41,10 +40,6 @@ export default defineConfig({
       {
         find: "@vtt-core/hellpiercers-content/combat-ui",
         replacement: path.join(contentSrc, "combat-ui.ts"),
-      },
-      {
-        find: "@vtt-core/hellpiercers-content/combat-board-placement",
-        replacement: path.join(contentSrc, "client/combat-board-placement.ts"),
       },
       {
         find: "@vtt-core/client/content-pack",
