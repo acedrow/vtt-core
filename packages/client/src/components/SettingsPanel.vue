@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-import { usePlayerSettings } from "../composables/usePlayerSettings.js";
+import {
+  ELEVATION_CONTOUR_COLORS,
+  usePlayerSettings,
+} from "../composables/usePlayerSettings.js";
 import { useSession } from "../composables/useSession.js";
 import { useTheme } from "../composables/useTheme.js";
 import ManagePlayersModal from "./ManagePlayersModal.vue";
 
-const { showHealthBars, showConnectionsInConsole, showLineOfSightIndicator, showElevationContours } = usePlayerSettings();
+const {
+  showHealthBars,
+  showConnectionsInConsole,
+  showLineOfSightIndicator,
+  showElevationContours,
+  elevationContourColor,
+} = usePlayerSettings();
 const { theme, themes } = useTheme();
 const { hasGmCapabilities } = useSession();
 
@@ -48,6 +57,28 @@ const managePlayersOpen = ref(false);
             <span class="toggle-thumb" />
           </button>
         </label>
+        <div
+          v-if="showElevationContours"
+          class="setting-subrow"
+          role="radiogroup"
+          aria-label="Elevation contour color"
+        >
+          <span class="setting-sublabel">Contour color</span>
+          <div class="contour-swatches">
+            <button
+              v-for="color in ELEVATION_CONTOUR_COLORS"
+              :key="color"
+              type="button"
+              role="radio"
+              class="contour-swatch"
+              :class="{ active: elevationContourColor === color }"
+              :aria-checked="elevationContourColor === color"
+              :aria-label="`Contour color ${color}`"
+              :style="{ background: color }"
+              @click="elevationContourColor = color"
+            />
+          </div>
+        </div>
       </section>
 
       <section class="settings-category">
@@ -177,6 +208,45 @@ const managePlayersOpen = ref(false);
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.setting-subrow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding-left: 0.15rem;
+}
+
+.setting-sublabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+.contour-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.contour-swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-border-strong);
+  padding: 0;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+
+.contour-swatch:hover {
+  border-color: var(--color-text);
+}
+
+.contour-swatch.active {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
 }
 
 .toggle {

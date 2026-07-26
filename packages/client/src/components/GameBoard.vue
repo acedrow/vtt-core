@@ -95,7 +95,8 @@ const activePlayerSelected = computed(() => {
   if (!selectedPlayerId.value) return true;
   return selectedPlayerId.value === id;
 });
-const { showHealthBars, showLineOfSightIndicator, showElevationContours } = usePlayerSettings();
+const { showHealthBars, showLineOfSightIndicator, showElevationContours, elevationContourColor } =
+  usePlayerSettings();
 const showEnemyHealthBars = computed(() => showHealthBars.value && canUseGmTools.value);
 const { indicators: damageIndicators } = useDamageIndicators(gameState);
 const { sheets, loadSheets } = useCharacterSheets();
@@ -4581,7 +4582,7 @@ onUnmounted(() => {
                 :key="i"
                 :d="d"
                 fill="none"
-                stroke="var(--color-elevation-contour)"
+                :stroke="elevationContourColor"
                 stroke-width="1"
                 stroke-linecap="round"
               />
