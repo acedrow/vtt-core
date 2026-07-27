@@ -27,18 +27,19 @@ export function tileImageLayerStyle(
   imageUrl: string,
   tint?: TileColorTint | null,
 ): CSSProperties {
+  const cssUrl = `url(${JSON.stringify(imageUrl)})`;
   if (!tint) {
-    return { backgroundImage: `url(${imageUrl})` };
+    return { backgroundImage: cssUrl };
   }
   const overlay = tintColorWithOpacity(tint.color, tint.opacity);
   return {
-    backgroundImage: `linear-gradient(${overlay}, ${overlay}), url(${imageUrl})`,
+    backgroundImage: `linear-gradient(${overlay}, ${overlay}), ${cssUrl}`,
     backgroundBlendMode: "multiply, normal",
     backgroundSize: "cover, cover",
     backgroundPosition: "center, center",
     backgroundRepeat: "no-repeat, no-repeat",
-    WebkitMaskImage: `url(${imageUrl})`,
-    maskImage: `url(${imageUrl})`,
+    WebkitMaskImage: cssUrl,
+    maskImage: cssUrl,
     WebkitMaskSize: "cover",
     maskSize: "cover",
     WebkitMaskPosition: "center",

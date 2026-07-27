@@ -805,16 +805,22 @@ export function useGmTools() {
     paintbrushFeatureTint.value = preset.featureTint ? { ...preset.featureTint } : null;
     paintbrushAppearanceKey.value = preset.appearanceKey ?? null;
     syncPaintbrushAppearanceSetFromKey(preset.appearanceKey);
-    if (preset.appearanceKey) setPaintbrushAppearancePreview(preset.appearanceKey);
-    else clearPaintbrushAppearancePreview();
+    if (preset.appearanceKey) {
+      paintbrushEnableAppearance.value = true;
+      setPaintbrushAppearancePreview(preset.appearanceKey);
+    } else clearPaintbrushAppearancePreview();
     paintbrushOverlayKey.value = preset.overlayKey ?? null;
     syncPaintbrushOverlaySetFromKey(preset.overlayKey);
-    if (preset.overlayKey) setPaintbrushOverlayPreview(preset.overlayKey);
-    else clearPaintbrushOverlayPreview();
+    if (preset.overlayKey) {
+      paintbrushEnableOverlay.value = true;
+      setPaintbrushOverlayPreview(preset.overlayKey);
+    } else clearPaintbrushOverlayPreview();
     paintbrushFeatureKey.value = preset.featureKey ?? null;
     syncPaintbrushFeatureSetFromKey(preset.featureKey);
-    if (preset.featureKey) setPaintbrushFeaturePreview(preset.featureKey);
-    else clearPaintbrushFeaturePreview();
+    if (preset.featureKey) {
+      paintbrushEnableFeature.value = true;
+      setPaintbrushFeaturePreview(preset.featureKey);
+    } else clearPaintbrushFeaturePreview();
     paintbrushImageRotation.value =
       preset.appearanceRotation ?? preset.overlayRotation ?? preset.featureRotation ?? 0;
     paintbrushImageFlip.value = !!(

@@ -27,6 +27,11 @@ const contentExports = [
 
 export default defineConfig({
   plugins: [vue()],
+  // Emit tile ?url imports as /assets/* files so board styles stay short and
+  // display does not depend on public/tiles sync surviving deploy.
+  build: {
+    assetsInlineLimit: 0,
+  },
   // Content lives in node_modules after private cutover. Prebundling it
   // duplicates @vtt-core/client/content-pack so register-client never hits the
   // app's registry ("Client content pack is not registered").

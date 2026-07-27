@@ -29,13 +29,22 @@ export function useTileAppearanceCache(tilesSource: Ref<{ tiles?: MapTile[] } | 
     }
 
     const next: Record<string, string> = {};
+    const missing: string[] = [];
     for (const key of needed) {
-      if (urls.value[key]) {
-        next[key] = urls.value[key]!;
-        continue;
-      }
-      const url = await fetchTileAppearanceUrl(key);
-      if (gen !== loadGen) return;
+      const cached = urls.value[key];
+      if (cached) next[key] = cached;
+      else missing.push(key);
+    }
+
+    const fetched = await Promise.all(
+      missing.map(async (key) => {
+        const url = await fetchTileAppearanceUrl(key);
+        return [key, url] as const;
+      }),
+    );
+    if (gen !== loadGen) return;
+
+    for (const [key, url] of fetched) {
       if (url) next[key] = url;
     }
 
