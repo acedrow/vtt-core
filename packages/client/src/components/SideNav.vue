@@ -15,7 +15,9 @@ import { useFactionSelection } from "../composables/useFactionSelection.js";
 import { activeTab } from "../composables/useGameConsole.js";
 import type { DataCategory } from "../composables/useInfoDataSelection.js";
 import { useInfoDataSelection } from "../composables/useInfoDataSelection.js";
+import { useGameState } from "../composables/useGameState.js";
 import { useMapSelection } from "../composables/useMapSelection.js";
+import { activeMainTab } from "../composables/useMainSectionTab.js";
 import { useSession } from "../composables/useSession.js";
 import { useTableSelection } from "../composables/useTableSelection.js";
 import CharacterSheetFormFields from "./CharacterSheetFormFields.vue";
@@ -25,6 +27,7 @@ type PlayerProfileOption = PlayerProfile & { isActive?: boolean };
 
 const { apiFetch, fetchPlayerProfiles, fetchMaps, createMap } = useApi();
 const { role, playerProfile, hasGmCapabilities } = useSession();
+const { gameState } = useGameState();
 const { selectedSheetId, sheetsExpanded, sheetsVersion, selectSheet } =
   useCharacterSheetSelection();
 const { selectedMapId, mapsExpanded, mapsVersion, selectMap, notifyMapsChanged } =
@@ -33,6 +36,15 @@ const { selectedFactionId, factionsExpanded, selectFaction } = useFactionSelecti
 const { selectedTableId, tablesExpanded, selectTable } = useTableSelection();
 const { clearBoardSelection, selectSheetFromNav } = useBoardSelection();
 const { dataCategory, dataExpanded, selectDataCategory } = useInfoDataSelection();
+
+const activeMapId = computed(() => gameState.value?.mapId ?? null);
+const showReturnToActiveMap = computed(
+  () =>
+    activeMainTab.value === "taccom" &&
+    activeMapId.value != null &&
+    selectedMapId.value != null &&
+    selectedMapId.value !== activeMapId.value,
+);
 
 const reconTables = listReconTables();
 const enemyFactionIds = listEnemyFactionIds();
@@ -218,6 +230,11 @@ function onSelectMap(mapId: string) {
   selectMap(mapId);
 }
 
+function returnToActiveMap() {
+  if (!activeMapId.value) return;
+  selectMap(activeMapId.value);
+}
+
 function openCreateMap() {
   createMapForm.value = {
     id: "",
@@ -326,6 +343,14 @@ watch(sheetsVersion, () => {
     </button>
 
     <template v-if="hasGmCapabilities">
+      <button
+        v-if="showReturnToActiveMap"
+        class="return-active-map-btn"
+        type="button"
+        @click="returnToActiveMap"
+      >
+        Return to active map
+      </button>
       <button class="nav-link nav-toggle" :class="{ expanded: mapsExpanded }" type="button" @click="toggleMaps">
         Maps
         <span class="chevron" aria-hidden="true">{{ mapsExpanded ? "▾" : "▸" }}</span>
@@ -347,11 +372,15 @@ watch(sheetsVersion, () => {
             v-for="map in filteredMaps"
             :key="map.id"
             class="sheet-item"
-            :class="{ selected: selectedMapId === map.id }"
+            :class="{
+              selected: selectedMapId === map.id,
+              active: activeMapId === map.id,
+            }"
             type="button"
             @click="onSelectMap(map.id)"
           >
             <span class="sheet-name">{{ map.name }}</span>
+            <span v-if="activeMapId === map.id" class="sheet-meta">Active</span>
           </button>
           <p v-if="maps.length === 0" class="sublist-muted">No maps yet.</p>
           <p v-else-if="filteredMaps.length === 0" class="sublist-muted">No matches.</p>
@@ -659,6 +688,35 @@ watch(sheetsVersion, () => {
   color: var(--color-text);
   background: var(--color-surface);
   border-color: var(--color-border);
+}
+
+.sheet-item.active {
+  color: var(--color-text);
+  border-color: var(--color-accent);
+}
+
+.sheet-item.active .sheet-meta {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.return-active-map-btn {
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid var(--color-accent-muted);
+  border-radius: 0;
+  background: var(--color-accent-subtle-bg);
+  color: var(--color-accent-bright);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.return-active-map-btn:hover {
+  background: var(--color-accent-hover-bg);
+  border-color: var(--color-accent-bright);
 }
 
 .sheet-name {

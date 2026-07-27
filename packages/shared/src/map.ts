@@ -565,11 +565,18 @@ export function cloneEnemy(enemy: Enemy): Enemy {
   };
 }
 
+export function persistMapEnemiesFromState(state: GameState, map: GameMap): void {
+  map.enemies = state.enemies
+    .filter((e) => e.kind !== "tower")
+    .map(cloneEnemy);
+}
+
 export function applySaveStartingState(state: GameState, map: GameMap): string {
   map.startingState = {
     tiles: state.tiles.map(cloneMapTile),
     enemies: state.enemies.map(cloneEnemy),
   };
+  persistMapEnemiesFromState(state, map);
   return "Starting state saved";
 }
 
@@ -587,15 +594,17 @@ export function applyResetToStartingState(state: GameState, map: GameMap): strin
 }
 
 export function createInitialStateFromMap(map: GameMap): GameState {
-  const enemies = (map.enemies ?? []).map((e) => {
-    const enemy = {
-      ...e,
-      scale: getEnemyScale(e),
-      hp: getEnemyMaxHpByName(e.name),
-    };
-    refreshEnemyMovement(enemy);
-    return enemy;
-  });
+  const enemies = map.startingState
+    ? map.startingState.enemies.map(cloneEnemy)
+    : (map.enemies ?? []).map((e) => {
+        const enemy = {
+          ...e,
+          scale: getEnemyScale(e),
+          hp: getEnemyMaxHpByName(e.name),
+        };
+        refreshEnemyMovement(enemy);
+        return enemy;
+      });
 
   return {
     mapId: map.id,

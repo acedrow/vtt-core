@@ -26,6 +26,7 @@ import {
   normalizeGameState,
   persistMapTileAt,
   persistMapTilesAt,
+  persistMapEnemiesFromState,
   applySaveStartingState,
   applyResetToStartingState,
   validateResetToStartingState,
@@ -374,6 +375,7 @@ export class GameRoom {
           }
         }
       }
+      await this.persistActiveMapEnemies();
       await this.broadcastState();
       return;
     }
@@ -411,6 +413,7 @@ export class GameRoom {
             `force-moved ${enemyLabel(enemy)} to (${parsed.x}, ${parsed.y})`,
           );
         }
+        await this.persistActiveMapEnemies();
       }
       await this.broadcastState();
       return;
@@ -652,6 +655,7 @@ export class GameRoom {
       if (parsed.type === "setTileTerrain") {
         await this.persistActiveMapTile(parsed.x, parsed.y);
       }
+      await this.persistActiveMapEnemies();
       const actor = await this.actorForSocket(ws);
       if (!combatResult.silent) {
         await this.broadcastConsole(actor, combatResult.message);
@@ -676,6 +680,9 @@ export class GameRoom {
           ? await getMap(this.env, this.gameState.mapId).catch(() => undefined)
           : undefined;
       const message = applyPhaseAction(this.gameState, parsed.action, ctx, map);
+      if (parsed.action === "removeAllEnemies" || parsed.action === "resetCombat") {
+        await this.persistActiveMapEnemies();
+      }
       const actor = await this.actorForSocket(ws);
       await this.broadcastConsole(actor, message);
       await this.broadcastState();
@@ -919,6 +926,10 @@ export class GameRoom {
 
   private async persistActiveMapTiles(coords: { x: number; y: number }[]): Promise<void> {
     return this.queueMapPersist((map) => persistMapTilesAt(this.gameState, map, coords));
+  }
+
+  private async persistActiveMapEnemies(): Promise<void> {
+    return this.queueMapPersist((map) => persistMapEnemiesFromState(this.gameState, map));
   }
 
   private async queueMapPersist(mutate: (map: Awaited<ReturnType<typeof getMap>>) => void): Promise<void> {

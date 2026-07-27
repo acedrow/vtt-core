@@ -57,6 +57,7 @@ import {
   validateFactionCampaignAction,
   persistMapTileAt,
   persistMapTilesAt,
+  persistMapEnemiesFromState,
   applySaveStartingState,
   applyResetToStartingState,
   validateResetToStartingState,
@@ -739,6 +740,8 @@ wss.on("connection", (ws: WebSocket) => {
           }
         }
       }
+      const map = savedMaps.get(gameState.mapId);
+      if (map) persistMapEnemiesFromState(gameState, map);
       broadcastState();
       return;
     }
@@ -774,6 +777,8 @@ wss.on("connection", (ws: WebSocket) => {
             `force-moved ${enemyLabel(enemy)} to (${parsed.x}, ${parsed.y})`,
           );
         }
+        const map = savedMaps.get(gameState.mapId);
+        if (map) persistMapEnemiesFromState(gameState, map);
       }
       broadcastState();
       return;
@@ -1007,6 +1012,10 @@ wss.on("connection", (ws: WebSocket) => {
         const map = savedMaps.get(gameState.mapId);
         if (map) persistMapTileAt(gameState, map, parsed.x, parsed.y);
       }
+      {
+        const map = savedMaps.get(gameState.mapId);
+        if (map) persistMapEnemiesFromState(gameState, map);
+      }
       if (!combatResult.silent) {
         broadcastConsole(actorForSocket(ws), combatResult.message);
       }
@@ -1027,6 +1036,10 @@ wss.on("connection", (ws: WebSocket) => {
       }
       const map = parsed.action === "resetCombat" ? savedMaps.get(gameState.mapId) : undefined;
       const message = applyPhaseAction(gameState, parsed.action, ctx, map);
+      if (parsed.action === "removeAllEnemies" || parsed.action === "resetCombat") {
+        const activeMap = savedMaps.get(gameState.mapId);
+        if (activeMap) persistMapEnemiesFromState(gameState, activeMap);
+      }
       broadcastConsole(actorForSocket(ws), message);
       broadcastState();
       return;
