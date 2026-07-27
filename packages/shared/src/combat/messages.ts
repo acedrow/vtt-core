@@ -179,7 +179,7 @@ import {
   validateClassPassive,
   validateResolveClassReaction,
 } from "./class-abilities.js";
-import { runEnemyDefeated } from "./combat-lifecycle.js";
+import { runEnemyDefeated, runAfterGmPaintTile } from "./combat-lifecycle.js";
 import { findWeaponActiveHandler, type WeaponActiveAction } from "./weapon-active.js";
 import { normalizePlayerAction } from "./normalize-player-action.js";
 import { normalizeGmEnemyAction } from "./normalize-gm-enemy-action.js";
@@ -2063,6 +2063,10 @@ export function handleCombatMessage(
       }
       for (const { x, y } of parsed.coords) {
         applyGmPaintTile(state, x, y, fields);
+        runAfterGmPaintTile(state, x, y, {
+          ...(fields.tileEffects !== undefined ? { tileEffects: fields.tileEffects } : {}),
+          ...(fields.overlayKey !== undefined ? { overlayKey: fields.overlayKey } : {}),
+        });
       }
       return { handled: true, message: "", silent: true };
     }

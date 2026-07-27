@@ -11,6 +11,7 @@ import { clearAegisFlyingUsed, ensureAssistedAscensionAegis } from "./combat/aeg
 import {
   runEnemyAdded,
   runEnemyMaxHpOverride,
+  runEnemyMoved,
   runGmTurnEnd,
   runIsPersistentEnemy,
   runPlayerEndOfTurn,
@@ -19,7 +20,7 @@ import {
 import { enemyHasFlyingTag, initializeUnitElevation, syncUnitElevationOnTile } from "./combat/elevation.js";
 import { enemyMoveStepCost } from "./combat/movement.js";
 import { resetEnemyExhaustion, resetGmTurnActions } from "./combat/enemy.js";
-import { getEnemyMaxHpByName, getEnemyScale, getEnemyScaleByName, enemyFootprintTiles, ensureEnemyMovement, spendEnemyMovement } from "./enemy-data.js";
+import { getEnemyListingByName, getEnemyMaxHpByName, getEnemyScale, getEnemyScaleByName, enemyFootprintTiles, ensureEnemyMovement, spendEnemyMovement } from "./enemy-data.js";
 import {
   defaultOverworldRegions,
   defaultPartyResources,
@@ -729,17 +730,20 @@ export function validateEnemyFootprint(
   scale: number,
   _excludeEnemyId?: string,
   occupancy?: BoardOccupancy,
-  enemy?: Pick<Enemy, "name">,
+  enemy?: Pick<Enemy, "name" | "burrowed">,
 ): string | null {
   if (scale < 1) return "Invalid scale";
   if (!isFootprintInBounds(x, y, scale, state.width, state.height)) {
     return "Out of bounds";
   }
   const flying = enemy != null && enemyHasFlyingTag(enemy);
+  const listing = enemy?.name ? getEnemyListingByName(enemy.name) : undefined;
+  const shareSpace =
+    enemy?.burrowed === true || (listing?.tags?.includes("ShareSpace") ?? false);
   const occ = occupancy ?? buildBoardOccupancy(state);
   for (const tile of enemyFootprintTiles(x, y, scale)) {
     if (!flying && !isWalkable(tileAt(state.tiles, tile.x, tile.y))) return "Blocked";
-    if (occ.playerByKey.has(coordKey(tile.x, tile.y))) return "Tile occupied";
+    if (!shareSpace && occ.playerByKey.has(coordKey(tile.x, tile.y))) return "Tile occupied";
   }
   return null;
 }
@@ -848,19 +852,25 @@ export function applyGmForceMove(
     for (const memberId of group.memberIds) {
       const member = state.enemies.find((e) => e.id === memberId);
       if (!member) continue;
+      const fromX = member.x;
+      const fromY = member.y;
       member.x += dx;
       member.y += dy;
       syncUnitElevationOnTile(state, member, member.x, member.y);
+      runEnemyMoved(state, member, fromX, fromY);
     }
     reconcileSwarmHp(state, prev);
     return;
   }
 
   const prev = snapshotSwarmGroups(state);
+  const fromX = enemy.x;
+  const fromY = enemy.y;
   enemy.x = toX;
   enemy.y = toY;
   syncUnitElevationOnTile(state, enemy, toX, toY);
   reconcileSwarmHp(state, prev);
+  runEnemyMoved(state, enemy, fromX, fromY);
 }
 
 function isOccupied(state: GameState, x: number, y: number, occupancy?: BoardOccupancy): boolean {
@@ -965,17 +975,27 @@ export function applyEnemyMove(
 
   const triggers = previewEnemyMoveProvokes(state, enemyId, toX, toY, opts);
   const movedEnemyIds: string[] = [];
+  const fromById = new Map<string, { x: number; y: number }>();
 
   if (swarmGroupForEnemy(state, enemyId)) {
     if (opts?.soloSwarmMember) {
+      fromById.set(enemyId, { x: enemy.x, y: enemy.y });
       applySwarmMemberMove(state, enemyId, toX, toY);
       movedEnemyIds.push(enemyId);
     } else {
+      const group = swarmGroupForEnemy(state, enemyId);
+      if (group) {
+        for (const id of group.memberIds) {
+          const m = state.enemies.find((e) => e.id === id);
+          if (m) fromById.set(id, { x: m.x, y: m.y });
+        }
+      }
       const moverId = applySwarmMove(state, enemyId, toX, toY);
       if (moverId) movedEnemyIds.push(moverId);
     }
   } else {
     const prev = snapshotSwarmGroups(state);
+    fromById.set(enemyId, { x: enemy.x, y: enemy.y });
     if (!isSandboxMode(state)) {
       const cost = enemyMoveStepCost(state, enemy, enemy.x, enemy.y, toX, toY);
       spendEnemyMovement(enemy, cost);
@@ -992,6 +1012,8 @@ export function applyEnemyMove(
   for (const id of movedEnemyIds) {
     const moved = state.enemies.find((e) => e.id === id);
     if (!moved) continue;
+    const from = fromById.get(id) ?? { x: moved.x, y: moved.y };
+    runEnemyMoved(state, moved, from.x, from.y);
     const hookResult = applyPostMovementHooks(state, moved, "enemy");
     hookMessages.push(...hookResult.messages);
     if (hookResult.interrupt) interrupt = true;

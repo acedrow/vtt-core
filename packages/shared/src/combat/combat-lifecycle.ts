@@ -14,6 +14,13 @@ export type CombatLifecycleHooks = {
   getEnemyMaxHpOverride?: (enemy: Enemy) => number | null | undefined;
   isPersistentEnemy?: (enemy: Enemy) => boolean;
   onRoundAdvance?: (state: GameState) => void;
+  onAfterGmPaintTile?: (
+    state: GameState,
+    x: number,
+    y: number,
+    fields: { tileEffects?: string[]; overlayKey?: string | null },
+  ) => void;
+  onEnemyMoved?: (state: GameState, enemy: Enemy, fromX: number, fromY: number) => void;
 };
 
 let hooks: CombatLifecycleHooks = {};
@@ -68,4 +75,22 @@ export function runIsPersistentEnemy(enemy: Enemy): boolean {
 
 export function runRoundAdvance(state: GameState): void {
   hooks.onRoundAdvance?.(state);
+}
+
+export function runAfterGmPaintTile(
+  state: GameState,
+  x: number,
+  y: number,
+  fields: { tileEffects?: string[]; overlayKey?: string | null },
+): void {
+  hooks.onAfterGmPaintTile?.(state, x, y, fields);
+}
+
+export function runEnemyMoved(
+  state: GameState,
+  enemy: Enemy,
+  fromX: number,
+  fromY: number,
+): void {
+  hooks.onEnemyMoved?.(state, enemy, fromX, fromY);
 }

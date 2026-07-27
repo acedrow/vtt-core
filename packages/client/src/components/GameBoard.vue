@@ -1665,7 +1665,9 @@ const cellStateByKey = computed(() => {
     const tile = tileAt(s.tiles, c.x, c.y);
     const player = occ.playerByKey.get(ck);
     const enemy = occ.enemyByKey.get(ck);
-    const enemiesAtTile = enemiesByAnchorKey.get(ck) ?? [];
+    const enemiesAtTile = getCombatBoardHelpers().filterBoardPieceEnemies?.(
+      enemiesByAnchorKey.get(ck) ?? [],
+    ) ?? (enemiesByAnchorKey.get(ck) ?? []);
     const enemyAnchor = enemiesAtTile[0];
     const adjacent =
       me != null &&

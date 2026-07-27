@@ -108,6 +108,8 @@ export type ClientCombatBoardHelpers = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
   flowerbudPlantTiles: (...args: any[]) => { x: number; y: number }[];
   tileIsStained: (state: GameState, x: number, y: number) => boolean;
+  /** Prefer solid pieces over terrain-like share-space tokens (e.g. Living Tide). */
+  filterBoardPieceEnemies?: (enemies: readonly Enemy[]) => Enemy[];
   SETHIAN_DAMAGE_CAP: number;
   HEAVEN_BURNING_MAX_LEVEL: number;
 };
@@ -157,6 +159,7 @@ function stubHelpers(): ClientCombatBoardHelpers {
     redirectionSourceTileKeys: emptySet,
     flowerbudPlantTiles: emptyTiles,
     tileIsStained: () => false,
+    filterBoardPieceEnemies: (enemies) => [...enemies],
     SETHIAN_DAMAGE_CAP: 132,
     HEAVEN_BURNING_MAX_LEVEL: 3,
   };
