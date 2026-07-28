@@ -106,6 +106,7 @@ const props = defineProps<{
   isBulkTileSelected?: boolean;
   showHealthBars: boolean;
   showEnemyHealthBars: boolean;
+  showTokenBackgrounds: boolean;
   enemyDying?: boolean;
   enemyDefeated?: boolean;
   playerTeleporting?: boolean;
@@ -486,6 +487,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
           'fortification-piece': isFortificationEnemy(cell.enemyAnchor),
           'has-portrait': !!cell.enemyPortraitUrl && cell.enemyAnchor.kind !== 'tower',
           stacked: stackedEnemyCount > 1,
+          'no-token-bg': !showTokenBackgrounds,
         },
         pieceDecorationClasses,
       ]"
@@ -493,9 +495,9 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         stackedEnemyCount > 1
           ? stackedPieceStyle(0, stackedEnemyCount)
           : enemyPieceStyle(cell.enemyAnchor),
-        cell.enemyPortraitUrl && cell.enemyAnchor.kind !== 'tower'
+        showTokenBackgrounds && cell.enemyPortraitUrl && cell.enemyAnchor.kind !== 'tower'
           ? { background: cell.enemyPortraitBg ?? undefined }
-          : cell.towerOwnerHue != null
+          : showTokenBackgrounds && cell.towerOwnerHue != null
             ? { background: `hsl(${cell.towerOwnerHue} 55% 38%)`, borderColor: `hsl(${cell.towerOwnerHue} 70% 55%)` }
             : undefined,
       ]"
@@ -550,10 +552,11 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         'fortification-piece': isFortificationEnemy(stacked.enemy),
         'has-portrait': !!stacked.portraitUrl && stacked.enemy.kind !== 'tower',
         'enemy-defeated': stacked.defeated,
+        'no-token-bg': !showTokenBackgrounds,
       }"
       :style="[
         stackedPieceStyle(stackedIndex + 1, stackedEnemyCount),
-        stacked.portraitUrl && stacked.enemy.kind !== 'tower'
+        showTokenBackgrounds && stacked.portraitUrl && stacked.enemy.kind !== 'tower'
           ? { background: stacked.portraitBg ?? undefined }
           : undefined,
       ]"
@@ -585,8 +588,9 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         'turn-ended': cell.turnEnded && !cell.playerDowned,
         'player-downed': cell.playerDowned,
         'has-portrait': !!cell.playerPortraitUrl,
+        'no-token-bg': !showTokenBackgrounds,
       }"
-      :style="!cell.playerPortraitUrl && playerHue != null ? { background: `hsl(${playerHue} 70% 45%)` } : undefined"
+      :style="showTokenBackgrounds && !cell.playerPortraitUrl && playerHue != null ? { background: `hsl(${playerHue} 70% 45%)` } : undefined"
       @click="onPlayerPieceClick"
       @pointerdown="onPlayerPiecePointerDown"
     >
@@ -953,6 +957,10 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 
 .piece.enemy.has-portrait {
   overflow: hidden;
+}
+
+.piece.no-token-bg {
+  background: transparent;
 }
 
 .piece.enemy .portrait-img {

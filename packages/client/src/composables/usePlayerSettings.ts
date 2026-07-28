@@ -17,6 +17,7 @@ export type ElevationContourColor = (typeof ELEVATION_CONTOUR_COLORS)[number];
 
 type PlayerSettings = {
   showHealthBars: boolean;
+  showTokenBackgrounds: boolean;
   showConnectionsInConsole: boolean;
   showLineOfSightIndicator: boolean;
   showElevationContours: boolean;
@@ -25,6 +26,7 @@ type PlayerSettings = {
 
 const DEFAULT_SETTINGS: PlayerSettings = {
   showHealthBars: true,
+  showTokenBackgrounds: true,
   showConnectionsInConsole: true,
   showLineOfSightIndicator: false,
   showElevationContours: true,
@@ -46,6 +48,7 @@ function parseSettings(raw: string): PlayerSettings {
     const parsed = JSON.parse(raw) as Partial<PlayerSettings>;
     return {
       showHealthBars: parsed.showHealthBars !== false,
+      showTokenBackgrounds: parsed.showTokenBackgrounds !== false,
       showConnectionsInConsole: parsed.showConnectionsInConsole !== false,
       showLineOfSightIndicator: parsed.showLineOfSightIndicator === true,
       showElevationContours: parsed.showElevationContours !== false,
@@ -81,6 +84,7 @@ const { role, playerProfile } = useSession();
 let currentKey = settingsKey(role.value, playerProfile.value?.id ?? null);
 
 const showHealthBars = ref(readSettings(currentKey).showHealthBars);
+const showTokenBackgrounds = ref(readSettings(currentKey).showTokenBackgrounds);
 const showConnectionsInConsole = ref(readSettings(currentKey).showConnectionsInConsole);
 const showLineOfSightIndicator = ref(readSettings(currentKey).showLineOfSightIndicator);
 const showElevationContours = ref(readSettings(currentKey).showElevationContours);
@@ -93,6 +97,7 @@ function schedulePersist() {
   persistTimer = setTimeout(() => {
     writeSettings(currentKey, {
       showHealthBars: showHealthBars.value,
+      showTokenBackgrounds: showTokenBackgrounds.value,
       showConnectionsInConsole: showConnectionsInConsole.value,
       showLineOfSightIndicator: showLineOfSightIndicator.value,
       showElevationContours: showElevationContours.value,
@@ -102,7 +107,14 @@ function schedulePersist() {
 }
 
 watch(
-  [showHealthBars, showConnectionsInConsole, showLineOfSightIndicator, showElevationContours, elevationContourColor],
+  [
+    showHealthBars,
+    showTokenBackgrounds,
+    showConnectionsInConsole,
+    showLineOfSightIndicator,
+    showElevationContours,
+    elevationContourColor,
+  ],
   schedulePersist,
 );
 
@@ -114,6 +126,7 @@ watch(
     currentKey = key;
     const next = readSettings(key);
     showHealthBars.value = next.showHealthBars;
+    showTokenBackgrounds.value = next.showTokenBackgrounds;
     showConnectionsInConsole.value = next.showConnectionsInConsole;
     showLineOfSightIndicator.value = next.showLineOfSightIndicator;
     showElevationContours.value = next.showElevationContours;
@@ -125,6 +138,7 @@ watch(
 export function usePlayerSettings() {
   return {
     showHealthBars,
+    showTokenBackgrounds,
     showConnectionsInConsole,
     showLineOfSightIndicator,
     showElevationContours,

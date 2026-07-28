@@ -470,6 +470,29 @@ export function buildElevationContourPaths(tiles: MapTile[], metrics: BoardCellM
   return paths;
 }
 
+// Outline a set of occupied cells using the same fillet style as elevation contours.
+export function buildOccupiedRegionContourPaths(
+  occupied: Iterable<{ x: number; y: number }>,
+  metrics: BoardCellMetrics,
+): string[] {
+  const keys = new Set<string>();
+  for (const p of occupied) keys.add(`${p.x},${p.y}`);
+  if (keys.size === 0) return [];
+
+  const tiles: MapTile[] = [];
+  for (let y = 0; y < metrics.height; y++) {
+    for (let x = 0; x < metrics.width; x++) {
+      tiles.push({
+        x,
+        y,
+        terrain: ["standard"],
+        elevation: keys.has(`${x},${y}`) ? 1 : 0,
+      });
+    }
+  }
+  return buildElevationContourPaths(tiles, metrics);
+}
+
 export function parsePathCommands(d: string): { cmd: string; x: number; y: number }[] {
   const tokens = d.trim().split(/\s+/);
   const points: { cmd: string; x: number; y: number }[] = [];

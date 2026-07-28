@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   boardCellMetrics,
   buildElevationContourPaths,
+  buildOccupiedRegionContourPaths,
   contourInsetIndex,
   contourStepInsetPx,
   elevationContourEdges,
@@ -448,5 +449,39 @@ describe("buildElevationContourPaths", () => {
     const paths = buildElevationContourPaths(tiles, boardCellMetrics(5, 5, 250, 3));
     expect(paths).toHaveLength(1);
     expect(paths[0]).toContain(" Z");
+  });
+});
+
+describe("buildOccupiedRegionContourPaths", () => {
+  it("returns empty for no occupied cells", () => {
+    expect(buildOccupiedRegionContourPaths([], metrics2x2)).toEqual([]);
+  });
+
+  it("outlines a 2×1 bar as one closed path", () => {
+    const metrics = boardCellMetrics(4, 4, 200, 3);
+    const paths = buildOccupiedRegionContourPaths(
+      [
+        { x: 1, y: 1 },
+        { x: 2, y: 1 },
+      ],
+      metrics,
+    );
+    expect(paths.length).toBeGreaterThan(0);
+    for (const path of paths) expect(path).toContain(" Z");
+  });
+
+  it("outlines an L-shape as one closed path", () => {
+    const metrics = boardCellMetrics(5, 5, 250, 3);
+    const paths = buildOccupiedRegionContourPaths(
+      [
+        { x: 1, y: 1 },
+        { x: 2, y: 1 },
+        { x: 2, y: 2 },
+      ],
+      metrics,
+    );
+    expect(paths).toHaveLength(1);
+    expect(paths[0]).toContain(" Z");
+    expect(countPathQs(paths[0]!)).toBeGreaterThan(0);
   });
 });

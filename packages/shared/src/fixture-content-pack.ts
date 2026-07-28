@@ -39,6 +39,12 @@ function fixtureCatalogs(): CatalogContribution {
             speed: 2,
             scale: 2,
           },
+          {
+            name: "Test Swarmling",
+            hp: 5,
+            speed: 4,
+            tags: ["Swarm", "ShareSpace"],
+          },
         ],
       },
     ],

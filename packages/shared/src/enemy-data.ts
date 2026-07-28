@@ -123,6 +123,11 @@ export function isFortificationEnemy(enemy: Pick<Enemy, "name">): boolean {
   return findEnemyListing(enemy.name)?.tags?.includes("Fortification") ?? false;
 }
 
+export function enemyHasShareSpace(enemy: Pick<Enemy, "name" | "burrowed">): boolean {
+  if (enemy.burrowed === true) return true;
+  return findEnemyListing(enemy.name)?.tags?.includes("ShareSpace") ?? false;
+}
+
 export function getEnemyMaxHpByName(name: string | undefined): number {
   return findEnemyListing(name)?.hp ?? 0;
 }

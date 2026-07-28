@@ -11,6 +11,7 @@ import ManagePlayersModal from "./ManagePlayersModal.vue";
 
 const {
   showHealthBars,
+  showTokenBackgrounds,
   showConnectionsInConsole,
   showLineOfSightIndicator,
   showElevationContours,
@@ -92,6 +93,19 @@ const managePlayersOpen = ref(false);
             :class="{ on: showHealthBars }"
             :aria-checked="showHealthBars"
             @click="showHealthBars = !showHealthBars"
+          >
+            <span class="toggle-thumb" />
+          </button>
+        </label>
+        <label class="setting-row">
+          <span class="setting-label">Show backgrounds</span>
+          <button
+            type="button"
+            role="switch"
+            class="toggle"
+            :class="{ on: showTokenBackgrounds }"
+            :aria-checked="showTokenBackgrounds"
+            @click="showTokenBackgrounds = !showTokenBackgrounds"
           >
             <span class="toggle-thumb" />
           </button>

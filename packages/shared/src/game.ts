@@ -20,7 +20,7 @@ import {
 import { enemyHasFlyingTag, initializeUnitElevation, syncUnitElevationOnTile } from "./combat/elevation.js";
 import { enemyMoveStepCost } from "./combat/movement.js";
 import { resetEnemyExhaustion, resetGmTurnActions } from "./combat/enemy.js";
-import { getEnemyListingByName, getEnemyMaxHpByName, getEnemyScale, getEnemyScaleByName, enemyFootprintTiles, ensureEnemyMovement, spendEnemyMovement } from "./enemy-data.js";
+import { enemyHasShareSpace, getEnemyMaxHpByName, getEnemyScale, getEnemyScaleByName, enemyFootprintTiles, ensureEnemyMovement, spendEnemyMovement } from "./enemy-data.js";
 import {
   defaultOverworldRegions,
   defaultPartyResources,
@@ -737,9 +737,7 @@ export function validateEnemyFootprint(
     return "Out of bounds";
   }
   const flying = enemy != null && enemyHasFlyingTag(enemy);
-  const listing = enemy?.name ? getEnemyListingByName(enemy.name) : undefined;
-  const shareSpace =
-    enemy?.burrowed === true || (listing?.tags?.includes("ShareSpace") ?? false);
+  const shareSpace = enemy != null && enemyHasShareSpace(enemy);
   const occ = occupancy ?? buildBoardOccupancy(state);
   for (const tile of enemyFootprintTiles(x, y, scale)) {
     if (!flying && !isWalkable(tileAt(state.tiles, tile.x, tile.y))) return "Blocked";

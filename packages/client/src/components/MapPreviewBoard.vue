@@ -208,6 +208,7 @@ const gridStyle = computed(() => ({
               :is-enemy-selected="false"
               :show-health-bars="false"
               :show-enemy-health-bars="false"
+              :show-token-backgrounds="true"
             />
           </div>
         </div>

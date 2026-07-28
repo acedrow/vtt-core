@@ -7,7 +7,7 @@ import { computed, onMounted, onUnmounted, provide, ref, shallowRef, watch } fro
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
 import { BOARD_CELL_GAP, boardContentHeightPx, boardContentWidthPx } from "../lib/boardLayout.js";
-import { boardCellMetrics, buildElevationContourPaths } from "../lib/elevationContours.js";
+import { boardCellMetrics, buildElevationContourPaths, buildOccupiedRegionContourPaths } from "../lib/elevationContours.js";
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
@@ -96,7 +96,7 @@ const activePlayerSelected = computed(() => {
   if (!selectedPlayerId.value) return true;
   return selectedPlayerId.value === id;
 });
-const { showHealthBars, showLineOfSightIndicator, showElevationContours, elevationContourColor } =
+const { showHealthBars, showTokenBackgrounds, showLineOfSightIndicator, showElevationContours, elevationContourColor } =
   usePlayerSettings();
 const showEnemyHealthBars = computed(() => showHealthBars.value && canUseGmTools.value);
 const { indicators: damageIndicators } = useDamageIndicators(gameState);
@@ -1576,6 +1576,46 @@ const elevationContourPaths = computed(() => {
   return paths.length > 0 ? paths : null;
 });
 
+const swarmFootprintPaths = computed(() => {
+  const s = gameState.value;
+  if (!s) return null;
+  const helpers = getCombatBoardHelpers();
+  const groups = helpers.buildSwarmGroups(s);
+  if (groups.size === 0) return null;
+  const byId = new Map(s.enemies.map((e) => [e.id, e]));
+  const metrics = boardCellMetrics(s.width, s.height, boardWidthPx.value, BOARD_CELL_GAP);
+  const sel = boardSelection.value;
+  const selectedCanonicalId =
+    sel?.kind === "enemy" && !sel.soloSwarmMember && sel.swarmMemberIds
+      ? helpers.swarmGroupForEnemy(s, sel.id, groups)?.canonicalId ?? null
+      : null;
+  const paths: { d: string; selected: boolean }[] = [];
+  for (const canonicalId of groups.keys()) {
+    const group = helpers.swarmGroupForEnemy(s, canonicalId, groups);
+    if (!group) continue;
+    const occupied: { x: number; y: number }[] = [];
+    for (const id of [...group.memberIds, ...group.linkedFlowerIds]) {
+      const enemy = byId.get(id);
+      if (enemy) occupied.push({ x: enemy.x, y: enemy.y });
+    }
+    const selected = group.canonicalId === selectedCanonicalId;
+    for (const d of buildOccupiedRegionContourPaths(occupied, metrics)) {
+      paths.push({ d, selected });
+    }
+  }
+  return paths.length > 0 ? paths : null;
+});
+
+// Group swarm selection uses the footprint ring; only solo/bulk/normal get token outlines.
+function showEnemyTokenSelected(enemyId: string): boolean {
+  if (isEnemyBulkSelected(enemyId)) return true;
+  const sel = boardSelection.value;
+  if (sel?.kind !== "enemy") return false;
+  if (sel.soloSwarmMember) return sel.id === enemyId;
+  if (sel.swarmMemberIds) return false;
+  return isEnemySelected(enemyId);
+}
+
 const cellStateByKey = computed(() => {
   const map = new Map<string, CellRenderState>();
   const s = gameState.value;
@@ -1803,7 +1843,7 @@ const cellStateByKey = computed(() => {
                 maxHp: getCombatBoardHelpers().getEffectiveEnemyMaxHp(stacked, s),
               }
             : undefined,
-        selected: isEnemySelected(stacked.id) || isEnemyBulkSelected(stacked.id),
+        selected: showEnemyTokenSelected(stacked.id),
         dying: isEnemyDying(stacked.id),
         defeated: isEnemyDefeated(stacked.id),
         turnEnded: !getCombatBoardHelpers().isTowerEnemy(stacked) && !isSandboxMode(s) && !!stacked.exhausted,
@@ -2014,7 +2054,7 @@ const boardCellRows = computed(() => {
       canDragDeploy: !!player && canDragDeploy(player),
       isPlayerSelected: !!player && (isPlayerSelected(player.id) || isPlayerBulkSelected(player.id)),
       isEnemySelected:
-        (!!enemyAnchor && (isEnemySelected(enemyAnchor.id) || isEnemyBulkSelected(enemyAnchor.id))) ||
+        (!!enemyAnchor && showEnemyTokenSelected(enemyAnchor.id)) ||
         !!cell.stackedEnemies?.some((e) => e.selected),
       isBulkTileSelected: isTileBulkSelected(c.x, c.y),
       playerHue: player ? hueFromId(player.id) : null,
@@ -4588,6 +4628,21 @@ onUnmounted(() => {
                 stroke-linecap="round"
               />
             </svg>
+            <svg
+              v-if="swarmFootprintPaths"
+              class="swarm-footprint-overlay"
+              aria-hidden="true"
+              :viewBox="`0 0 ${boardWidthPx} ${contentHeightPx}`"
+            >
+              <template v-for="(item, i) in swarmFootprintPaths" :key="i">
+                <path
+                  v-if="item.selected"
+                  class="swarm-footprint-selected"
+                  :d="item.d"
+                />
+                <path class="swarm-footprint-path" :d="item.d" />
+              </template>
+            </svg>
             <BoardCell
                 v-for="row in boardCellRows"
                 :key="row.key"
@@ -4618,6 +4673,7 @@ onUnmounted(() => {
                   row.enemyDying,
                   showHealthBars,
                   showEnemyHealthBars,
+                  showTokenBackgrounds,
                   row.enemyAnimating,
                   row.playerTeleporting,
                   row.enemyPendingRemoval,
@@ -4636,6 +4692,7 @@ onUnmounted(() => {
                 :player-hue="row.playerHue"
                 :show-health-bars="showHealthBars"
                 :show-enemy-health-bars="showEnemyHealthBars"
+                :show-token-backgrounds="showTokenBackgrounds"
                 :enemy-dying="row.enemyDying"
                 :enemy-defeated="row.enemyDefeated"
                 :player-teleporting="row.playerTeleporting"
@@ -4768,10 +4825,11 @@ onUnmounted(() => {
             'has-portrait': !!enemyMoveOverlayPortraitUrl,
             'fortification-overlay': enemyMoveOverlayIsFortification,
             selected: enemyMoveOverlaySelected,
+            'no-token-bg': !showTokenBackgrounds,
           }"
           :style="[
             enemyMoveOverlayStyle,
-            enemyMoveOverlayBg ? { background: enemyMoveOverlayBg } : undefined,
+            showTokenBackgrounds && enemyMoveOverlayBg ? { background: enemyMoveOverlayBg } : undefined,
           ]"
           @transitionend="onEnemyMoveOverlayTransitionEnd"
         >
@@ -4789,10 +4847,12 @@ onUnmounted(() => {
           :class="{
             'teleport-overlay-animating': teleportOverlayAtDest,
             selected: teleportOverlaySelected,
+            'no-token-bg': !showTokenBackgrounds,
           }"
           :style="[
             teleportOverlayStyle,
-            !teleportOverlayPlayer.characterSheetId || !portraitUrlFor(teleportOverlayPlayer.characterSheetId)
+            showTokenBackgrounds &&
+            (!teleportOverlayPlayer.characterSheetId || !portraitUrlFor(teleportOverlayPlayer.characterSheetId))
               ? { background: `hsl(${hueFromId(teleportOverlayPlayer.id)} 70% 45%)` }
               : undefined,
           ]"
@@ -4978,6 +5038,42 @@ onUnmounted(() => {
   z-index: 1;
 }
 
+.swarm-footprint-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.swarm-footprint-path {
+  fill: var(--color-board-target-attack-bg);
+  stroke: var(--color-board-target-attack);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
+  animation: swarm-footprint-pulse 2.4s ease-in-out infinite;
+}
+
+.swarm-footprint-selected {
+  fill: none;
+  stroke: var(--color-on-accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes swarm-footprint-pulse {
+  0%,
+  100% {
+    stroke-opacity: 0.28;
+  }
+  50% {
+    stroke-opacity: 0.42;
+  }
+}
+
 .map-ping {
   position: absolute;
   z-index: 6;
@@ -5063,6 +5159,11 @@ onUnmounted(() => {
 
 .enemy-move-overlay.fortification-overlay .portrait-img {
   border-radius: 4px;
+}
+
+.teleport-overlay.no-token-bg,
+.enemy-move-overlay.no-token-bg {
+  background: transparent;
 }
 
 .damage-indicator {

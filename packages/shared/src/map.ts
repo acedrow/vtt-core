@@ -1,7 +1,14 @@
 import type { EffectStacks, Enemy, GameMap, GameMapSummary, GameState, MapTile, TerrainType } from "./types.js";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "./constants.js";
 import { DEFAULT_OBSTACLE_HP, TERRAIN_TYPES } from "./types.js";
-import { getEnemyMaxHpByName, getEnemyScale, getEnemyScaleByName, enemyFootprintTiles, refreshEnemyMovement } from "./enemy-data.js";
+import {
+  enemyHasShareSpace,
+  getEnemyMaxHpByName,
+  getEnemyScale,
+  getEnemyScaleByName,
+  enemyFootprintTiles,
+  refreshEnemyMovement,
+} from "./enemy-data.js";
 import { isKnownEffectId } from "./effects-data.js";
 import {
   defaultOverworldParty,
@@ -380,6 +387,33 @@ export function parseGameMap(raw: unknown): GameMap {
   };
 }
 
+/** Rejects footprint overlaps unless every occupant on the tile has ShareSpace. */
+export function assertLegalMapEnemyFootprints(
+  enemies: Pick<Enemy, "id" | "x" | "y" | "scale" | "name" | "burrowed">[],
+  width: number,
+  height: number,
+): void {
+  const occupants = new Map<string, boolean>();
+  for (const enemy of enemies) {
+    const scale = getEnemyScale(enemy);
+    const shareSpace = enemyHasShareSpace(enemy);
+    for (const tile of enemyFootprintTiles(enemy.x, enemy.y, scale)) {
+      if (!isInBounds(tile.x, tile.y, width, height)) {
+        throw new Error(`Enemy ${enemy.id} footprint at (${enemy.x}, ${enemy.y}) is out of bounds`);
+      }
+      const posKey = coordKey(tile.x, tile.y);
+      const existingShareSpace = occupants.get(posKey);
+      if (existingShareSpace !== undefined) {
+        if (!existingShareSpace || !shareSpace) {
+          throw new Error(`Enemy footprints overlap at (${tile.x}, ${tile.y})`);
+        }
+        continue;
+      }
+      occupants.set(posKey, shareSpace);
+    }
+  }
+}
+
 function parseMapEnemies(raw: unknown, width: number, height: number): Enemy[] | undefined {
   if (raw === undefined) return undefined;
   if (!Array.isArray(raw)) {
@@ -387,7 +421,6 @@ function parseMapEnemies(raw: unknown, width: number, height: number): Enemy[] |
   }
 
   const seenIds = new Set<string>();
-  const seenPositions = new Set<string>();
   const enemies: Enemy[] = [];
 
   for (const entry of raw) {
@@ -425,17 +458,6 @@ function parseMapEnemies(raw: unknown, width: number, height: number): Enemy[] |
         ? (rawScale as number)
         : getEnemyScaleByName(name as string | undefined);
 
-    for (const tile of enemyFootprintTiles(x as number, y as number, scale)) {
-      if (!isInBounds(tile.x, tile.y, width, height)) {
-        throw new Error(`Enemy ${id} footprint at (${x}, ${y}) is out of bounds`);
-      }
-      const posKey = coordKey(tile.x, tile.y);
-      if (seenPositions.has(posKey)) {
-        throw new Error(`Enemy footprints overlap at (${tile.x}, ${tile.y})`);
-      }
-      seenPositions.add(posKey);
-    }
-
     enemies.push({
       id: id.trim(),
       x: x as number,
@@ -445,6 +467,7 @@ function parseMapEnemies(raw: unknown, width: number, height: number): Enemy[] |
     });
   }
 
+  assertLegalMapEnemyFootprints(enemies, width, height);
   return enemies;
 }
 
@@ -566,9 +589,11 @@ export function cloneEnemy(enemy: Enemy): Enemy {
 }
 
 export function persistMapEnemiesFromState(state: GameState, map: GameMap): void {
-  map.enemies = state.enemies
+  const enemies = state.enemies
     .filter((e) => e.kind !== "tower")
     .map(cloneEnemy);
+  assertLegalMapEnemyFootprints(enemies, state.width, state.height);
+  map.enemies = enemies;
 }
 
 export function applySaveStartingState(state: GameState, map: GameMap): string {
