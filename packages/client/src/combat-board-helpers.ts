@@ -114,6 +114,8 @@ export type ClientCombatBoardHelpers = {
   tileIsStained: (state: GameState, x: number, y: number) => boolean;
   /** Prefer solid pieces over terrain-like share-space tokens (e.g. Living Tide). */
   filterBoardPieceEnemies?: (enemies: readonly Enemy[]) => Enemy[];
+  /** When false, omit idle red swarm footprint; selected white ring still draws. */
+  swarmFootprintShowIdle?: (state: GameState, group: CombatBoardSwarmGroup) => boolean;
   SETHIAN_DAMAGE_CAP: number;
   HEAVEN_BURNING_MAX_LEVEL: number;
 };
@@ -166,6 +168,7 @@ function stubHelpers(): ClientCombatBoardHelpers {
     emptyAdjacentPlantTiles: emptyTiles,
     tileIsStained: () => false,
     filterBoardPieceEnemies: (enemies) => [...enemies],
+    swarmFootprintShowIdle: () => true,
     SETHIAN_DAMAGE_CAP: 132,
     HEAVEN_BURNING_MAX_LEVEL: 3,
   };

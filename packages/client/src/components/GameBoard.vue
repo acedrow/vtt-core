@@ -1617,7 +1617,7 @@ const swarmFootprintPaths = computed(() => {
       ? helpers.swarmGroupForEnemy(s, sel.id, groups)?.canonicalId ?? null
       : null;
   const fogKeys = playerFogActive.value ? outOfLineOfSightKeys.value : null;
-  const paths: { d: string; selected: boolean }[] = [];
+  const paths: { d: string; selected: boolean; showIdle: boolean }[] = [];
   for (const canonicalId of groups.keys()) {
     const group = helpers.swarmGroupForEnemy(s, canonicalId, groups);
     if (!group) continue;
@@ -1630,8 +1630,9 @@ const swarmFootprintPaths = computed(() => {
     }
     if (occupied.length === 0) continue;
     const selected = group.canonicalId === selectedCanonicalId;
+    const showIdle = helpers.swarmFootprintShowIdle?.(s, group) ?? true;
     for (const d of buildOccupiedRegionContourPaths(occupied, metrics)) {
-      paths.push({ d, selected });
+      paths.push({ d, selected, showIdle });
     }
   }
   return paths.length > 0 ? paths : null;
@@ -4698,7 +4699,11 @@ onUnmounted(() => {
                   class="swarm-footprint-selected"
                   :d="item.d"
                 />
-                <path class="swarm-footprint-path" :d="item.d" />
+                <path
+                  v-if="item.showIdle"
+                  class="swarm-footprint-path"
+                  :d="item.d"
+                />
               </template>
             </svg>
             <BoardCell
