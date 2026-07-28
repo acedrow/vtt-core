@@ -1884,7 +1884,7 @@ const cellStateByKey = computed(() => {
         animating: animatingEnemyIds.value.has(stacked.id),
       })),
       enemyHp:
-        enemyAnchor && s && canUseGmTools.value
+        enemyAnchor && s && canUseGmTools.value && (getCombatBoardHelpers().enemyShowsBoardHp?.(enemyAnchor) ?? true)
           ? (() => {
               const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyAnchor.id, swarmGroups);
               if (
@@ -1904,6 +1904,7 @@ const cellStateByKey = computed(() => {
           : undefined,
       showSwarmHp: (() => {
         if (!enemyAnchor || !s) return true;
+        if (!(getCombatBoardHelpers().enemyShowsBoardHp?.(enemyAnchor) ?? true)) return false;
         if (isSoloSwarmMemberSelected.value && selectedEnemyId.value === enemyAnchor.id) {
           return true;
         }
@@ -2123,6 +2124,7 @@ const tooltipData = computed(() => {
   const enemyEntries = enemiesAtTile
     .filter((e) => !getCombatBoardHelpers().isTowerEnemy(e))
     .map((anchor) => {
+      const showHp = getCombatBoardHelpers().enemyShowsBoardHp?.(anchor) ?? true;
       const group = getCombatBoardHelpers().swarmGroupForEnemy(s, anchor.id);
       const baseName = anchor.name ?? "Enemy";
       if (group && group.size > 1) {
@@ -2132,15 +2134,15 @@ const tooltipData = computed(() => {
         return {
           ...anchor,
           displayName: solo ? `${baseName} (Swarm member)` : `${baseName} (Swarm · ${group.size})`,
-          displayHp: solo ? memberHp : group.currentHp,
-          displayMaxHp: solo ? getCombatBoardHelpers().getSwarmMaxHp(1) : group.maxHp,
+          displayHp: showHp ? (solo ? memberHp : group.currentHp) : null,
+          displayMaxHp: showHp ? (solo ? getCombatBoardHelpers().getSwarmMaxHp(1) : group.maxHp) : null,
         };
       }
       return {
         ...anchor,
         displayName: baseName,
-        displayHp: getCombatBoardHelpers().getEffectiveEnemyHp(anchor, s),
-        displayMaxHp: getCombatBoardHelpers().getEffectiveEnemyMaxHp(anchor, s),
+        displayHp: showHp ? getCombatBoardHelpers().getEffectiveEnemyHp(anchor, s) : null,
+        displayMaxHp: showHp ? getCombatBoardHelpers().getEffectiveEnemyMaxHp(anchor, s) : null,
       };
     });
   const towers = enemiesAtTile.filter((e) => getCombatBoardHelpers().isTowerEnemy(e));
@@ -2651,6 +2653,17 @@ function selectOccupantAt(x: number, y: number): boolean {
   const player = occ.playerByKey.get(key);
   if (player) {
     selectBoardPlayer(player.id, player.characterSheetId);
+    return true;
+  }
+  const atTile = occ.enemiesByKey.get(key) ?? [];
+  const helpers = getCombatBoardHelpers();
+  const tide = atTile.find((e) => helpers.isLivingTide?.(e));
+  if (tide) {
+    const group = helpers.swarmGroupForEnemy(gameState.value!, tide.id);
+    const selectId = group
+      ? helpers.swarmCanonicalDisplayId(gameState.value!, group.memberIds)
+      : tide.id;
+    toggleBoardEnemy(selectId);
     return true;
   }
   const enemy = occ.enemyByKey.get(key);
@@ -4159,7 +4172,9 @@ function buildContextMenuItems(x: number, y: number): BoardContextMenuItem[] {
   const occ = occupancy.value;
   const key = coordKey(x, y);
   const player = occ?.playerByKey.get(key);
-  const enemy = occ?.enemyByKey.get(key);
+  const enemiesAt = occ?.enemiesByKey.get(key) ?? [];
+  const tideAt = enemiesAt.find((e) => getCombatBoardHelpers().isLivingTide?.(e));
+  const enemy = tideAt ?? occ?.enemyByKey.get(key);
   const attractor = s?.combat?.attractors?.find((a) => a.x === x && a.y === y);
   const tile = s ? tileAt(s.tiles, x, y) : undefined;
   const bulk = gmBulkSelection.value;
@@ -4252,15 +4267,22 @@ function onBoardContextMenu(e: MouseEvent) {
   const occ = occupancy.value;
   const key = coordKey(x, y);
   const player = occ?.playerByKey.get(key);
-  const enemy = occ?.enemyByKey.get(key);
+  const enemiesAt = occ?.enemiesByKey.get(key) ?? [];
+  const tideAt = enemiesAt.find((e) => getCombatBoardHelpers().isLivingTide?.(e));
+  const enemy = tideAt ?? occ?.enemyByKey.get(key);
   const inBulk =
     canUseGmTools.value &&
     !!gmBulkSelection.value &&
     !!occ &&
     isCellInBulkSelection(x, y, occ);
   if (!inBulk) {
-    if (enemy) selectBoardEnemy(enemy.id);
-    else if (player) selectBoardPlayer(player.id, player.characterSheetId);
+    if (enemy) {
+      const group = getCombatBoardHelpers().swarmGroupForEnemy(gameState.value!, enemy.id);
+      const selectId = group
+        ? getCombatBoardHelpers().swarmCanonicalDisplayId(gameState.value!, group.memberIds)
+        : enemy.id;
+      selectBoardEnemy(selectId);
+    } else if (player) selectBoardPlayer(player.id, player.characterSheetId);
   }
 
   contextMenu.value = {
@@ -4826,7 +4848,7 @@ onUnmounted(() => {
             <span class="tooltip-heading">Enemies</span>
             <div v-for="enemy in tooltipData.enemies" :key="enemy.id" class="tooltip-unit">
               <span class="tooltip-row">
-                {{ enemy.displayName }}<template v-if="canUseGmTools"> · HP {{ formatHp(enemy.displayHp, enemy.displayMaxHp) }}</template>
+                {{ enemy.displayName }}<template v-if="canUseGmTools && enemy.displayHp != null && enemy.displayMaxHp != null"> · HP {{ formatHp(enemy.displayHp, enemy.displayMaxHp) }}</template>
               </span>
               <span
                 v-for="effect in effectEntries(enemy.effects)"

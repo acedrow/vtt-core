@@ -116,6 +116,7 @@ const currentHp = computed(() => {
 const showHpBar = computed(() => {
   const enemy = activeEnemy.value;
   if (!enemy) return false;
+  if (!(getCombatBoardHelpers().enemyShowsBoardHp?.(enemy) ?? true)) return false;
   if (getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
   return hasGmCapabilities.value;
 });
@@ -265,7 +266,10 @@ function spawnUnit() {
       <component :is="combatBoard.enemyInfoExtras" />
 
       <div v-if="listing || towerDef" class="stats">
-        <span v-if="hasGmCapabilities && !showHpBar" class="stat">
+        <span
+          v-if="hasGmCapabilities && !showHpBar && (getCombatBoardHelpers().enemyShowsBoardHp?.(activeEnemy ?? { name: listing?.name }) ?? true)"
+          class="stat"
+        >
           HP: {{ listing?.hp ?? towerDef?.hp }}
         </span>
         <span v-if="listing?.crown != null" class="stat">Crown: {{ listing.crown }}</span>

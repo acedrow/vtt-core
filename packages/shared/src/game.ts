@@ -12,6 +12,7 @@ import {
   runEnemyAdded,
   runEnemyMaxHpOverride,
   runEnemyMoved,
+  runEnemyRemoved,
   runGmTurnEnd,
   runIsPersistentEnemy,
   runMovementBlockReason,
@@ -110,8 +111,9 @@ export function occupancyBlockedByEnemy(
   x: number,
   y: number,
 ): boolean {
-  const enemy = occupancy.enemyByKey.get(coordKey(x, y));
-  return enemy != null && !enemy.burrowed;
+  const enemies = occupancy.enemiesByKey.get(coordKey(x, y));
+  if (!enemies?.length) return false;
+  return enemies.some((e) => !enemyHasShareSpace(e));
 }
 
 export function isTileOccupied(
@@ -735,7 +737,7 @@ export function validateEnemyFootprint(
   x: number,
   y: number,
   scale: number,
-  _excludeEnemyId?: string,
+  excludeEnemyId?: string,
   occupancy?: BoardOccupancy,
   enemy?: Pick<Enemy, "name" | "burrowed">,
 ): string | null {
@@ -749,6 +751,14 @@ export function validateEnemyFootprint(
   for (const tile of enemyFootprintTiles(x, y, scale)) {
     if (!flying && !isWalkable(tileAt(state.tiles, tile.x, tile.y))) return "Blocked";
     if (!shareSpace && occ.playerByKey.has(coordKey(tile.x, tile.y))) return "Tile occupied";
+    // ShareSpace movers may underlap solid enemies; others may only stack on ShareSpace.
+    if (!shareSpace) {
+      const occupants = occ.enemiesByKey.get(coordKey(tile.x, tile.y)) ?? [];
+      for (const occupant of occupants) {
+        if (excludeEnemyId && occupant.id === excludeEnemyId) continue;
+        if (!enemyHasShareSpace(occupant)) return "Tile occupied";
+      }
+    }
   }
   return null;
 }
@@ -1104,10 +1114,12 @@ export function removeEnemy(
   const prev = snapshotSwarmGroups(state);
   const group = opts?.entireSwarm ? swarmGroupForEnemy(state, enemyId) : null;
   const removeIds = new Set(group?.memberIds ?? [enemyId]);
+  const removed = state.enemies.filter((e) => removeIds.has(e.id));
   const before = state.enemies.length;
   state.enemies = state.enemies.filter((e) => !removeIds.has(e.id));
   if (state.enemies.length < before) {
     reconcileSwarmHp(state, prev);
+    runEnemyRemoved(state, removed);
     return true;
   }
   return false;

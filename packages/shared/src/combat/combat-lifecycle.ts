@@ -4,6 +4,7 @@ export type CombatLifecycleHooks = {
   onPlayerEndOfTurn?: (state: GameState, player: Player) => string[];
   onGmTurnEnd?: (state: GameState) => string[];
   onEnemyAdded?: (state: GameState, enemy: Enemy) => void;
+  onEnemyRemoved?: (state: GameState, removed: Enemy[]) => void;
   onEnemyRoundReset?: (state: GameState, enemy: Enemy) => void;
   onEnemyDamageAdjustment?: (state: GameState, enemy: Enemy) => number;
   onEnemyDefeated?: (
@@ -51,6 +52,11 @@ export function runGmTurnEnd(state: GameState): string[] {
 
 export function runEnemyAdded(state: GameState, enemy: Enemy): void {
   hooks.onEnemyAdded?.(state, enemy);
+}
+
+export function runEnemyRemoved(state: GameState, removed: Enemy[]): void {
+  if (!removed.length) return;
+  hooks.onEnemyRemoved?.(state, removed);
 }
 
 export function runEnemyRoundReset(state: GameState, enemy: Enemy): void {
