@@ -375,6 +375,11 @@ export function parseGameMap(raw: unknown): GameMap {
   const tilePresets = parseTilePresets(obj.tilePresets);
   const startingState = parseStartingState(obj.startingState, w, h);
 
+  const enforceSightlinesRaw = obj.enforceSightlines;
+  if (enforceSightlinesRaw !== undefined && typeof enforceSightlinesRaw !== "boolean") {
+    throw new Error("Map enforceSightlines must be a boolean");
+  }
+
   return {
     id: id.trim(),
     name: typeof name === "string" ? name.trim() : undefined,
@@ -384,6 +389,7 @@ export function parseGameMap(raw: unknown): GameMap {
     enemies,
     tilePresets,
     ...(startingState ? { startingState } : {}),
+    ...(enforceSightlinesRaw === true ? { enforceSightlines: true } : {}),
   };
 }
 
@@ -544,6 +550,7 @@ export function createBlankGameMap(
   name: string,
   width = BOARD_WIDTH,
   height = BOARD_HEIGHT,
+  enforceSightlines = false,
 ): GameMap {
   const tiles: MapTile[] = [];
   for (let y = 0; y < height; y++) {
@@ -551,7 +558,14 @@ export function createBlankGameMap(
       tiles.push({ x, y, terrain: ["standard"], elevation: 0 });
     }
   }
-  return { id, name, width, height, tiles };
+  return {
+    id,
+    name,
+    width,
+    height,
+    tiles,
+    ...(enforceSightlines ? { enforceSightlines: true } : {}),
+  };
 }
 
 export function cloneMapTile(tile: MapTile): MapTile {
@@ -645,6 +659,7 @@ export function createInitialStateFromMap(map: GameMap): GameState {
     actedPlayerIds: [],
     turnLog: [],
     sandboxMode: false,
+    ...(map.enforceSightlines ? { enforceSightlines: true } : {}),
     campaign: {
       partyResources: defaultPartyResources(),
       unlockedUpgrades: [],

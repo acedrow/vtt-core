@@ -11,7 +11,7 @@ import PanelShell from "./PanelShell.vue";
 
 const props = defineProps<{ mapId: string }>();
 
-const { fetchMap, fetchMaps, deleteMap } = useApi();
+const { fetchMap, fetchMaps, deleteMap, patchMap } = useApi();
 const { closeRightPanel } = useBoardSelection();
 const { gameState, send } = useGameState();
 const { selectMap, notifyMapsChanged } = useMapSelection();
@@ -25,6 +25,7 @@ const activating = ref(false);
 const deleting = ref(false);
 const savingStartingState = ref(false);
 const resettingStartingState = ref(false);
+const patchingEnforce = ref(false);
 
 const isActiveOnBoard = computed(
   () => map.value != null && gameState.value?.mapId === map.value.id,
@@ -101,6 +102,19 @@ function resetToStartingState() {
   resettingStartingState.value = false;
 }
 
+async function setEnforceSightlines(value: boolean) {
+  if (!map.value || patchingEnforce.value) return;
+  patchingEnforce.value = true;
+  actionError.value = null;
+  try {
+    map.value = await patchMap(props.mapId, { enforceSightlines: value });
+  } catch (e) {
+    actionError.value = e instanceof Error ? e.message : "Unable to update map";
+  } finally {
+    patchingEnforce.value = false;
+  }
+}
+
 async function removeMap() {
   if (!canDelete.value || !map.value) return;
   if (!confirm(`Delete map "${map.value.name}"?`)) return;
@@ -153,6 +167,22 @@ watch(
           <div class="detail-row">
             <dt>Starting state</dt>
             <dd>{{ hasStartingState ? "Saved" : "Not saved" }}</dd>
+          </div>
+          <div class="detail-row detail-row-toggle">
+            <dt>Enforce sightlines</dt>
+            <dd>
+              <button
+                type="button"
+                role="switch"
+                class="toggle"
+                :class="{ on: map.enforceSightlines === true }"
+                :aria-checked="map.enforceSightlines === true"
+                :disabled="patchingEnforce"
+                @click="setEnforceSightlines(map.enforceSightlines !== true)"
+              >
+                <span class="toggle-thumb" />
+              </button>
+            </dd>
           </div>
         </dl>
         <p v-if="actionError" class="panel-error">{{ actionError }}</p>
@@ -237,6 +267,48 @@ watch(
 .detail-row dd {
   margin: 0;
   color: var(--color-text);
+}
+
+.detail-row-toggle dd {
+  display: flex;
+  align-items: center;
+}
+
+.toggle {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.toggle:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.toggle.on {
+  background: var(--color-success-dark);
+  border-color: var(--color-success-bright);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--color-text);
+  transition: transform 0.15s;
+}
+
+.toggle.on .toggle-thumb {
+  transform: translateX(1rem);
 }
 
 .map-actions {

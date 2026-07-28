@@ -1402,6 +1402,12 @@ export function normalizeGameState(state: GameState, map?: GameMap): GameState {
     state.sandboxMode =
       legacy.enforceTurns === false || legacy.enforceActionLimits === false;
   }
+  if (map) {
+    if (map.enforceSightlines) state.enforceSightlines = true;
+    else delete state.enforceSightlines;
+  } else if (state.enforceSightlines !== true) {
+    delete state.enforceSightlines;
+  }
   liftLegacyCampaignFields(state);
   migrateCampaignRuntimeKeys(ensureCampaignBag(state));
   ensureCampaignState(state);
@@ -1483,6 +1489,8 @@ export function applyActivateMap(state: GameState, map: GameMap): string {
   if (preservedCampaign) state.campaign = preservedCampaign;
   else if (fresh.campaign) state.campaign = fresh.campaign;
   if (sandboxMode !== undefined) state.sandboxMode = sandboxMode;
+  if (fresh.enforceSightlines) state.enforceSightlines = true;
+  else delete state.enforceSightlines;
 
   normalizeGameState(state, map);
   const label = map.name ?? map.id;

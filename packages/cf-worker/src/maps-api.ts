@@ -77,9 +77,47 @@ export async function handleCreateMap(
       ? (heightRaw as number)
       : BOARD_HEIGHT;
 
-  const map = createBlankGameMap(id, name, width, height);
+  const enforceSightlines = body?.enforceSightlines === true;
+
+  const map = createBlankGameMap(id, name, width, height, enforceSightlines);
   await putMap(env, map);
   return Response.json({ map: toMapSummary(map) }, { status: 201 });
+}
+
+export async function handlePatchMap(
+  env: Env,
+  auth: AuthContext,
+  mapId: string,
+  request: Request,
+  activeMapId: string,
+  applyActiveEnforceSightlines: (value: boolean) => Promise<void>,
+): Promise<Response> {
+  if (!(await authHasGmCapabilities(auth, env))) {
+    return Response.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  let map;
+  try {
+    map = await getMap(env, mapId);
+  } catch {
+    return Response.json({ error: "Map not found" }, { status: 404 });
+  }
+
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  if (typeof body?.enforceSightlines !== "boolean") {
+    return Response.json({ error: "enforceSightlines boolean is required" }, { status: 400 });
+  }
+
+  if (body.enforceSightlines) map.enforceSightlines = true;
+  else delete map.enforceSightlines;
+
+  await putMap(env, map);
+
+  if (mapId === activeMapId) {
+    await applyActiveEnforceSightlines(body.enforceSightlines);
+  }
+
+  return Response.json({ map });
 }
 
 export async function handleDeleteMap(

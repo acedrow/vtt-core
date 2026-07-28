@@ -206,6 +206,14 @@ export class GameRoom {
       return Response.json({ mapId: this.gameState.mapId });
     }
 
+    if (url.pathname === "/internal/set-enforce-sightlines" && request.method === "POST") {
+      const body = (await request.json()) as { enforceSightlines: boolean };
+      if (body.enforceSightlines) this.gameState.enforceSightlines = true;
+      else delete this.gameState.enforceSightlines;
+      await this.broadcastState();
+      return new Response(null, { status: 204 });
+    }
+
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected WebSocket", { status: 426 });
     }

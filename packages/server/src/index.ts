@@ -104,6 +104,7 @@ import {
   getMapHandler,
   listMapsHandler,
   mapsDirPath,
+  patchMapHandler,
   savedMaps,
   seedMapsFromDisk,
 } from "./maps.js";
@@ -412,6 +413,22 @@ app.delete("/api/maps/:mapId", (req, res) => {
   const auth = parseAuth(req, res);
   if (!auth) return;
   deleteMapHandler(auth, req.params.mapId, gameState.mapId, res);
+});
+
+app.patch("/api/maps/:mapId", (req, res) => {
+  const auth = parseAuth(req, res);
+  if (!auth) return;
+  const result = patchMapHandler(auth, req.params.mapId, req);
+  if ("error" in result) {
+    res.status(result.status).json({ error: result.error });
+    return;
+  }
+  if (req.params.mapId === gameState.mapId) {
+    if (result.map.enforceSightlines) gameState.enforceSightlines = true;
+    else delete gameState.enforceSightlines;
+    broadcastState();
+  }
+  res.json({ map: result.map });
 });
 
 app.get("/api/maps/:mapId/tile-presets", (req, res) => {

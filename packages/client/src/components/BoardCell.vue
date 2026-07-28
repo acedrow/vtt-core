@@ -60,6 +60,7 @@ export type CellRenderState = {
   towerOwnerHue?: number | null;
   tileEffects?: EffectStacks;
   outOfLineOfSight?: boolean;
+  sightlineFog?: boolean;
   tileAppearanceUrl?: string | null;
   tileOverlayUrl?: string | null;
   tileFeatureUrl?: string | null;
@@ -352,7 +353,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
     class="cell"
     :data-cell-x="x"
     :data-cell-y="y"
-    :style="cell.tileBaseColor ? { backgroundColor: cell.tileBaseColor } : undefined"
+    :style="!cell.sightlineFog && cell.tileBaseColor ? { backgroundColor: cell.tileBaseColor } : undefined"
     :class="{
       [cell.terrainClass ?? '']: !!cell.terrainClass,
       movable: cell.movable,
@@ -373,12 +374,14 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       'enemy-defeated': enemyDefeated,
       'bulk-tile-selected': isBulkTileSelected,
       'out-of-los': cell.outOfLineOfSight,
+      'sightline-fog': cell.sightlineFog,
       'gm-inherit-cursor': gmInheritCursor,
     }"
     @click="emit('click')"
     @mouseenter="emit('hover')"
     @mouseleave="emit('unhover')"
   >
+    <template v-if="!cell.sightlineFog">
     <span
       v-if="cell.tileBaseColor && !cell.paintbrushPreview"
       class="tile-base-color"
@@ -658,6 +661,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         />
       </span>
     </div>
+    </template>
   </button>
 </template>
 
@@ -670,6 +674,10 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   padding: 0;
   cursor: default;
   background: var(--color-surface-raised);
+}
+
+.cell.sightline-fog {
+  background: #000;
 }
 
 .cell.gm-inherit-cursor {

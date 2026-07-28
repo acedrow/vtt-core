@@ -91,9 +91,34 @@ export function createMapHandler(auth: AuthContext, req: Request, res: Response)
       ? (heightRaw as number)
       : BOARD_HEIGHT;
 
-  const map = createBlankGameMap(id, name, width, height);
+  const enforceSightlines = req.body?.enforceSightlines === true;
+
+  const map = createBlankGameMap(id, name, width, height, enforceSightlines);
   savedMaps.set(id, map);
   res.status(201).json({ map: toMapSummary(map) });
+}
+
+export function patchMapHandler(
+  auth: AuthContext,
+  mapId: string,
+  req: Request,
+): { error: string; status: number } | { map: GameMap } {
+  if (!authHasGmCapabilities(auth)) {
+    return { error: "Forbidden", status: 403 };
+  }
+  const map = savedMaps.get(mapId);
+  if (!map) {
+    return { error: "Map not found", status: 404 };
+  }
+
+  if (typeof req.body?.enforceSightlines !== "boolean") {
+    return { error: "enforceSightlines boolean is required", status: 400 };
+  }
+
+  if (req.body.enforceSightlines) map.enforceSightlines = true;
+  else delete map.enforceSightlines;
+
+  return { map };
 }
 
 export function deleteMapHandler(

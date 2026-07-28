@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 import {
   ELEVATION_CONTOUR_COLORS,
   usePlayerSettings,
 } from "../composables/usePlayerSettings.js";
+import { useGameState } from "../composables/useGameState.js";
 import { useSession } from "../composables/useSession.js";
 import { useTheme } from "../composables/useTheme.js";
 import ManagePlayersModal from "./ManagePlayersModal.vue";
@@ -18,9 +19,21 @@ const {
   elevationContourColor,
 } = usePlayerSettings();
 const { theme, themes } = useTheme();
-const { hasGmCapabilities } = useSession();
+const { hasGmCapabilities, role } = useSession();
+const { gameState } = useGameState();
 
 const managePlayersOpen = ref(false);
+
+const enforceSightlines = computed(() => gameState.value?.enforceSightlines === true);
+const losSettingForced = computed(() => role.value === "player" && enforceSightlines.value);
+const losSettingOn = computed(() =>
+  losSettingForced.value ? true : showLineOfSightIndicator.value,
+);
+
+function toggleLosSetting() {
+  if (losSettingForced.value) return;
+  showLineOfSightIndicator.value = !showLineOfSightIndicator.value;
+}
 </script>
 
 <template>
@@ -38,9 +51,10 @@ const managePlayersOpen = ref(false);
             type="button"
             role="switch"
             class="toggle"
-            :class="{ on: showLineOfSightIndicator }"
-            :aria-checked="showLineOfSightIndicator"
-            @click="showLineOfSightIndicator = !showLineOfSightIndicator"
+            :class="{ on: losSettingOn }"
+            :aria-checked="losSettingOn"
+            :disabled="losSettingForced"
+            @click="toggleLosSetting"
           >
             <span class="toggle-thumb" />
           </button>
@@ -274,6 +288,11 @@ const managePlayersOpen = ref(false);
   padding: 0;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
+}
+
+.toggle:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
 
 .toggle.on {

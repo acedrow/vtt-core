@@ -42,6 +42,7 @@ import {
   handleDeleteMap,
   handleGetMap,
   handleListMaps,
+  handlePatchMap,
 } from "./maps-api.js";
 
 export { GameRoom };
@@ -249,6 +250,22 @@ export default {
       const activeRes = await stub.fetch("http://internal/internal/active-map-id");
       const activeData = (await activeRes.json()) as { mapId: string };
       return handleDeleteMap(env, auth, mapIdMatch[1], activeData.mapId);
+    }
+
+    if (mapIdMatch && request.method === "PATCH") {
+      const auth = await verifyAuth(request, env);
+      if (auth instanceof Response) return auth;
+      const roomId = env.GAME_ROOM.idFromName("default");
+      const stub = env.GAME_ROOM.get(roomId);
+      const activeRes = await stub.fetch("http://internal/internal/active-map-id");
+      const activeData = (await activeRes.json()) as { mapId: string };
+      return handlePatchMap(env, auth, mapIdMatch[1], request, activeData.mapId, async (value) => {
+        await stub.fetch("http://internal/internal/set-enforce-sightlines", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enforceSightlines: value }),
+        });
+      });
     }
 
     const tilePresetsMatch = url.pathname.match(TILE_PRESETS_RE);

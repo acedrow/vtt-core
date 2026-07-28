@@ -190,6 +190,7 @@ export function useApi() {
     name: string;
     width?: number;
     height?: number;
+    enforceSightlines?: boolean;
   }): Promise<GameMapSummary> {
     const res = await apiFetch("/api/maps", {
       method: "POST",
@@ -202,6 +203,25 @@ export function useApi() {
     }
     if (!data?.map) {
       throw new Error("Failed to create map");
+    }
+    return data.map;
+  }
+
+  async function patchMap(
+    id: string,
+    body: { enforceSightlines: boolean },
+  ): Promise<GameMap> {
+    const res = await apiFetch(`/api/maps/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = (await res.json().catch(() => null)) as { map?: GameMap; error?: string } | null;
+    if (!res.ok) {
+      throw new Error(data?.error ?? "Failed to update map");
+    }
+    if (!data?.map) {
+      throw new Error("Failed to update map");
     }
     return data.map;
   }
@@ -234,6 +254,7 @@ export function useApi() {
     fetchMaps,
     fetchMap,
     createMap,
+    patchMap,
     deleteMap,
   };
 }

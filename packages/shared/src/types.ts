@@ -125,6 +125,8 @@ export type GameMap = {
   enemies?: Enemy[];
   tilePresets?: Record<string, TilePaintPreset>;
   startingState?: { tiles: MapTile[]; enemies: Enemy[] };
+  /** When true, players get forced fog-of-war from their own character. */
+  enforceSightlines?: boolean;
 };
 
 export type GameMapSummary = {
@@ -361,6 +363,8 @@ export type GameState = {
   actedPlayerIds: string[];
   turnLog: RoundTurnLog[];
   sandboxMode?: boolean;
+  /** Copied from the active map; players cannot fetch GameMap. */
+  enforceSightlines?: boolean;
   combat?: CombatState;
   damageEvents?: DamageEvent[];
   silentHpEnemyIds?: string[];

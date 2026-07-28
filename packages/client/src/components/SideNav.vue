@@ -84,6 +84,7 @@ const createMapForm = ref({
   name: "",
   width: BOARD_WIDTH,
   height: BOARD_HEIGHT,
+  enforceSightlines: false,
 });
 
 const createMapFormValid = computed(() => {
@@ -241,6 +242,7 @@ function openCreateMap() {
     name: "",
     width: BOARD_WIDTH,
     height: BOARD_HEIGHT,
+    enforceSightlines: false,
   };
   createMapError.value = null;
   showCreateMap.value = true;
@@ -256,6 +258,7 @@ async function submitCreateMap() {
       name: f.name.trim(),
       width: f.width,
       height: f.height,
+      enforceSightlines: f.enforceSightlines,
     });
     showCreateMap.value = false;
     await loadMaps();
@@ -584,6 +587,19 @@ watch(sheetsVersion, () => {
           <span class="field-label">Height</span>
           <input v-model.number="createMapForm.height" class="field-input" type="number" min="1" />
         </label>
+        <label class="field field-toggle">
+          <span class="field-label">Enforce sightlines</span>
+          <button
+            type="button"
+            role="switch"
+            class="toggle"
+            :class="{ on: createMapForm.enforceSightlines }"
+            :aria-checked="createMapForm.enforceSightlines"
+            @click="createMapForm.enforceSightlines = !createMapForm.enforceSightlines"
+          >
+            <span class="toggle-thumb" />
+          </button>
+        </label>
       </div>
 
       <p v-if="createMapError" class="sublist-error">{{ createMapError }}</p>
@@ -803,5 +819,45 @@ watch(sheetsVersion, () => {
   color: var(--color-text);
   font-family: inherit;
   font-size: 0.85rem;
+}
+
+.field-toggle {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.toggle.on {
+  background: var(--color-success-dark);
+  border-color: var(--color-success-bright);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--color-text);
+  transition: transform 0.15s;
+}
+
+.toggle.on .toggle-thumb {
+  transform: translateX(1rem);
 }
 </style>

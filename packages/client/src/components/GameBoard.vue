@@ -850,9 +850,16 @@ const armorTeleportLandingKeys = computed(() => {
 
 
 const lineOfSightObserver = computed((): { x: number; y: number } | null => {
-  const sel = boardSelection.value;
   const s = gameState.value;
-  if (!sel || !s) return null;
+  if (!s) return null;
+  if (props.role === "player") {
+    const id = yourPlayerId.value;
+    if (!id) return null;
+    const player = s.players.find((p) => p.id === id);
+    return player ? { x: player.x, y: player.y } : null;
+  }
+  const sel = boardSelection.value;
+  if (!sel) return null;
   if (sel.kind === "player") {
     const player = s.players.find((p) => p.id === sel.id);
     return player ? { x: player.x, y: player.y } : null;
@@ -862,21 +869,39 @@ const lineOfSightObserver = computed((): { x: number; y: number } | null => {
 });
 
 const lineOfSightViewer = computed((): Player | Enemy | null => {
-  const sel = boardSelection.value;
   const s = gameState.value;
-  if (!sel || !s) return null;
+  if (!s) return null;
+  if (props.role === "player") {
+    const id = yourPlayerId.value;
+    if (!id) return null;
+    return s.players.find((p) => p.id === id) ?? null;
+  }
+  const sel = boardSelection.value;
+  if (!sel) return null;
   if (sel.kind === "player") {
     return s.players.find((p) => p.id === sel.id) ?? null;
   }
   return s.enemies.find((e) => e.id === sel.id) ?? null;
 });
 
+const enforceSightlines = computed(() => gameState.value?.enforceSightlines === true);
+const playerFogActive = computed(() => props.role === "player" && enforceSightlines.value);
+const losIndicatorActive = computed(() =>
+  playerFogActive.value ? true : showLineOfSightIndicator.value,
+);
+
 const outOfLineOfSightKeys = computed(() => {
-  if (!showLineOfSightIndicator.value) return new Set<string>();
+  if (!losIndicatorActive.value) return new Set<string>();
+  const s = gameState.value;
+  if (!s) return new Set<string>();
   const observer = lineOfSightObserver.value;
   const viewer = lineOfSightViewer.value;
-  const s = gameState.value;
-  if (!observer || !s) return new Set<string>();
+  if (!observer) {
+    if (!playerFogActive.value) return new Set<string>();
+    const keys = new Set<string>();
+    for (const tile of s.tiles) keys.add(`${tile.x},${tile.y}`);
+    return keys;
+  }
   return outOfLineOfSightTileKeys(s, observer.x, observer.y, viewer ? { viewer } : undefined);
 });
 
@@ -1907,7 +1932,8 @@ const cellStateByKey = computed(() => {
           ? hueFromId(enemyAnchor.ownerPlayerId)
           : null,
       tileEffects: tile?.tileEffects,
-      outOfLineOfSight: outOfLineOfSightKeys.value.has(ck),
+      outOfLineOfSight: !playerFogActive.value && outOfLineOfSightKeys.value.has(ck),
+      sightlineFog: playerFogActive.value && outOfLineOfSightKeys.value.has(ck),
       tileAppearanceUrl: tile?.appearanceKey ? tileAppearanceUrlFor(tile.appearanceKey) : null,
       tileOverlayUrl: tile?.overlayKey ? tileAppearanceUrlFor(tile.overlayKey) : null,
       tileFeatureUrl: tile?.featureKey ? tileAppearanceUrlFor(tile.featureKey) : null,
