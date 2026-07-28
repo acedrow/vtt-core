@@ -178,12 +178,15 @@ function useAttack(index: number) {
   if (
     attackSpec.specialId === "flowerbud-plant" ||
     attackSpec.specialId === "stain-teleport" ||
+    getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(attackSpec.specialId) ||
     isSelectTargetEnemyAttack(attackSpec) ||
     isPatternEnemyAttack(attackSpec)
   ) {
     startGmEnemyAttack(enemy.id, index, undefined, {
       stainTeleport: attackSpec.specialId === "stain-teleport",
-      plantFlowerbud: attackSpec.specialId === "flowerbud-plant",
+      plantFlowerbud:
+        attackSpec.specialId === "flowerbud-plant" ||
+        !!getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(attackSpec.specialId),
     });
   }
 }

@@ -13,6 +13,7 @@ import { applyDamageToEnemy, applyDamageToPlayer } from "./attack.js";
 import { applyVoidTileDefeat, enemyFullyOnVoid, isVoidTile } from "./void-tile.js";
 import { isTowerEnemy } from "./yadathan.js";
 import { syncUnitElevationOnTile } from "./elevation.js";
+import { runPushBlockReason } from "./combat-lifecycle.js";
 
 export type PushUnitKind = "player" | "enemy";
 
@@ -223,6 +224,8 @@ export function applyPushFromOrigin(
   opts?: PushOpts,
 ): string {
   if (distance <= 0) return "";
+  const pushBlock = runPushBlockReason(state, unit);
+  if (pushBlock) return pushBlock;
   const kind = opts?.kind ?? ("weapon" in unit && unit.weapon !== undefined ? "player" : "enemy");
   const isPlayer = kind === "player";
   const startX = unit.x;

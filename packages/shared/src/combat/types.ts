@@ -317,6 +317,9 @@ export type GmEnemyAction =
       destX?: number;
       destY?: number;
       swarmStrikes?: number;
+      // Optional multi-tile payloads for content specialId handlers (blob move/create, surf).
+      path?: { x: number; y: number }[];
+      tiles?: { x: number; y: number }[];
     }
   | { action: "pack"; kind: string; enemyId: string; detail?: Record<string, unknown> }
   | { action: "assisted"; enemyId: string; label: string; detail?: string; damage?: number; targetPlayerId?: string; effects?: string[] }

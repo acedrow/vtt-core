@@ -14,6 +14,7 @@ import {
   runEnemyMoved,
   runGmTurnEnd,
   runIsPersistentEnemy,
+  runMovementBlockReason,
   runPlayerEndOfTurn,
   runRoundAdvance,
 } from "./combat/combat-lifecycle.js";
@@ -937,6 +938,9 @@ export function validateEnemyMove(
 ): string | null {
   const enemy = state.enemies.find((e) => e.id === enemyId);
   if (!enemy) return "Unknown enemy";
+
+  const movementBlock = runMovementBlockReason(state, enemy);
+  if (movementBlock) return movementBlock;
 
   if (swarmGroupForEnemy(state, enemyId)) {
     const chipErr = requireSwarmChipResolved(state, enemyId);

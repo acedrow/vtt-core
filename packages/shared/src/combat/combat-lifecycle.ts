@@ -21,6 +21,10 @@ export type CombatLifecycleHooks = {
     fields: { tileEffects?: string[]; overlayKey?: string | null },
   ) => void;
   onEnemyMoved?: (state: GameState, enemy: Enemy, fromX: number, fromY: number) => void;
+  movementBlockReason?: (state: GameState, unit: Player | Enemy) => string | null | undefined;
+  tryPlayerInteract?: (state: GameState, player: Player) => string | null | undefined;
+  onUnitDamaged?: (state: GameState, unit: Player | Enemy, dealt: number) => string[];
+  pushBlockReason?: (state: GameState, unit: Player | Enemy) => string | null | undefined;
 };
 
 let hooks: CombatLifecycleHooks = {};
@@ -93,4 +97,31 @@ export function runEnemyMoved(
   fromY: number,
 ): void {
   hooks.onEnemyMoved?.(state, enemy, fromX, fromY);
+}
+
+export function runMovementBlockReason(
+  state: GameState,
+  unit: Player | Enemy,
+): string | null {
+  return hooks.movementBlockReason?.(state, unit) ?? null;
+}
+
+export function runPushBlockReason(state: GameState, unit: Player | Enemy): string | null {
+  return hooks.pushBlockReason?.(state, unit) ?? null;
+}
+
+export function runTryPlayerInteract(state: GameState, player: Player): string | null {
+  return hooks.tryPlayerInteract?.(state, player) ?? null;
+}
+
+export function runUnitDamaged(
+  state: GameState,
+  unit: Player | Enemy,
+  dealt: number,
+): void {
+  if (dealt <= 0) return;
+  const msgs = hooks.onUnitDamaged?.(state, unit, dealt) ?? [];
+  if (!msgs.length || !state.combat) return;
+  if (!state.combat.sideEffectMessages) state.combat.sideEffectMessages = [];
+  state.combat.sideEffectMessages.push(...msgs);
 }

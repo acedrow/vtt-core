@@ -117,6 +117,7 @@ import {
   applySelectTargetEnemyAttack,
 } from "./enemy-attack-resolve.js";
 import { getSpecialIdHandler } from "./special-id.js";
+import { runTryPlayerInteract } from "./combat-lifecycle.js";
 import { setActiveEnemy } from "./enemy.js";
 import {
   dedupeSwarmTargetIds,
@@ -963,6 +964,8 @@ export function applyPlayerAction(
     }
     case "interact": {
       maybeSpendActionTier(state, player, "support");
+      const contentMsg = runTryPlayerInteract(state, player);
+      if (contentMsg) return `${playerLabel(player)} ${contentMsg}`;
       const seedMsg = applySeedInteract(state, player);
       if (seedMsg) return `${playerLabel(player)} ${seedMsg}`;
       addPendingAction(

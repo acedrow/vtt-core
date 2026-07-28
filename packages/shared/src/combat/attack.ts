@@ -36,7 +36,7 @@ import { checkSharurEmergencyDefenses } from "./attractor.js";
 import { clampHp, getEnemyMaxHp, getPlayerMaxHp, getEffectiveEnemyMaxHp, removeEnemy } from "../game.js";
 import { maybeTriggerAgnosia } from "./agnosia.js";
 import { hasSpecialIdHandler } from "./special-id.js";
-import { runEnemyDamageAdjustment } from "./combat-lifecycle.js";
+import { runEnemyDamageAdjustment, runUnitDamaged } from "./combat-lifecycle.js";
 import {
   countSwarmTilesAdjacentTo,
   getSwarmMemberHp,
@@ -607,6 +607,7 @@ export function applyDamageToEnemy(
       }
     }
     maybeTriggerAgnosia(state, enemy, before);
+    runUnitDamaged(state, enemy, adjusted);
   } else {
     enemy.hp = newHp;
   }
@@ -705,6 +706,7 @@ export function applyDamageToPlayer(
     if (!state.damageEvents) state.damageEvents = [];
     state.damageEvents.push({ x: player.x, y: player.y, amount: adjusted });
   }
+  if (state) runUnitDamaged(state, player, adjusted);
   return adjusted;
 }
 

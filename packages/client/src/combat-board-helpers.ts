@@ -107,6 +107,10 @@ export type ClientCombatBoardHelpers = {
   redirectionSourceTileKeys: (...args: any[]) => Set<string>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
   flowerbudPlantTiles: (...args: any[]) => { x: number; y: number }[];
+  /** True for specialIds that plant on an empty adjacent tile (flowerbud, coral-grow, …). */
+  isEmptyAdjacentPlantAttack?: (specialId: string | undefined) => boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
+  emptyAdjacentPlantTiles?: (...args: any[]) => { x: number; y: number }[];
   tileIsStained: (state: GameState, x: number, y: number) => boolean;
   /** Prefer solid pieces over terrain-like share-space tokens (e.g. Living Tide). */
   filterBoardPieceEnemies?: (enemies: readonly Enemy[]) => Enemy[];
@@ -158,6 +162,8 @@ function stubHelpers(): ClientCombatBoardHelpers {
     forceProjectionTileKeys: emptySet,
     redirectionSourceTileKeys: emptySet,
     flowerbudPlantTiles: emptyTiles,
+    isEmptyAdjacentPlantAttack: (specialId) => specialId === "flowerbud-plant",
+    emptyAdjacentPlantTiles: emptyTiles,
     tileIsStained: () => false,
     filterBoardPieceEnemies: (enemies) => [...enemies],
     SETHIAN_DAMAGE_CAP: 132,

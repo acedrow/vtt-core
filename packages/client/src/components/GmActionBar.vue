@@ -87,7 +87,10 @@ const needsStainTeleport = computed(() => {
 
 const needsFlowerbudPlant = computed(() => {
   const spec = listing.value?.attacks?.[attackIndex.value]?.attack;
-  return spec?.specialId === "flowerbud-plant";
+  return (
+    spec?.specialId === "flowerbud-plant" ||
+    !!getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(spec?.specialId)
+  );
 });
 
 const usesBoardTargeting = computed(

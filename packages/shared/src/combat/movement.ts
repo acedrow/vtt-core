@@ -26,6 +26,7 @@ import { swarmGroupForEnemy } from "./swarm.js";
 import { combatMod } from "../combat-modules.js";
 import { createDefaultActionBudget, type ActionBudget } from "./types.js";
 import { enemyHasFlyingTag, isUnitFalling, syncUnitElevationOnTile } from "./elevation.js";
+import { runMovementBlockReason } from "./combat-lifecycle.js";
 
 export type TerrainStepCostOpts = {
   seeking?: boolean;
@@ -237,6 +238,8 @@ export function validateMovementPath(
   const player = state.players.find((p) => p.id === playerId);
   if (!player) return "Unknown player";
   if ((player.effects?.Pin ?? 0) > 0) return "Pinned — cannot move";
+  const movementBlock = runMovementBlockReason(state, player);
+  if (movementBlock) return movementBlock;
   if (isUnitFalling(player)) return "Falling — cannot spend Speed to move";
   if (!player.actionBudget) {
     const speed = player.speed ?? getArmorSpeed(player.armor);
@@ -467,6 +470,8 @@ export function validateSprintBegin(state: GameState, playerId: string): string 
   if (!canPlayerMove(state, playerId)) return "Not your turn";
   if (state.roundPhase === "deployment") return "Wrong phase";
   if ((player.effects?.Pin ?? 0) > 0) return "Pinned — cannot Sprint";
+  const movementBlock = runMovementBlockReason(state, player);
+  if (movementBlock) return movementBlock;
   if (isUnitFalling(player)) return "Falling — cannot Sprint";
   if (!player.actionBudget) {
     const speed = player.speed ?? getArmorSpeed(player.armor);
@@ -501,6 +506,8 @@ export function validateSprintMove(
   if (!canPlayerMove(state, playerId)) return "Not your turn";
   if (state.roundPhase === "deployment") return "Wrong phase";
   if ((player.effects?.Pin ?? 0) > 0) return "Pinned — cannot Sprint";
+  const movementBlock = runMovementBlockReason(state, player);
+  if (movementBlock) return movementBlock;
   const remaining = player.actionBudget?.sprintRemaining ?? 0;
   if (remaining <= 0) return "No sprint movement remaining";
   const flying = opts?.flying ?? false;
