@@ -4742,6 +4742,8 @@ onUnmounted(() => {
                   row.enemyPendingRemoval,
                   row.enemyDefeated,
                   row.stackedEnemyKey,
+                  row.cell.outOfLineOfSight,
+                  row.cell.sightlineFog,
                 ]"
                 :x="row.x"
                 :y="row.y"

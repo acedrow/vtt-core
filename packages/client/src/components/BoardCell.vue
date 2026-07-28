@@ -381,6 +381,9 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
     @mouseenter="emit('hover')"
     @mouseleave="emit('unhover')"
   >
+    <Transition name="los-fog">
+      <span v-if="cell.sightlineFog" class="sightline-fog-overlay" aria-hidden="true" />
+    </Transition>
     <template v-if="!cell.sightlineFog">
     <span
       v-if="cell.tileBaseColor && !cell.paintbrushPreview"
@@ -476,8 +479,12 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       </div>
     </div>
     <span v-if="cell.combatTargetInvalid" class="combat-target-invalid-mark" aria-hidden="true" />
-    <span v-if="cell.outOfLineOfSight" class="board-overlay out-of-los-shadow" aria-hidden="true" />
-    <NoLosIcon v-if="cell.outOfLineOfSight" class="no-los-overlay" :size="20" />
+    <Transition name="los-indicator">
+      <div v-if="cell.outOfLineOfSight" class="out-of-los-indicators" aria-hidden="true">
+        <span class="board-overlay out-of-los-shadow" />
+        <NoLosIcon class="no-los-overlay" :size="20" />
+      </div>
+    </Transition>
     <span
       v-if="cell.enemyAnchor && !enemyAnimating"
       class="piece enemy"
@@ -676,8 +683,39 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   background: var(--color-surface-raised);
 }
 
-.cell.sightline-fog {
+.sightline-fog-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
   background: #000;
+  pointer-events: none;
+}
+
+.los-fog-enter-active,
+.los-fog-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.los-fog-enter-from,
+.los-fog-leave-to {
+  opacity: 0;
+}
+
+.out-of-los-indicators {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.los-indicator-enter-active,
+.los-indicator-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.los-indicator-enter-from,
+.los-indicator-leave-to {
+  opacity: 0;
 }
 
 .cell.gm-inherit-cursor {
@@ -1131,7 +1169,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 
 .out-of-los-shadow {
   inset: 0;
-  z-index: 7;
+  z-index: 0;
   background: rgba(0, 0, 0, 0.25);
 }
 
@@ -1140,7 +1178,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 8;
+  z-index: 1;
   pointer-events: none;
   color: rgba(255, 255, 255, 0.5);
 }
