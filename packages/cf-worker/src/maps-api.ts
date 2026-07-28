@@ -78,8 +78,9 @@ export async function handleCreateMap(
       : BOARD_HEIGHT;
 
   const enforceSightlines = body?.enforceSightlines === true;
+  const gmDeployment = body?.gmDeployment === true;
 
-  const map = createBlankGameMap(id, name, width, height, enforceSightlines);
+  const map = createBlankGameMap(id, name, width, height, enforceSightlines, gmDeployment);
   await putMap(env, map);
   return Response.json({ map: toMapSummary(map) }, { status: 201 });
 }
@@ -90,7 +91,7 @@ export async function handlePatchMap(
   mapId: string,
   request: Request,
   activeMapId: string,
-  applyActiveEnforceSightlines: (value: boolean) => Promise<void>,
+  applyActiveMapFlags: (flags: { enforceSightlines?: boolean; gmDeployment?: boolean }) => Promise<void>,
 ): Promise<Response> {
   if (!(await authHasGmCapabilities(auth, env))) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
@@ -104,17 +105,33 @@ export async function handlePatchMap(
   }
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
-  if (typeof body?.enforceSightlines !== "boolean") {
-    return Response.json({ error: "enforceSightlines boolean is required" }, { status: 400 });
+  const enforceSightlines = body?.enforceSightlines;
+  const gmDeployment = body?.gmDeployment;
+  const hasEnforce = typeof enforceSightlines === "boolean";
+  const hasGmDeployment = typeof gmDeployment === "boolean";
+  if (!hasEnforce && !hasGmDeployment) {
+    return Response.json(
+      { error: "enforceSightlines or gmDeployment boolean is required" },
+      { status: 400 },
+    );
   }
 
-  if (body.enforceSightlines) map.enforceSightlines = true;
-  else delete map.enforceSightlines;
+  if (hasEnforce) {
+    if (enforceSightlines) map.enforceSightlines = true;
+    else delete map.enforceSightlines;
+  }
+  if (hasGmDeployment) {
+    if (gmDeployment) map.gmDeployment = true;
+    else delete map.gmDeployment;
+  }
 
   await putMap(env, map);
 
   if (mapId === activeMapId) {
-    await applyActiveEnforceSightlines(body.enforceSightlines);
+    await applyActiveMapFlags({
+      ...(hasEnforce ? { enforceSightlines } : {}),
+      ...(hasGmDeployment ? { gmDeployment } : {}),
+    });
   }
 
   return Response.json({ map });

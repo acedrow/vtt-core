@@ -379,6 +379,10 @@ export function parseGameMap(raw: unknown): GameMap {
   if (enforceSightlinesRaw !== undefined && typeof enforceSightlinesRaw !== "boolean") {
     throw new Error("Map enforceSightlines must be a boolean");
   }
+  const gmDeploymentRaw = obj.gmDeployment;
+  if (gmDeploymentRaw !== undefined && typeof gmDeploymentRaw !== "boolean") {
+    throw new Error("Map gmDeployment must be a boolean");
+  }
 
   return {
     id: id.trim(),
@@ -390,6 +394,7 @@ export function parseGameMap(raw: unknown): GameMap {
     tilePresets,
     ...(startingState ? { startingState } : {}),
     ...(enforceSightlinesRaw === true ? { enforceSightlines: true } : {}),
+    ...(gmDeploymentRaw === true ? { gmDeployment: true } : {}),
   };
 }
 
@@ -551,6 +556,7 @@ export function createBlankGameMap(
   width = BOARD_WIDTH,
   height = BOARD_HEIGHT,
   enforceSightlines = false,
+  gmDeployment = false,
 ): GameMap {
   const tiles: MapTile[] = [];
   for (let y = 0; y < height; y++) {
@@ -565,6 +571,7 @@ export function createBlankGameMap(
     height,
     tiles,
     ...(enforceSightlines ? { enforceSightlines: true } : {}),
+    ...(gmDeployment ? { gmDeployment: true } : {}),
   };
 }
 
@@ -660,6 +667,7 @@ export function createInitialStateFromMap(map: GameMap): GameState {
     turnLog: [],
     sandboxMode: false,
     ...(map.enforceSightlines ? { enforceSightlines: true } : {}),
+    ...(map.gmDeployment ? { gmDeployment: true } : {}),
     campaign: {
       partyResources: defaultPartyResources(),
       unlockedUpgrades: [],

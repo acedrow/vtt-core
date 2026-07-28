@@ -206,6 +206,23 @@ export class GameRoom {
       return Response.json({ mapId: this.gameState.mapId });
     }
 
+    if (url.pathname === "/internal/set-map-flags" && request.method === "POST") {
+      const body = (await request.json()) as {
+        enforceSightlines?: boolean;
+        gmDeployment?: boolean;
+      };
+      if (typeof body.enforceSightlines === "boolean") {
+        if (body.enforceSightlines) this.gameState.enforceSightlines = true;
+        else delete this.gameState.enforceSightlines;
+      }
+      if (typeof body.gmDeployment === "boolean") {
+        if (body.gmDeployment) this.gameState.gmDeployment = true;
+        else delete this.gameState.gmDeployment;
+      }
+      await this.broadcastState();
+      return new Response(null, { status: 204 });
+    }
+
     if (url.pathname === "/internal/set-enforce-sightlines" && request.method === "POST") {
       const body = (await request.json()) as { enforceSightlines: boolean };
       if (body.enforceSightlines) this.gameState.enforceSightlines = true;

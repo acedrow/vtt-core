@@ -127,6 +127,8 @@ export type GameMap = {
   startingState?: { tiles: MapTile[]; enemies: Enemy[] };
   /** When true, players get forced fog-of-war from their own character. */
   enforceSightlines?: boolean;
+  /** When true, only the GM may place player tokens during deployment. */
+  gmDeployment?: boolean;
 };
 
 export type GameMapSummary = {
@@ -365,6 +367,8 @@ export type GameState = {
   sandboxMode?: boolean;
   /** Copied from the active map; players cannot fetch GameMap. */
   enforceSightlines?: boolean;
+  /** Copied from the active map. */
+  gmDeployment?: boolean;
   combat?: CombatState;
   damageEvents?: DamageEvent[];
   silentHpEnemyIds?: string[];

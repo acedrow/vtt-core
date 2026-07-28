@@ -25,7 +25,31 @@ const activating = ref(false);
 const deleting = ref(false);
 const savingStartingState = ref(false);
 const resettingStartingState = ref(false);
-const patchingEnforce = ref(false);
+const patchingMapFlags = ref(false);
+
+async function patchMapFlags(partial: { enforceSightlines?: boolean; gmDeployment?: boolean }) {
+  if (!map.value || patchingMapFlags.value) return;
+  patchingMapFlags.value = true;
+  actionError.value = null;
+  try {
+    map.value = await patchMap(props.mapId, {
+      enforceSightlines: partial.enforceSightlines ?? map.value.enforceSightlines === true,
+      gmDeployment: partial.gmDeployment ?? map.value.gmDeployment === true,
+    });
+  } catch (e) {
+    actionError.value = e instanceof Error ? e.message : "Unable to update map";
+  } finally {
+    patchingMapFlags.value = false;
+  }
+}
+
+function setEnforceSightlines(value: boolean) {
+  void patchMapFlags({ enforceSightlines: value });
+}
+
+function setGmDeployment(value: boolean) {
+  void patchMapFlags({ gmDeployment: value });
+}
 
 const isActiveOnBoard = computed(
   () => map.value != null && gameState.value?.mapId === map.value.id,
@@ -102,19 +126,6 @@ function resetToStartingState() {
   resettingStartingState.value = false;
 }
 
-async function setEnforceSightlines(value: boolean) {
-  if (!map.value || patchingEnforce.value) return;
-  patchingEnforce.value = true;
-  actionError.value = null;
-  try {
-    map.value = await patchMap(props.mapId, { enforceSightlines: value });
-  } catch (e) {
-    actionError.value = e instanceof Error ? e.message : "Unable to update map";
-  } finally {
-    patchingEnforce.value = false;
-  }
-}
-
 async function removeMap() {
   if (!canDelete.value || !map.value) return;
   if (!confirm(`Delete map "${map.value.name}"?`)) return;
@@ -177,8 +188,24 @@ watch(
                 class="toggle"
                 :class="{ on: map.enforceSightlines === true }"
                 :aria-checked="map.enforceSightlines === true"
-                :disabled="patchingEnforce"
+                :disabled="patchingMapFlags"
                 @click="setEnforceSightlines(map.enforceSightlines !== true)"
+              >
+                <span class="toggle-thumb" />
+              </button>
+            </dd>
+          </div>
+          <div class="detail-row detail-row-toggle">
+            <dt>GM deployment</dt>
+            <dd>
+              <button
+                type="button"
+                role="switch"
+                class="toggle"
+                :class="{ on: map.gmDeployment === true }"
+                :aria-checked="map.gmDeployment === true"
+                :disabled="patchingMapFlags"
+                @click="setGmDeployment(map.gmDeployment !== true)"
               >
                 <span class="toggle-thumb" />
               </button>

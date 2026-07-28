@@ -1835,9 +1835,11 @@ const cellStateByKey = computed(() => {
         isDeployment &&
         props.role === "player" &&
         !!yourPlayerId.value &&
+        s.gmDeployment !== true &&
         isWalkable(tile) &&
         !player &&
-        !enemy,
+        !enemy &&
+        (!playerFogActive.value || !outOfLineOfSightKeys.value.has(ck)),
       gmMovable: canUseGmTools.value && gmEnemyMoveTargetKeys.value.has(c.key),
       gmSpawnable:
         canUseGmTools.value &&
@@ -2675,7 +2677,8 @@ function canDragDeploy(player: Player): boolean {
     !!yourPlayerId.value &&
     player.id === yourPlayerId.value &&
     !!gameState.value &&
-    gameState.value.roundPhase === "deployment"
+    gameState.value.roundPhase === "deployment" &&
+    gameState.value.gmDeployment !== true
   );
 }
 

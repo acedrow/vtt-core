@@ -92,8 +92,9 @@ export function createMapHandler(auth: AuthContext, req: Request, res: Response)
       : BOARD_HEIGHT;
 
   const enforceSightlines = req.body?.enforceSightlines === true;
+  const gmDeployment = req.body?.gmDeployment === true;
 
-  const map = createBlankGameMap(id, name, width, height, enforceSightlines);
+  const map = createBlankGameMap(id, name, width, height, enforceSightlines, gmDeployment);
   savedMaps.set(id, map);
   res.status(201).json({ map: toMapSummary(map) });
 }
@@ -111,12 +112,22 @@ export function patchMapHandler(
     return { error: "Map not found", status: 404 };
   }
 
-  if (typeof req.body?.enforceSightlines !== "boolean") {
-    return { error: "enforceSightlines boolean is required", status: 400 };
+  const enforceSightlines = req.body?.enforceSightlines;
+  const gmDeployment = req.body?.gmDeployment;
+  const hasEnforce = typeof enforceSightlines === "boolean";
+  const hasGmDeployment = typeof gmDeployment === "boolean";
+  if (!hasEnforce && !hasGmDeployment) {
+    return { error: "enforceSightlines or gmDeployment boolean is required", status: 400 };
   }
 
-  if (req.body.enforceSightlines) map.enforceSightlines = true;
-  else delete map.enforceSightlines;
+  if (hasEnforce) {
+    if (enforceSightlines) map.enforceSightlines = true;
+    else delete map.enforceSightlines;
+  }
+  if (hasGmDeployment) {
+    if (gmDeployment) map.gmDeployment = true;
+    else delete map.gmDeployment;
+  }
 
   return { map };
 }

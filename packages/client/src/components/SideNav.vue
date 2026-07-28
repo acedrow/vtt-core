@@ -85,6 +85,7 @@ const createMapForm = ref({
   width: BOARD_WIDTH,
   height: BOARD_HEIGHT,
   enforceSightlines: false,
+  gmDeployment: false,
 });
 
 const createMapFormValid = computed(() => {
@@ -243,6 +244,7 @@ function openCreateMap() {
     width: BOARD_WIDTH,
     height: BOARD_HEIGHT,
     enforceSightlines: false,
+    gmDeployment: false,
   };
   createMapError.value = null;
   showCreateMap.value = true;
@@ -259,6 +261,7 @@ async function submitCreateMap() {
       width: f.width,
       height: f.height,
       enforceSightlines: f.enforceSightlines,
+      gmDeployment: f.gmDeployment,
     });
     showCreateMap.value = false;
     await loadMaps();
@@ -596,6 +599,19 @@ watch(sheetsVersion, () => {
             :class="{ on: createMapForm.enforceSightlines }"
             :aria-checked="createMapForm.enforceSightlines"
             @click="createMapForm.enforceSightlines = !createMapForm.enforceSightlines"
+          >
+            <span class="toggle-thumb" />
+          </button>
+        </label>
+        <label class="field field-toggle">
+          <span class="field-label">GM deployment</span>
+          <button
+            type="button"
+            role="switch"
+            class="toggle"
+            :class="{ on: createMapForm.gmDeployment }"
+            :aria-checked="createMapForm.gmDeployment"
+            @click="createMapForm.gmDeployment = !createMapForm.gmDeployment"
           >
             <span class="toggle-thumb" />
           </button>

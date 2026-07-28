@@ -259,11 +259,11 @@ export default {
       const stub = env.GAME_ROOM.get(roomId);
       const activeRes = await stub.fetch("http://internal/internal/active-map-id");
       const activeData = (await activeRes.json()) as { mapId: string };
-      return handlePatchMap(env, auth, mapIdMatch[1], request, activeData.mapId, async (value) => {
-        await stub.fetch("http://internal/internal/set-enforce-sightlines", {
+      return handlePatchMap(env, auth, mapIdMatch[1], request, activeData.mapId, async (flags) => {
+        await stub.fetch("http://internal/internal/set-map-flags", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enforceSightlines: value }),
+          body: JSON.stringify(flags),
         });
       });
     }

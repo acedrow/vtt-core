@@ -191,6 +191,7 @@ export function useApi() {
     width?: number;
     height?: number;
     enforceSightlines?: boolean;
+    gmDeployment?: boolean;
   }): Promise<GameMapSummary> {
     const res = await apiFetch("/api/maps", {
       method: "POST",
@@ -209,7 +210,7 @@ export function useApi() {
 
   async function patchMap(
     id: string,
-    body: { enforceSightlines: boolean },
+    body: { enforceSightlines: boolean; gmDeployment: boolean },
   ): Promise<GameMap> {
     const res = await apiFetch(`/api/maps/${encodeURIComponent(id)}`, {
       method: "PATCH",

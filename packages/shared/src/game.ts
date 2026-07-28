@@ -230,6 +230,7 @@ export function canPlayerMove(state: GameState, playerId: string): boolean {
     return state.players.some((p) => p.id === playerId);
   }
   if (state.roundPhase === "deployment") {
+    if (state.gmDeployment === true) return false;
     return state.round === 1 && state.players.some((p) => p.id === playerId);
   }
   return (
@@ -237,6 +238,11 @@ export function canPlayerMove(state: GameState, playerId: string): boolean {
     state.turn?.role === "player" &&
     state.turn.playerId === playerId
   );
+}
+
+export function shouldHideTaccomMapFromPlayer(state: GameState, hasBoardToken: boolean): boolean {
+  if (state.enforceSightlines !== true || hasBoardToken) return false;
+  return state.roundPhase === "deployment" || state.roundPhase === "startRoundEffects";
 }
 
 export function canGmMoveEnemies(state: GameState): boolean {
@@ -1405,8 +1411,11 @@ export function normalizeGameState(state: GameState, map?: GameMap): GameState {
   if (map) {
     if (map.enforceSightlines) state.enforceSightlines = true;
     else delete state.enforceSightlines;
-  } else if (state.enforceSightlines !== true) {
-    delete state.enforceSightlines;
+    if (map.gmDeployment) state.gmDeployment = true;
+    else delete state.gmDeployment;
+  } else {
+    if (state.enforceSightlines !== true) delete state.enforceSightlines;
+    if (state.gmDeployment !== true) delete state.gmDeployment;
   }
   liftLegacyCampaignFields(state);
   migrateCampaignRuntimeKeys(ensureCampaignBag(state));
@@ -1491,6 +1500,8 @@ export function applyActivateMap(state: GameState, map: GameMap): string {
   if (sandboxMode !== undefined) state.sandboxMode = sandboxMode;
   if (fresh.enforceSightlines) state.enforceSightlines = true;
   else delete state.enforceSightlines;
+  if (fresh.gmDeployment) state.gmDeployment = true;
+  else delete state.gmDeployment;
 
   normalizeGameState(state, map);
   const label = map.name ?? map.id;

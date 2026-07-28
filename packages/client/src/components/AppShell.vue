@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { PhaseAction } from "@vtt-core/shared";
-import { isPlayerDowned, isSandboxMode, remainingPlayerIds, roundPhaseLabel, turnHolderLabel } from "@vtt-core/shared";
+import { isPlayerDowned, isSandboxMode, remainingPlayerIds, roundPhaseLabel, shouldHideTaccomMapFromPlayer, turnHolderLabel } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
@@ -208,6 +208,12 @@ const showTaccomWaiting = computed(
     gameState.value?.roundPhase === "taccomNotStarted",
 );
 
+const showSpawnTokenWaiting = computed(() => {
+  const s = gameState.value;
+  if (!s || hasGmCapabilities.value || sandboxMode.value) return false;
+  return shouldHideTaccomMapFromPlayer(s, yourPlayer.value != null);
+});
+
 function leave() {
   clearSession();
   router.push("/");
@@ -377,6 +383,9 @@ function selectMainTab(tab: MainSectionTab) {
       <div v-if="role && activeMainTab === 'taccom'" class="board-area">
         <p v-if="showTaccomWaiting" class="taccom-waiting">
           Waiting for the GM to start TACCOM.
+        </p>
+        <p v-else-if="showSpawnTokenWaiting" class="taccom-waiting">
+          Spawn your token to view the map.
         </p>
         <MapPreviewBoard v-else-if="previewMapId" :map-id="previewMapId" />
         <template v-else>
