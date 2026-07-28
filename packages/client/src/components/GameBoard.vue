@@ -14,8 +14,8 @@ import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useBoardViewport } from "../composables/useBoardViewport.js";
 import { useDamageIndicators } from "../composables/useDamageIndicators.js";
 import { useEnemyDeathAnimations } from "../composables/useEnemyDeathAnimations.js";
-import { useEnemyMoveAnimation } from "../composables/useEnemyMoveAnimation.js";
-import { usePlayerTeleportAnimation } from "../composables/usePlayerTeleportAnimation.js";
+import { useTokenMoveAnimations } from "../composables/useTokenMoveAnimations.js";
+import type { TokenMoveAnimation } from "../composables/useTokenMoveAnimations.js";
 import { useCharacterSheets } from "../composables/useCharacterSheets.js";
 import { useEnemySpawnSelection } from "../composables/useEnemySpawnSelection.js";
 import { clearActiveTool, useGmTools } from "../composables/useGmTools.js";
@@ -410,18 +410,16 @@ function finalizeDefeatedEnemy(enemyId: string) {
 const { isEnemyDying, isEnemyDefeated, isEnemyPendingRemoval } =
   useEnemyDeathAnimations(gameState, finalizeDefeatedEnemy);
 const {
-  active: teleportAnimation,
-  teleportingPlayerIds,
-  startTeleport,
-  finishTeleport,
-} = usePlayerTeleportAnimation(gameState);
-const {
-  active: enemyMoveAnimation,
-  animatingEnemyId,
-  startMove: startEnemyMove,
-  finishMove: finishEnemyMove,
-} = useEnemyMoveAnimation(gameState);
-const enemyMoveOverlayAtDest = ref(false);
+  activeEnemyMoves,
+  activePlayerMoves,
+  animatingEnemyIds,
+  animatingPlayerIds,
+  startEnemyMove,
+  startPlayerMove,
+  finishMove: finishTokenMove,
+} = useTokenMoveAnimations(gameState, boardKey);
+const moveOverlayAtDestIds = ref(new Set<string>());
+const moveOverlayFinishTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const breakerPromptOpen = ref(false);
 const pendingAttackAction = ref<Extract<PlayerAction, { action: "attack" }> | null>(null);
 const provokePromptOpen = ref(false);
@@ -575,8 +573,6 @@ const combatBoardHostBridge = {
   onAfterAddEnemy: (_name: string, _x: number, _y: number) => {},
 };
 provide(combatBoardHostKey, combatBoardHostBridge);
-
-const teleportOverlayAtDest = ref(false);
 
 const gridStyle = computed(() => {
   const s = gameState.value;
@@ -1620,6 +1616,7 @@ const swarmFootprintPaths = computed(() => {
     sel?.kind === "enemy" && !sel.soloSwarmMember && sel.swarmMemberIds
       ? helpers.swarmGroupForEnemy(s, sel.id, groups)?.canonicalId ?? null
       : null;
+  const fogKeys = playerFogActive.value ? outOfLineOfSightKeys.value : null;
   const paths: { d: string; selected: boolean }[] = [];
   for (const canonicalId of groups.keys()) {
     const group = helpers.swarmGroupForEnemy(s, canonicalId, groups);
@@ -1627,8 +1624,11 @@ const swarmFootprintPaths = computed(() => {
     const occupied: { x: number; y: number }[] = [];
     for (const id of [...group.memberIds, ...group.linkedFlowerIds]) {
       const enemy = byId.get(id);
-      if (enemy) occupied.push({ x: enemy.x, y: enemy.y });
+      if (!enemy) continue;
+      if (fogKeys?.has(coordKey(enemy.x, enemy.y))) continue;
+      occupied.push({ x: enemy.x, y: enemy.y });
     }
+    if (occupied.length === 0) continue;
     const selected = group.canonicalId === selectedCanonicalId;
     for (const d of buildOccupiedRegionContourPaths(occupied, metrics)) {
       paths.push({ d, selected });
@@ -1880,7 +1880,7 @@ const cellStateByKey = computed(() => {
         dying: isEnemyDying(stacked.id),
         defeated: isEnemyDefeated(stacked.id),
         turnEnded: !getCombatBoardHelpers().isTowerEnemy(stacked) && !isSandboxMode(s) && !!stacked.exhausted,
-        animating: stacked.id === animatingEnemyId.value,
+        animating: animatingEnemyIds.value.has(stacked.id),
       })),
       enemyHp:
         enemyAnchor && s && canUseGmTools.value
@@ -2072,8 +2072,8 @@ const cellStateByKey = computed(() => {
 
 const boardCellRows = computed(() => {
   const states = cellStateByKey.value;
-  const teleportingIds = teleportingPlayerIds.value;
-  const animatingId = animatingEnemyId.value;
+  const movingPlayerIds = animatingPlayerIds.value;
+  const movingEnemyIds = animatingEnemyIds.value;
   return cells.value.map((c) => {
     const cell = states.get(c.key);
     if (!cell) return null;
@@ -2099,10 +2099,10 @@ const boardCellRows = computed(() => {
         (!!enemyAnchor && isEnemyDefeated(enemyAnchor.id)) ||
         !!cell.stackedEnemies?.some((e) => e.defeated),
       enemyPendingRemoval: !!enemyAnchor && isEnemyPendingRemoval(enemyAnchor.id),
-      playerTeleporting: !!player && teleportingIds.has(player.id),
+      playerTeleporting: !!player && movingPlayerIds.has(player.id),
       enemyAnimating:
-        enemyAnchor?.id === animatingId ||
-        !!cell.stackedEnemies?.some((e) => e.enemy.id === animatingId),
+        (!!enemyAnchor && movingEnemyIds.has(enemyAnchor.id)) ||
+        !!cell.stackedEnemies?.some((e) => movingEnemyIds.has(e.enemy.id)),
       playerHp: player?.hp,
       enemyHp: enemyAnchor?.hp,
       stackedEnemyKey: cell.stackedEnemies?.map((e) => `${e.enemy.id}:${e.selected}:${e.hp?.currentHp ?? ""}`).join("|") ?? "",
@@ -2235,61 +2235,121 @@ function damageIndicatorStyle(x: number, y: number) {
   };
 }
 
-const teleportOverlayPlayer = computed(() => {
-  const anim = teleportAnimation.value;
+const visibleEnemyMoveOverlays = computed(() => {
+  const fogKeys = playerFogActive.value ? outOfLineOfSightKeys.value : null;
+  return activeEnemyMoves.value.filter((anim) => {
+    if (!fogKeys) return true;
+    return !fogKeys.has(coordKey(anim.toX, anim.toY));
+  });
+});
+
+const visiblePlayerMoveOverlays = computed(() => {
+  const fogKeys = playerFogActive.value ? outOfLineOfSightKeys.value : null;
   const s = gameState.value;
-  if (!anim || !s) return null;
-  return s.players.find((p) => p.id === anim.playerId) ?? null;
+  if (!s) return [];
+  return activePlayerMoves.value.flatMap((anim) => {
+    if (fogKeys?.has(coordKey(anim.toX, anim.toY))) return [];
+    const player = s.players.find((p) => p.id === anim.id);
+    if (!player) return [];
+    return [{ anim, player }];
+  });
 });
 
-const teleportOverlayStyle = computed(() => {
-  const anim = teleportAnimation.value;
-  if (!anim?.animating) return null;
-  const x = teleportOverlayAtDest.value ? anim.toX : anim.fromX;
-  const y = teleportOverlayAtDest.value ? anim.toY : anim.fromY;
-  return cellCenterStyle(x, y);
-});
+function clearMoveOverlayTracking(id: string) {
+  const timer = moveOverlayFinishTimers.get(id);
+  if (timer) {
+    clearTimeout(timer);
+    moveOverlayFinishTimers.delete(id);
+  }
+  if (moveOverlayAtDestIds.value.has(id)) {
+    const next = new Set(moveOverlayAtDestIds.value);
+    next.delete(id);
+    moveOverlayAtDestIds.value = next;
+  }
+}
 
-let teleportFinishTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleMoveOverlayToDest(id: string) {
+  if (moveOverlayFinishTimers.has(id)) return;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (![...activeEnemyMoves.value, ...activePlayerMoves.value].some((a) => a.id === id && a.animating)) {
+        return;
+      }
+      const next = new Set(moveOverlayAtDestIds.value);
+      next.add(id);
+      moveOverlayAtDestIds.value = next;
+    });
+  });
+  moveOverlayFinishTimers.set(
+    id,
+    setTimeout(() => {
+      moveOverlayFinishTimers.delete(id);
+      finishTokenMove(id);
+      clearMoveOverlayTracking(id);
+    }, 450),
+  );
+}
 
 watch(
-  () => teleportAnimation.value?.animating,
-  (animating) => {
-    if (teleportFinishTimer) {
-      clearTimeout(teleportFinishTimer);
-      teleportFinishTimer = null;
+  () =>
+    [...activeEnemyMoves.value, ...activePlayerMoves.value]
+      .map((a) => `${a.id}:${a.animating ? 1 : 0}`)
+      .sort()
+      .join("|"),
+  () => {
+    const liveIds = new Set<string>();
+    for (const anim of [...activeEnemyMoves.value, ...activePlayerMoves.value]) {
+      liveIds.add(anim.id);
+      if (!anim.animating) {
+        const timer = moveOverlayFinishTimers.get(anim.id);
+        if (timer) {
+          clearTimeout(timer);
+          moveOverlayFinishTimers.delete(anim.id);
+        }
+        if (moveOverlayAtDestIds.value.has(anim.id)) {
+          const next = new Set(moveOverlayAtDestIds.value);
+          next.delete(anim.id);
+          moveOverlayAtDestIds.value = next;
+        }
+        continue;
+      }
+      scheduleMoveOverlayToDest(anim.id);
     }
-    if (!animating) {
-      teleportOverlayAtDest.value = false;
-      return;
+    for (const id of [...moveOverlayAtDestIds.value]) {
+      if (!liveIds.has(id)) clearMoveOverlayTracking(id);
     }
-    teleportOverlayAtDest.value = false;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        teleportOverlayAtDest.value = true;
-      });
-    });
-    teleportFinishTimer = setTimeout(() => finishTeleport(), 450);
+    for (const id of [...moveOverlayFinishTimers.keys()]) {
+      if (!liveIds.has(id)) clearMoveOverlayTracking(id);
+    }
   },
 );
 
-function onTeleportOverlayTransitionEnd(e: TransitionEvent) {
-  if (e.propertyName !== "left" || !teleportOverlayAtDest.value) return;
-  if (teleportFinishTimer) {
-    clearTimeout(teleportFinishTimer);
-    teleportFinishTimer = null;
-  }
-  finishTeleport();
+function onPlayerMoveOverlayTransitionEnd(id: string, e: TransitionEvent) {
+  if (e.propertyName !== "left" || !moveOverlayAtDestIds.value.has(id)) return;
+  clearMoveOverlayTracking(id);
+  finishTokenMove(id);
 }
 
-const enemyMoveOverlayStyle = computed(() => {
-  const anim = enemyMoveAnimation.value;
-  if (!anim) return null;
+function onEnemyMoveOverlayTransitionEnd(id: string, e: TransitionEvent) {
+  if (e.propertyName !== "left" || !moveOverlayAtDestIds.value.has(id)) return;
+  clearMoveOverlayTracking(id);
+  finishTokenMove(id);
+}
+
+function playerMoveOverlayStyle(anim: TokenMoveAnimation) {
+  const atDest = moveOverlayAtDestIds.value.has(anim.id);
+  const x = atDest ? anim.toX : anim.fromX;
+  const y = atDest ? anim.toY : anim.fromY;
+  return cellCenterStyle(x, y);
+}
+
+function enemyMoveOverlayStyle(anim: TokenMoveAnimation) {
   const s = gameState.value;
   if (!s) return null;
-  const x = enemyMoveOverlayAtDest.value ? anim.toX : anim.fromX;
-  const y = enemyMoveOverlayAtDest.value ? anim.toY : anim.fromY;
-  const enemy = s.enemies.find((e) => e.id === anim.enemyId);
+  const atDest = moveOverlayAtDestIds.value.has(anim.id);
+  const x = atDest ? anim.toX : anim.fromX;
+  const y = atDest ? anim.toY : anim.fromY;
+  const enemy = s.enemies.find((e) => e.id === anim.id);
   const enemyScale = enemy ? getEnemyScale(enemy) : 1;
   if (enemyScale <= 1) return cellCenterStyle(x, y);
 
@@ -2309,79 +2369,40 @@ const enemyMoveOverlayStyle = computed(() => {
     width: `${tokenW * scale.value}px`,
     height: `${tokenH * scale.value}px`,
   };
-});
+}
 
-const enemyMoveOverlayPortraitUrl = computed(() => {
-  const anim = enemyMoveAnimation.value;
+function enemyMoveOverlayPortraitUrl(anim: TokenMoveAnimation) {
   const s = gameState.value;
-  if (!anim || !s) return null;
-  const enemy = s.enemies.find((e) => e.id === anim.enemyId);
+  if (!s) return null;
+  const enemy = s.enemies.find((e) => e.id === anim.id);
   if (!enemy || enemy.kind === "tower") return null;
   return enemyPortraitUrlForName(enemy.name);
-});
+}
 
-const enemyMoveOverlayIsFortification = computed(() => {
-  const anim = enemyMoveAnimation.value;
+function enemyMoveOverlayIsFortification(anim: TokenMoveAnimation) {
   const s = gameState.value;
-  if (!anim || !s) return false;
-  const enemy = s.enemies.find((e) => e.id === anim.enemyId);
+  if (!s) return false;
+  const enemy = s.enemies.find((e) => e.id === anim.id);
   return !!enemy && isFortificationEnemy(enemy);
-});
+}
 
-const enemyMoveOverlayBg = computed(() => {
-  const anim = enemyMoveAnimation.value;
+function enemyMoveOverlayBg(anim: TokenMoveAnimation) {
   const s = gameState.value;
-  if (!anim || !s) return null;
-  const enemy = s.enemies.find((e) => e.id === anim.enemyId);
+  if (!s) return null;
+  const enemy = s.enemies.find((e) => e.id === anim.id);
   if (!enemy || enemy.kind === "tower") return null;
   const listing = getEnemyListingByName(enemy.name);
   const url = enemyPortraitUrlForName(enemy.name);
   if (!listing?.portrait || !url) return null;
   return portraitBackgroundFor(listing.portrait, url);
-});
+}
 
-const enemyMoveOverlaySelected = computed(() => {
-  const anim = enemyMoveAnimation.value;
-  if (!anim) return false;
-  return isEnemySelected(anim.enemyId) || isEnemyBulkSelected(anim.enemyId);
-});
+function enemyMoveOverlaySelected(anim: TokenMoveAnimation) {
+  return isEnemySelected(anim.id) || isEnemyBulkSelected(anim.id);
+}
 
-const teleportOverlaySelected = computed(() => {
-  const anim = teleportAnimation.value;
-  if (!anim) return false;
-  return isPlayerSelected(anim.playerId) || isPlayerBulkSelected(anim.playerId);
-});
-
-let enemyMoveFinishTimer: ReturnType<typeof setTimeout> | null = null;
-
-watch(
-  () => enemyMoveAnimation.value?.animating,
-  (animating) => {
-    if (enemyMoveFinishTimer) {
-      clearTimeout(enemyMoveFinishTimer);
-      enemyMoveFinishTimer = null;
-    }
-    if (!animating) {
-      enemyMoveOverlayAtDest.value = false;
-      return;
-    }
-    enemyMoveOverlayAtDest.value = false;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        enemyMoveOverlayAtDest.value = true;
-      });
-    });
-    enemyMoveFinishTimer = setTimeout(() => finishEnemyMove(), 450);
-  },
-);
-
-function onEnemyMoveOverlayTransitionEnd(e: TransitionEvent) {
-  if (e.propertyName !== "left" || !enemyMoveOverlayAtDest.value) return;
-  if (enemyMoveFinishTimer) {
-    clearTimeout(enemyMoveFinishTimer);
-    enemyMoveFinishTimer = null;
-  }
-  finishEnemyMove();
+function playerMoveOverlaySelected(playerId: string) {
+  return isPlayerSelected(playerId) || isPlayerBulkSelected(playerId);
 }
 
 function playerLabel(player: Player): string {
@@ -3070,7 +3091,7 @@ function commitWarhook(landing: { x: number; y: number }) {
   if (!me || !target || !s) return;
   const triggers = previewSprintProvokes(s, me.id, landing.x, landing.y);
   gateProvoke(triggers, () => {
-    startTeleport(me.id, { x: me.x, y: me.y }, landing);
+    startPlayerMove(me.id, { x: me.x, y: me.y }, landing);
     sendPlayerAction({
       action: "pack",
       kind: "weaponActive",
@@ -3320,7 +3341,7 @@ function handleCombatCellClick(x: number, y: number): boolean {
     const id = yourPlayerId.value;
     if (!s || !id) return true;
     gateProvoke(previewSprintProvokes(s, id, x, y), () => {
-      startTeleport(me.id, { x: me.x, y: me.y }, { x, y });
+      startPlayerMove(me.id, { x: me.x, y: me.y }, { x, y });
       sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: pendingTargetEnemyId.value!,
         landingX: x,
         landingY: y } });
@@ -4618,8 +4639,8 @@ watch(viewportEl, (el, prev) => {
 onUnmounted(() => {
   if (previewHoverTimer) clearTimeout(previewHoverTimer);
   if (attackPreviewSyncTimer) clearTimeout(attackPreviewSyncTimer);
-  if (teleportFinishTimer) clearTimeout(teleportFinishTimer);
-  if (enemyMoveFinishTimer) clearTimeout(enemyMoveFinishTimer);
+  for (const timer of moveOverlayFinishTimers.values()) clearTimeout(timer);
+  moveOverlayFinishTimers.clear();
   window.removeEventListener("keydown", onKeydown);
   window.removeEventListener("keyup", onKeyup);
   window.removeEventListener("blur", onWindowBlur);
@@ -4855,49 +4876,51 @@ onUnmounted(() => {
         </div>
 
         <div
-          v-if="enemyMoveOverlayStyle"
+          v-for="anim in visibleEnemyMoveOverlays"
+          :key="`enemy-move-${anim.id}`"
           class="enemy-move-overlay"
           :class="{
-            'enemy-move-overlay-animating': enemyMoveOverlayAtDest,
-            'has-portrait': !!enemyMoveOverlayPortraitUrl,
-            'fortification-overlay': enemyMoveOverlayIsFortification,
-            selected: enemyMoveOverlaySelected,
+            'enemy-move-overlay-animating': moveOverlayAtDestIds.has(anim.id),
+            'has-portrait': !!enemyMoveOverlayPortraitUrl(anim),
+            'fortification-overlay': enemyMoveOverlayIsFortification(anim),
+            selected: enemyMoveOverlaySelected(anim),
             'no-token-bg': !showTokenBackgrounds,
           }"
           :style="[
-            enemyMoveOverlayStyle,
-            showTokenBackgrounds && enemyMoveOverlayBg ? { background: enemyMoveOverlayBg } : undefined,
+            enemyMoveOverlayStyle(anim),
+            showTokenBackgrounds && enemyMoveOverlayBg(anim) ? { background: enemyMoveOverlayBg(anim)! } : undefined,
           ]"
-          @transitionend="onEnemyMoveOverlayTransitionEnd"
+          @transitionend="onEnemyMoveOverlayTransitionEnd(anim.id, $event)"
         >
           <img
-            v-if="enemyMoveOverlayPortraitUrl"
-            :src="enemyMoveOverlayPortraitUrl"
+            v-if="enemyMoveOverlayPortraitUrl(anim)"
+            :src="enemyMoveOverlayPortraitUrl(anim)!"
             alt=""
             class="portrait-img"
           />
         </div>
 
         <div
-          v-if="teleportOverlayStyle && teleportOverlayPlayer"
+          v-for="entry in visiblePlayerMoveOverlays"
+          :key="`player-move-${entry.anim.id}`"
           class="teleport-overlay"
           :class="{
-            'teleport-overlay-animating': teleportOverlayAtDest,
-            selected: teleportOverlaySelected,
+            'teleport-overlay-animating': moveOverlayAtDestIds.has(entry.anim.id),
+            selected: playerMoveOverlaySelected(entry.player.id),
             'no-token-bg': !showTokenBackgrounds,
           }"
           :style="[
-            teleportOverlayStyle,
+            playerMoveOverlayStyle(entry.anim),
             showTokenBackgrounds &&
-            (!teleportOverlayPlayer.characterSheetId || !portraitUrlFor(teleportOverlayPlayer.characterSheetId))
-              ? { background: `hsl(${hueFromId(teleportOverlayPlayer.id)} 70% 45%)` }
+            (!entry.player.characterSheetId || !portraitUrlFor(entry.player.characterSheetId))
+              ? { background: `hsl(${hueFromId(entry.player.id)} 70% 45%)` }
               : undefined,
           ]"
-          @transitionend="onTeleportOverlayTransitionEnd"
+          @transitionend="onPlayerMoveOverlayTransitionEnd(entry.anim.id, $event)"
         >
           <img
-            v-if="teleportOverlayPlayer.characterSheetId && portraitUrlFor(teleportOverlayPlayer.characterSheetId)"
-            :src="portraitUrlFor(teleportOverlayPlayer.characterSheetId)!"
+            v-if="entry.player.characterSheetId && portraitUrlFor(entry.player.characterSheetId)"
+            :src="portraitUrlFor(entry.player.characterSheetId)!"
             alt=""
             class="portrait-img"
           />
