@@ -35,6 +35,7 @@ const {
   activePlayer,
   hasEquipmentCharge,
   effectPills,
+  isGm,
 } = useCombatActions(() => props.playerId);
 
 const { mode, setMode, clearMode } = useBoardActionMode();
@@ -112,10 +113,10 @@ function pickShoveMode() {
         <span v-if="sprintLabel" class="stat sprint-budget" data-testid="sprint-remaining">
           Sprint {{ sprintLabel }}
         </span>
-        <template v-if="showPlayerActionBar">
+        <template v-if="!isGm">
           <SheetActionButton
             :active="mode === 'sprint' || !!sprintLabel"
-            :disabled="mode !== 'sprint' && !canStartSprint"
+            :disabled="!showPlayerActionBar || (mode !== 'sprint' && !canStartSprint)"
             @click="pickSprintMode"
           >
             Sprint
@@ -126,7 +127,7 @@ function pickShoveMode() {
           <SheetActionButton
             v-if="showAegis"
             :active="mode === 'aegis'"
-            :disabled="mode !== 'aegis' && !canUseAegis"
+            :disabled="!showPlayerActionBar || (mode !== 'aegis' && !canUseAegis)"
             @click="pickAegisToggle"
           >
             Aegis {{ aegisLabel }}
@@ -140,7 +141,7 @@ function pickShoveMode() {
           <SheetActionButton
             v-if="showTowerStep"
             :active="mode === 'towerTeleport'"
-            :disabled="!canTowerTeleport"
+            :disabled="!showPlayerActionBar || !canTowerTeleport"
             @click="pickTowerTeleportMode"
           >
             Tower step
@@ -154,7 +155,7 @@ function pickShoveMode() {
           <SheetActionButton
             v-if="showAssistedLaunch"
             :active="mode === 'assistedLaunch'"
-            :disabled="mode !== 'assistedLaunch' && !canAssistedLaunch"
+            :disabled="!showPlayerActionBar || (mode !== 'assistedLaunch' && !canAssistedLaunch)"
             @click="pickAssistedLaunchMode"
           >
             Launch
@@ -165,10 +166,10 @@ function pickShoveMode() {
         </template>
       </div>
 
-      <div v-if="showPlayerActionBar" class="action-row">
+      <div v-if="!isGm" class="action-row">
         <SheetActionButton
           :active="mode === 'rez'"
-          :disabled="mode !== 'rez' && !canMain"
+          :disabled="!showPlayerActionBar || (mode !== 'rez' && !canMain)"
           @click="pickRezMode"
         >
           Rez
@@ -181,7 +182,7 @@ function pickShoveMode() {
         </SheetActionButton>
         <SheetActionButton
           :active="mode === 'shove'"
-          :disabled="mode !== 'shove' && !canAux"
+          :disabled="!showPlayerActionBar || (mode !== 'shove' && !canAux)"
           @click="pickShoveMode"
         >
           Shove

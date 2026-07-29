@@ -108,7 +108,6 @@ watch(
 );
 
 const {
-  showPlayerActionBar,
   combatUiUnlocked,
   canMain,
   canSupport,
@@ -158,7 +157,7 @@ const { rangeAttackHint, rangedPatternAttackHint, omnistrikeHint, equipmentCorri
   });
 
 const showSheetCombatActions = computed(
-  () => !!boardPlayer.value && showPlayerActionBar.value,
+  () => !!boardPlayer.value && combatUiUnlocked.value,
 );
 
 const showSecondWeaponRow = computed(

@@ -42,7 +42,7 @@ export function useCombatActions(playerId?: () => string | null) {
 
   const showSheetCombatPanel = computed(() => {
     if (!activePlayerId.value || !combatUiUnlocked.value) return false;
-    return showPlayerActionBar.value || hasGmCapabilities.value;
+    return true;
   });
 
   const canGmRestoreActionTier = computed(
