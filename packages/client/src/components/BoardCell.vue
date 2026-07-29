@@ -943,8 +943,8 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 
 .turn-ended-zzz {
   position: absolute;
-  top: -3px;
-  left: -1px;
+  top: -8px;
+  left: -2px;
   z-index: 3;
   display: flex;
   align-items: flex-end;
@@ -1001,8 +1001,8 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   z-index: 1;
 }
 
-.piece.enemy.has-portrait {
-  overflow: hidden;
+.piece.enemy.has-portrait .portrait-img {
+  clip-path: circle(50% at 50% 50%);
 }
 
 .piece.no-token-bg {
@@ -1019,6 +1019,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 
 .piece.enemy.fortification-piece .portrait-img {
   border-radius: 4px;
+  clip-path: none;
 }
 
 .piece.selected {
@@ -1036,9 +1037,9 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 
 .token-hp-bar {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: -5px;
+  left: 1px;
+  right: 1px;
   z-index: 2;
   pointer-events: none;
 }
