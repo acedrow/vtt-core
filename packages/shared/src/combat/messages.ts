@@ -181,6 +181,7 @@ import {
   validateResolveClassReaction,
 } from "./class-abilities.js";
 import { runEnemyDefeated, runAfterGmPaintTile } from "./combat-lifecycle.js";
+import { recordSeenTilesForAllPlayers, recordSeenTilesForPlayer } from "./los.js";
 import { findWeaponActiveHandler, type WeaponActiveAction } from "./weapon-active.js";
 import { normalizePlayerAction } from "./normalize-player-action.js";
 import { normalizeGmEnemyAction } from "./normalize-gm-enemy-action.js";
@@ -800,6 +801,7 @@ export function applyPlayerAction(
           const targetEnemyIds = detail.targetEnemyIds as string[] | undefined;
           if (kind === "tower_teleport" && x != null && y != null) {
             const msg = applyTowerTeleport(state, player, x, y, keraunoTargetEnemyId);
+            recordSeenTilesForPlayer(state, player.id);
             return `${playerLabel(player)} ${msg}`;
           }
           if (kind === "katapty_end_turn") {
@@ -822,6 +824,7 @@ export function applyPlayerAction(
             }
             player.x = landing.x;
             player.y = landing.y;
+            recordSeenTilesForPlayer(state, player.id);
             maybeSpendActionTier(state, player, "support");
             let msg = `${playerLabel(player)} used Formless`;
             if (provokeMsg) msg = `${provokeMsg}; ${msg}`;
@@ -1507,6 +1510,7 @@ export function applySetTileTerrain(
 ): string {
   const tile = tileAt(state.tiles, x, y)!;
   setTileTerrain(tile, terrain);
+  recordSeenTilesForAllPlayers(state);
   return `Set (${x}, ${y}) terrain to ${terrain}`;
 }
 
@@ -2084,6 +2088,7 @@ export function handleCombatMessage(
           ...(fields.overlayKey !== undefined ? { overlayKey: fields.overlayKey } : {}),
         });
       }
+      recordSeenTilesForAllPlayers(state);
       return { handled: true, message: "", silent: true };
     }
     case "confirmPending": {

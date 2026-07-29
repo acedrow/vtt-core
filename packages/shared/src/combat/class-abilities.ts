@@ -1,5 +1,6 @@
 import type { Enemy, GameState, Player } from "../types.js";
 import { combatMod } from "../combat-modules.js";
+import { recordSeenTilesForPlayer } from "./los.js";
 import type { ActionTier, PlayerAction } from "./types.js";
 
 type PackAction = Extract<PlayerAction, { action: "pack" }>;
@@ -90,7 +91,12 @@ export function applyPostMovementHooks(
   unit: Player | Enemy,
   kind: "player" | "enemy",
 ): MovementHookResult {
-  return classAbilities().applyPostMovementHooks(state, unit, kind);
+  const result = classAbilities().applyPostMovementHooks(state, unit, kind) ?? {
+    messages: [],
+    interrupt: false,
+  };
+  if (kind === "player") recordSeenTilesForPlayer(state, unit.id);
+  return result;
 }
 
 export function classActiveTierFor(player: Player): ActionTier {

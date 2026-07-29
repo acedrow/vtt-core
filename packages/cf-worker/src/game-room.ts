@@ -29,6 +29,7 @@ import {
   persistMapEnemiesFromState,
   applySaveStartingState,
   applyResetToStartingState,
+  recordSeenTilesForAllPlayers,
   validateResetToStartingState,
   playerLabel,
   removeEnemy,
@@ -212,8 +213,10 @@ export class GameRoom {
         gmDeployment?: boolean;
       };
       if (typeof body.enforceSightlines === "boolean") {
-        if (body.enforceSightlines) this.gameState.enforceSightlines = true;
-        else delete this.gameState.enforceSightlines;
+        if (body.enforceSightlines) {
+          this.gameState.enforceSightlines = true;
+          recordSeenTilesForAllPlayers(this.gameState);
+        } else delete this.gameState.enforceSightlines;
       }
       if (typeof body.gmDeployment === "boolean") {
         if (body.gmDeployment) this.gameState.gmDeployment = true;
@@ -225,8 +228,10 @@ export class GameRoom {
 
     if (url.pathname === "/internal/set-enforce-sightlines" && request.method === "POST") {
       const body = (await request.json()) as { enforceSightlines: boolean };
-      if (body.enforceSightlines) this.gameState.enforceSightlines = true;
-      else delete this.gameState.enforceSightlines;
+      if (body.enforceSightlines) {
+        this.gameState.enforceSightlines = true;
+        recordSeenTilesForAllPlayers(this.gameState);
+      } else delete this.gameState.enforceSightlines;
       await this.broadcastState();
       return new Response(null, { status: 204 });
     }

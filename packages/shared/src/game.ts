@@ -20,6 +20,7 @@ import {
   runRoundAdvance,
 } from "./combat/combat-lifecycle.js";
 import { enemyHasFlyingTag, initializeUnitElevation, syncUnitElevationOnTile } from "./combat/elevation.js";
+import { recordSeenTilesForPlayer } from "./combat/los.js";
 import { enemyMoveStepCost } from "./combat/movement.js";
 import { resetEnemyExhaustion, resetGmTurnActions } from "./combat/enemy.js";
 import { enemyHasShareSpace, getEnemyMaxHpByName, getEnemyScale, getEnemyScaleByName, enemyFootprintTiles, ensureEnemyMovement, spendEnemyMovement } from "./enemy-data.js";
@@ -850,6 +851,7 @@ export function applyGmForceMove(
     player.x = toX;
     player.y = toY;
     syncUnitElevationOnTile(state, player, toX, toY);
+    recordSeenTilesForPlayer(state, player.id);
     return;
   }
 
@@ -944,6 +946,7 @@ export function applyMove(
   player.x = toX;
   player.y = toY;
   syncUnitElevationOnTile(state, player, toX, toY);
+  recordSeenTilesForPlayer(state, playerId);
 }
 
 export function validateEnemyMove(
@@ -1430,6 +1433,22 @@ export function normalizeGameState(state: GameState, map?: GameMap): GameState {
     if (state.enforceSightlines !== true) delete state.enforceSightlines;
     if (state.gmDeployment !== true) delete state.gmDeployment;
   }
+  if (state.seenTilesByPlayerId != null) {
+    if (typeof state.seenTilesByPlayerId !== "object" || Array.isArray(state.seenTilesByPlayerId)) {
+      delete state.seenTilesByPlayerId;
+    } else {
+      const cleaned: Record<string, string[]> = {};
+      for (const [playerId, keys] of Object.entries(state.seenTilesByPlayerId)) {
+        if (!playerId || !Array.isArray(keys)) continue;
+        const unique = [
+          ...new Set(keys.filter((k): k is string => typeof k === "string" && /^-?\d+,-?\d+$/.test(k))),
+        ];
+        if (unique.length) cleaned[playerId] = unique;
+      }
+      if (Object.keys(cleaned).length) state.seenTilesByPlayerId = cleaned;
+      else delete state.seenTilesByPlayerId;
+    }
+  }
   liftLegacyCampaignFields(state);
   migrateCampaignRuntimeKeys(ensureCampaignBag(state));
   ensureCampaignState(state);
@@ -1507,6 +1526,7 @@ export function applyActivateMap(state: GameState, map: GameMap): string {
   delete state.damageEvents;
   delete state.silentHpEnemyIds;
   delete state.terrainObjects;
+  delete state.seenTilesByPlayerId;
 
   if (preservedCampaign) state.campaign = preservedCampaign;
   else if (fresh.campaign) state.campaign = fresh.campaign;

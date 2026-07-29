@@ -13,6 +13,7 @@ import { applyDamageToEnemy, applyDamageToPlayer } from "./attack.js";
 import { applyVoidTileDefeat, enemyFullyOnVoid, isVoidTile } from "./void-tile.js";
 import { isTowerEnemy } from "./yadathan.js";
 import { syncUnitElevationOnTile } from "./elevation.js";
+import { recordSeenTilesForPlayer } from "./los.js";
 import { runPushBlockReason } from "./combat-lifecycle.js";
 
 export type PushUnitKind = "player" | "enemy";
@@ -115,6 +116,7 @@ function applyMovedPlayer(state: GameState, player: Player, x: number, y: number
   player.x = x;
   player.y = y;
   syncUnitElevationOnTile(state, player, x, y);
+  recordSeenTilesForPlayer(state, player.id);
   return applyVoidTileDefeat(state, player, "player");
 }
 

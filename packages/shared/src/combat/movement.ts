@@ -22,6 +22,7 @@ import {
   validateFlyingMask,
 } from "./aegis.js";
 import { canUseActionTier, spendActionTierOrHaste, spendMovement } from "./actions.js";
+import { recordSeenTilesForPlayer } from "./los.js";
 import { swarmGroupForEnemy } from "./swarm.js";
 import { combatMod } from "../combat-modules.js";
 import { createDefaultActionBudget, type ActionBudget } from "./types.js";
@@ -539,6 +540,7 @@ export function applySprintMove(
   const budget = player.actionBudget!;
   budget.sprintRemaining = Math.max(0, (budget.sprintRemaining ?? 0) - cost);
   if (budget.sprintRemaining <= 0) clearSprintBudget(budget);
+  recordSeenTilesForPlayer(state, playerId);
   return `${playerLabel(player)} sprinted to (${x}, ${y})`;
 }
 

@@ -60,6 +60,7 @@ import {
   persistMapEnemiesFromState,
   applySaveStartingState,
   applyResetToStartingState,
+  recordSeenTilesForAllPlayers,
   validateResetToStartingState,
   validateActivateMap,
   verifyAuthToken,
@@ -424,8 +425,10 @@ app.patch("/api/maps/:mapId", (req, res) => {
     return;
   }
   if (req.params.mapId === gameState.mapId) {
-    if (result.map.enforceSightlines) gameState.enforceSightlines = true;
-    else delete gameState.enforceSightlines;
+    if (result.map.enforceSightlines) {
+      gameState.enforceSightlines = true;
+      recordSeenTilesForAllPlayers(gameState);
+    } else delete gameState.enforceSightlines;
     if (result.map.gmDeployment) gameState.gmDeployment = true;
     else delete gameState.gmDeployment;
     broadcastState();

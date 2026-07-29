@@ -228,6 +228,25 @@ export function outOfLineOfSightTileKeys(
   return keys;
 }
 
+export function recordSeenTilesForPlayer(state: GameState, playerId: string): void {
+  if (state.enforceSightlines !== true) return;
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return;
+  const visible = visibleTileKeys(state, player.x, player.y);
+  visible.add(`${player.x},${player.y}`);
+  const merged = new Set(state.seenTilesByPlayerId?.[playerId] ?? []);
+  for (const key of visible) merged.add(key);
+  if (!state.seenTilesByPlayerId) state.seenTilesByPlayerId = {};
+  state.seenTilesByPlayerId[playerId] = [...merged];
+}
+
+export function recordSeenTilesForAllPlayers(state: GameState): void {
+  if (state.enforceSightlines !== true) return;
+  for (const player of state.players) {
+    recordSeenTilesForPlayer(state, player.id);
+  }
+}
+
 export function tilesOnCardinalLine(
   fromX: number,
   fromY: number,

@@ -381,6 +381,11 @@ export type GameState = {
   sandboxMode?: boolean;
   /** Copied from the active map; players cannot fetch GameMap. */
   enforceSightlines?: boolean;
+  /**
+   * Per-player tiles previously seen while enforceSightlines is on.
+   * Keys are player ids; values are `"x,y"` coord keys (union, never removed).
+   */
+  seenTilesByPlayerId?: Record<string, string[]>;
   /** Copied from the active map. */
   gmDeployment?: boolean;
   combat?: CombatState;

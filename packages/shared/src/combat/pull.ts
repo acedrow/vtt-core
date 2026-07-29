@@ -9,6 +9,7 @@ import {
 import { coordKey, isInBounds, isWalkable, tileAt } from "../map.js";
 import { enemyLabel, playerLabel } from "../console.js";
 import { enemyFootprintTiles, getEnemyScale } from "../enemy-data.js";
+import { recordSeenTilesForPlayer } from "./los.js";
 import { applyVoidTileDefeat, enemyFullyOnVoid, isVoidTile } from "./void-tile.js";
 
 export function isAttractorVoidTile(state: GameState, x: number, y: number): boolean {
@@ -131,6 +132,7 @@ export function applyPullToward(
 
     if (isPlayer) {
       applyPulledPlayer(unit as Player, cx, cy);
+      recordSeenTilesForPlayer(state, unit.id);
       const voidMsg = applyVoidTileDefeat(state, unit as Player, "player");
       if (voidMsg) {
         parts.push("void defeat");
