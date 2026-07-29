@@ -2908,6 +2908,13 @@ function handleAttackCellClick(x: number, y: number, targetEnemyId?: string): bo
   };
 
   if (elevationBonusCandidateKeys.value.has(key)) {
+    if (elevBonusTile.value && elevBonusTile.value.x === x && elevBonusTile.value.y === y) {
+      submitAttackAction({
+        ...attackAction,
+        elevationBonusTile: { x, y },
+      });
+      return true;
+    }
     elevBonusTile.value = { x, y };
     return true;
   }

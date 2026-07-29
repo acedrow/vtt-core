@@ -613,6 +613,7 @@ export function applyPlayerAction(
               weaponName,
               elevationBonusTile: action.elevationBonusTile,
               suppressEffects,
+              attacker: player,
             },
           );
         }
@@ -633,6 +634,7 @@ export function applyPlayerAction(
             weaponName,
             elevationBonusTile: action.elevationBonusTile,
             suppressEffects,
+            attacker: player,
           },
         );
       }

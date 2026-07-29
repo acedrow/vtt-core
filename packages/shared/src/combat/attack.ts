@@ -434,7 +434,11 @@ export function collectAttackTiles(
   if (!elevationBonusTile) return tiles;
   const bonusKey = coordKey(elevationBonusTile.x, elevationBonusTile.y);
   if (tiles.some((t) => coordKey(t.x, t.y) === bonusKey)) return tiles;
-  const candidates = elevationBonusTileCandidates(state, origin, tiles, attacker);
+  const resolvedAttacker =
+    attacker ??
+    state.players.find((p) => p.x === origin.x && p.y === origin.y) ??
+    state.enemies.find((e) => e.x === origin.x && e.y === origin.y);
+  const candidates = elevationBonusTileCandidates(state, origin, tiles, resolvedAttacker);
   if (!candidates.some((c) => coordKey(c.x, c.y) === bonusKey)) return tiles;
   return [...tiles, elevationBonusTile];
 }
@@ -759,9 +763,17 @@ export function applyAttackToEnemies(
     weaponName?: string;
     elevationBonusTile?: { x: number; y: number };
     suppressEffects?: boolean;
+    attacker?: Player | Enemy;
   },
 ): { damage: number; detail: string; targets: AttackTarget[]; effects: string[] } {
-  const tiles = collectAttackTiles(state, origin, spec, direction, opts?.elevationBonusTile);
+  const tiles = collectAttackTiles(
+    state,
+    origin,
+    spec,
+    direction,
+    opts?.elevationBonusTile,
+    opts?.attacker,
+  );
   const { total, detail } = resolveAttackDamage(spec, damageRoll);
   const effects = opts?.suppressEffects ? [] : spec.effects ?? [];
   const useBreaker =
