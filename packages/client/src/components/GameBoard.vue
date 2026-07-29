@@ -1940,6 +1940,8 @@ const cellStateByKey = computed(() => {
       tileEffects: tile?.tileEffects,
       outOfLineOfSight: !playerFogActive.value && outOfLineOfSightKeys.value.has(ck),
       sightlineFog: playerFogActive.value && outOfLineOfSightKeys.value.has(ck),
+      allyThroughFog:
+        playerFogActive.value && !!player && player.id !== yourPlayerId.value,
       tileAppearanceUrl: tile?.appearanceKey ? tileAppearanceUrlFor(tile.appearanceKey) : null,
       tileOverlayUrl: tile?.overlayKey ? tileAppearanceUrlFor(tile.overlayKey) : null,
       tileFeatureUrl: tile?.featureKey ? tileAppearanceUrlFor(tile.featureKey) : null,
@@ -2254,9 +2256,15 @@ const visiblePlayerMoveOverlays = computed(() => {
   const s = gameState.value;
   if (!s) return [];
   return activePlayerMoves.value.flatMap((anim) => {
-    if (fogKeys?.has(coordKey(anim.toX, anim.toY))) return [];
     const player = s.players.find((p) => p.id === anim.id);
     if (!player) return [];
+    // Allies stay visible through fog (VTT-19); own moves into fog stay hidden.
+    if (
+      fogKeys?.has(coordKey(anim.toX, anim.toY)) &&
+      player.id === yourPlayerId.value
+    ) {
+      return [];
+    }
     return [{ anim, player }];
   });
 });

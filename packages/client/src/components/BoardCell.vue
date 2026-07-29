@@ -62,6 +62,8 @@ export type CellRenderState = {
   tileEffects?: EffectStacks;
   outOfLineOfSight?: boolean;
   sightlineFog?: boolean;
+  /** Other player token should pierce enforce-sightlines fog. */
+  allyThroughFog?: boolean;
   tileAppearanceUrl?: string | null;
   tileOverlayUrl?: string | null;
   tileFeatureUrl?: string | null;
@@ -590,51 +592,6 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         :max-hp="stacked.hp.maxHp"
       />
     </span>
-    <span
-      v-if="cell.player && !playerTeleporting"
-      class="piece player-piece"
-      :class="{
-        selected: isPlayerSelected,
-        draggable: canDragDeploy,
-        dragging: draggingDeploy && canDragDeploy,
-        'turn-ended': cell.turnEnded && !cell.playerDowned,
-        'player-downed': cell.playerDowned,
-        'has-portrait': !!cell.playerPortraitUrl,
-        'no-token-bg': !showTokenBackgrounds,
-      }"
-      :style="showTokenBackgrounds && !cell.playerPortraitUrl && playerHue != null ? { background: `hsl(${playerHue} 70% 45%)` } : undefined"
-      @click="onPlayerPieceClick"
-      @pointerdown="onPlayerPiecePointerDown"
-    >
-      <img
-        v-if="cell.playerPortraitUrl"
-        :src="cell.playerPortraitUrl"
-        alt=""
-        class="portrait-img"
-      />
-      <span
-        v-if="cell.playerDowned || (cell.turnEnded && !cell.playerPortraitUrl)"
-        class="turn-ended-shade"
-        aria-hidden="true"
-      ></span>
-      <span v-if="cell.turnEnded && !cell.playerDowned" class="turn-ended-zzz" aria-hidden="true">
-        <span class="z z1">z</span><span class="z z2">z</span><span class="z z3">z</span>
-      </span>
-      <span v-if="cell.playerDowned" class="player-down-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-          <path
-            d="M12 2a5 5 0 0 0-5 5c0 1.74.89 3.27 2.24 4.17C7.77 12.03 6 14.13 6 16.5V18h12v-1.5c0-2.37-1.77-4.47-3.24-5.33A4.99 4.99 0 0 0 17 7a5 5 0 0 0-5-5Zm-1.5 15v2h3v-2h-3Z"
-          />
-        </svg>
-      </span>
-      <HpBar
-        v-if="showHealthBars && playerHp"
-        class="token-hp-bar"
-        compact
-        :current-hp="playerHp.currentHp"
-        :max-hp="playerHp.maxHp"
-      />
-    </span>
     <div v-if="effectEntries.length" class="effect-badges" :style="effectBadgeStyle(cell.enemyAnchor)">
       <span
         v-for="effect in visibleEffects"
@@ -671,6 +628,52 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       </span>
     </div>
     </template>
+    <span
+      v-if="cell.player && !playerTeleporting && (!cell.sightlineFog || cell.allyThroughFog)"
+      class="piece player-piece"
+      :class="{
+        selected: isPlayerSelected,
+        draggable: canDragDeploy,
+        dragging: draggingDeploy && canDragDeploy,
+        'turn-ended': cell.turnEnded && !cell.playerDowned,
+        'player-downed': cell.playerDowned,
+        'has-portrait': !!cell.playerPortraitUrl,
+        'no-token-bg': !showTokenBackgrounds,
+        'ally-through-fog': !!cell.sightlineFog && !!cell.allyThroughFog,
+      }"
+      :style="showTokenBackgrounds && !cell.playerPortraitUrl && playerHue != null ? { background: `hsl(${playerHue} 70% 45%)` } : undefined"
+      @click="onPlayerPieceClick"
+      @pointerdown="onPlayerPiecePointerDown"
+    >
+      <img
+        v-if="cell.playerPortraitUrl"
+        :src="cell.playerPortraitUrl"
+        alt=""
+        class="portrait-img"
+      />
+      <span
+        v-if="cell.playerDowned || (cell.turnEnded && !cell.playerPortraitUrl)"
+        class="turn-ended-shade"
+        aria-hidden="true"
+      ></span>
+      <span v-if="cell.turnEnded && !cell.playerDowned" class="turn-ended-zzz" aria-hidden="true">
+        <span class="z z1">z</span><span class="z z2">z</span><span class="z z3">z</span>
+      </span>
+      <span v-if="cell.playerDowned" class="player-down-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+          <path
+            d="M12 2a5 5 0 0 0-5 5c0 1.74.89 3.27 2.24 4.17C7.77 12.03 6 14.13 6 16.5V18h12v-1.5c0-2.37-1.77-4.47-3.24-5.33A4.99 4.99 0 0 0 17 7a5 5 0 0 0-5-5Zm-1.5 15v2h3v-2h-3Z"
+          />
+        </svg>
+      </span>
+      <HpBar
+        v-if="showHealthBars && playerHp && !cell.sightlineFog"
+        class="token-hp-bar"
+        compact
+        :current-hp="playerHp.currentHp"
+        :max-hp="playerHp.maxHp"
+      />
+    </span>
   </button>
 </template>
 
@@ -912,6 +915,20 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   display: block;
   z-index: 1;
   overflow: visible;
+}
+
+.piece.ally-through-fog {
+  z-index: 21;
+  animation: ally-through-fog-fade 1s ease forwards;
+}
+
+@keyframes ally-through-fog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .piece.player-piece.has-portrait {
