@@ -52,6 +52,8 @@ npm run lint:fix       # eslint with autofix
 npm run test:e2e       # Playwright combat UI tests (client :5174, API :3002)
 npm run dev            # local stack (client :5173, server :3001)
 npm run dev:cf         # Vite dev (:5173, HMR) + wrangler dev (:8787); open :5173
+npm run rulebook       # content rulebook extract wrapper
+npm run kan            # kan.bn board CLI (requires KAN_API_KEY in .env)
 npm run deploy:cf      # production deploy
 ```
 
@@ -69,9 +71,55 @@ Entering the game requires a password (GM or shared player password). Configure 
 | `PLAYER_PASSWORD` | Shared password for all players |
 | `AUTH_SECRET` | HMAC key used to sign/verify session tokens |
 | `RANDOM_ORG_API_KEY` | Optional; dice via random.org |
+| `KAN_API_KEY` | kan.bn API key for `npm run kan` (see [docs/kan-integration.md](docs/kan-integration.md); copy from [`.env.example`](.env.example)) |
 
 - Local server: put them in a gitignored `.env` (loaded via `dotenv`).
 - cf-worker: put them in a gitignored `.dev.vars` for local dev, and set with `wrangler secret put <NAME>` for production.
+- `KAN_API_KEY`: put in the same gitignored root `.env` (loaded by `scripts/kan.mjs`).
+
+## Kan tickets
+
+Ticket tracking is on [kan.bn](https://kan.bn/boards/y0t45eyjddnf) (workspace **vtt**, prefix **VTT**). API/CLI reference: [docs/kan-integration.md](docs/kan-integration.md). Config: [`config/kan-vtt.json`](config/kan-vtt.json).
+
+```bash
+npm run kan -- board
+npm run kan -- card VTT-42
+npm run kan -- move VTT-42 in-progress
+```
+
+Lists: **backlog** → **in-progress** → **done**.
+
+```mermaid
+flowchart LR
+  backlog[backlog]
+  inProgress[in-progress]
+  done[done]
+  backlog -->|"start ticket"| inProgress
+  inProgress -->|"verify green"| done
+  done -->|"VTT-n: commit / push"| git[git]
+```
+
+### Agent rules
+
+- Ticket ids: **`VTT-<cardNumber>`** (from the board or `npm run kan -- card …`).
+- **Commits:** every commit message must start with `VTT-<n>:` (e.g. `VTT-42: Fix token animation snap`).
+- **Multi-ticket work items (MTWI):** one shared branch name (documented on every related ticket) and **one PR to `main`** for the whole MTWI; individual tickets still get their own `VTT-n` commits on that branch.
+- **Finishing a ticket** (when asked to do / work / finish a ticket):
+  1. Read the card (`npm run kan -- card VTT-n`); update the description if scope, clarifications, or testing notes change.
+  2. Move **backlog → in-progress** when starting implementation.
+  3. Implement + run verification (`build`, `test`, `lint`, `test:e2e`).
+  4. Move **in-progress → done** after verification passes.
+  5. Commit (with `VTT-n:` prefix) and push / open a PR when the user asked (do **not** commit/push/PR unless asked).
+
+### Ticket authoring rules
+
+When creating or updating cards (API or UI):
+
+- Concise **title** + **description** of the work.
+- Keep the description current (changes, clarifications).
+- Description must include a **Testing** section: new/updated tests that guard the fix or support the feature (see [ADR 006](docs/adr/006-testing-strategy.md) — engine Vitest vs content repo).
+- **MTWI titles:** `[Slug] Specific subtask title` (e.g. `[Engine Peel] Data panel config`).
+- **MTWI descriptions:** include **`Branch: <branch-name>`** — same branch name on all tickets in that MTWI.
 
 ## Verification (required for all code changes)
 

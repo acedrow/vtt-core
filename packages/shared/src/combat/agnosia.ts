@@ -153,7 +153,7 @@ export function maybeTriggerAgnosia(state: GameState, enemy: Enemy, hpBefore: nu
 
   const detail = listing?.agnosia?.trim() || "Resolve Agnosia effect";
   queueAgnosiaPending(state, enemy, detail);
-  const msg = `${enemyLabel(enemy)} entered Agnosia (pending GM)`;
+  const msg = `${enemyLabel(enemy)} entered Agnosia — resolve pending`;
   pushSideEffectMessages(state, [msg]);
   return [msg];
 }

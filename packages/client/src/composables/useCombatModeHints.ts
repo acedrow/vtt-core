@@ -1,5 +1,6 @@
 import type { Player } from "@vtt-core/shared";
 import {
+  aegisFlyingRemaining,
   isRangeTargetAttack,
   isRangedPatternAttack,
   rangeTargetMax,
@@ -160,6 +161,28 @@ export function useCombatModeHints(opts: {
 
   const boardHintRows = computed(() => {
     const rows: { key: string; text: string }[] = [];
+    if (mode.value === "sprint") {
+      const rem = opts.player.value?.actionBudget?.sprintRemaining ?? 0;
+      const max = opts.player.value?.actionBudget?.sprintMax ?? rem;
+      rows.push({
+        key: "sprint",
+        text:
+          rem > 0
+            ? `Sprint — ${rem}/${max} movement remaining. Click adjacent tiles to move.`
+            : "Sprint — click adjacent tiles to move up to half your Speed.",
+      });
+    }
+    if (mode.value === "aegis") {
+      const sprintRem = opts.player.value?.actionBudget?.sprintRemaining ?? 0;
+      const flyRem = opts.player.value ? aegisFlyingRemaining(opts.player.value) : 0;
+      rows.push({
+        key: "aegis",
+        text:
+          sprintRem > 0
+            ? `Aegis flight — spends Sprint budget (${sprintRem} left). Does not Provoke.`
+            : `Aegis flight — ${flyRem} remaining. Does not Provoke.`,
+      });
+    }
     if (mode.value === "attack" || isPackEquipmentAttack.value) {
       rows.push({ key: "attack", text: attackHint.value });
     }

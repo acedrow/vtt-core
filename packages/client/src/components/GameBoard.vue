@@ -2118,6 +2118,7 @@ const tooltipData = computed(() => {
   const occ = occupancy.value;
   if (!cell || !s || !occ) return null;
   const key = coordKey(cell.x, cell.y);
+  if (playerFogActive.value && outOfLineOfSightKeys.value.has(key)) return null;
   const tile = tileAt(s.tiles, cell.x, cell.y);
   if (!tile) return null;
   const enemiesAtTile = s.enemies.filter((e) => e.x === cell.x && e.y === cell.y);

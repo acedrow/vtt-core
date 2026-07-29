@@ -248,7 +248,19 @@ export type OverworldCampaignAction =
   | { kind: "adjustRevelations"; delta: number }
   | { kind: "travel"; qx: number; qy: number }
   | { kind: "returnToDis" }
-  | { kind: "deployToHell"; qx: number; qy: number };
+  | { kind: "deployToHell"; qx: number; qy: number }
+  | {
+      kind: "resolveGearUpRollOut";
+      choice: "extraEscort" | "overfuel" | "advancedRecon";
+    }
+  | { kind: "dismissGearUpRollOut" };
+
+export type GearUpRollOutChoice = "extraEscort" | "overfuel" | "advancedRecon";
+
+export type GearUpRollOutState = {
+  active: boolean;
+  choice?: GearUpRollOutChoice;
+};
 
 export type FactionState = {
   crown: number;
@@ -325,6 +337,7 @@ export type CampaignRuntimeState = {
   mapLocations?: OverworldLocation[];
   mapConvoys?: OverworldConvoy[];
   factionStates?: FactionStates;
+  gearUpRollOut?: GearUpRollOutState | null;
 };
 
 /** Pre-nesting / pre-rename wire fields; dual-read by lift + migrateCampaignRuntimeKeys. */

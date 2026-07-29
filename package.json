@@ -14,6 +14,7 @@
     "deploy:cf": "npm run build -w @vtt-core/shared && npm run build:content && npm run build -w @vtt-core/client && npm run deploy -w @vtt-core/cf-worker",
     "rulebook:setup": "node scripts/rulebook-setup.mjs",
     "rulebook": "node scripts/rulebook.mjs",
+    "kan": "node scripts/kan.mjs",
     "enemy-portraits:crop": "node scripts/enemy-portraits-crop.mjs",
     "typecheck": "npm run typecheck -w @vtt-core/client",
     "lint": "eslint . && npm run typecheck",

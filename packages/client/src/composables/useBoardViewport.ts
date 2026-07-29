@@ -295,6 +295,9 @@ export function useBoardViewport(
       pendingZoom.my = my;
       pendingPanDx = 0;
       pendingPanDy = 0;
+    } else if (e.shiftKey) {
+      // Shift+wheel pans horizontally (map/VTT convention).
+      pendingPanDx += e.deltaY !== 0 ? e.deltaY : e.deltaX;
     } else {
       pendingPanDx += e.deltaX;
       pendingPanDy += e.deltaY;

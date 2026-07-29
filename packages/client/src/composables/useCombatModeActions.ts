@@ -63,12 +63,7 @@ export function useCombatModeActions(opts?: {
 
   function pickMode(next: BoardActionMode) {
     if (mode.value === next) clearMode();
-    else if (next === "attack") setMode("attack");
-    else {
-      if (next === "sprint" && mode.value === "aegis") clearMode();
-      if (next === "aegis" && mode.value === "sprint") clearMode();
-      setMode(next);
-    }
+    else setMode(next);
   }
 
   function pickAegisMode() {

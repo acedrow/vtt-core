@@ -1,0 +1,14 @@
+{
+  "workspacePublicId": "3aumi48oalwf",
+  "workspaceName": "vtt",
+  "cardPrefix": "VTT",
+  "boardPublicId": "y0t45eyjddnf",
+  "boardName": "vtt",
+  "boardUrl": "https://kan.bn/boards/y0t45eyjddnf",
+  "ticketFormat": "VTT-<cardNumber>",
+  "lists": {
+    "backlog": "775cv19ruwhp",
+    "in-progress": "wpbzi1nltlxd",
+    "done": "n6otxn6nnf3p"
+  }
+}

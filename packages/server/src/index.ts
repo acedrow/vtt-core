@@ -502,6 +502,16 @@ function cloneState() {
   return structuredClone(gameState);
 }
 
+function sendStateTo(ws: WebSocket): void {
+  if (ws.readyState !== ws.OPEN) return;
+  const msg: ServerMessage = {
+    type: "state",
+    state: cloneState(),
+    yourPlayerId: playerIdForSocket(ws),
+  };
+  ws.send(JSON.stringify(msg));
+}
+
 function broadcastState(): void {
   const snapshot = cloneState();
   for (const ws of wss.clients) {
@@ -621,7 +631,7 @@ wss.on("connection", (ws: WebSocket) => {
   socketGmPermissions.set(ws, false);
   socketRole.set(ws, null);
   sendConsoleSync(ws);
-  broadcastState();
+  sendStateTo(ws);
 
   ws.on("message", (raw) => {
     void (async () => {
@@ -649,7 +659,7 @@ wss.on("connection", (ws: WebSocket) => {
         socketGmPermissions.set(ws, false);
         socketRole.set(ws, "gm");
         broadcastConsole(actorForSocket(ws), CONSOLE_MSG_CONNECTED);
-        broadcastState();
+        sendStateTo(ws);
         return;
       }
 
@@ -671,7 +681,7 @@ wss.on("connection", (ws: WebSocket) => {
       socketGmPermissions.set(ws, profileGmPermissions(playerKey));
       socketRole.set(ws, "player");
       broadcastConsole(actorForSocket(ws), CONSOLE_MSG_CONNECTED);
-      broadcastState();
+      sendStateTo(ws);
       return;
     }
 

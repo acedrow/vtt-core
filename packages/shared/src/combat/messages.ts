@@ -895,7 +895,7 @@ export function applyPlayerAction(
               direction: weaponAction.detail?.direction as PatternDirection | undefined,
             }),
           );
-          return `${playerLabel(player)} used weapon active (pending GM)`;
+          return `${playerLabel(player)} used weapon active — resolve pending`;
         }
         default:
           return "Unknown pack action";
@@ -960,7 +960,7 @@ export function applyPlayerAction(
           detail: action.detail,
         }),
       );
-      return `${playerLabel(player)} used equipment (pending GM)`;
+      return `${playerLabel(player)} used equipment — resolve pending`;
     }
     case "interact": {
       maybeSpendActionTier(state, player, "support");
@@ -975,7 +975,7 @@ export function applyPlayerAction(
           detail: action.detail,
         }),
       );
-      return `${playerLabel(player)} interacted (pending GM)`;
+      return `${playerLabel(player)} interacted — resolve pending`;
     }
     case "commitHaste": {
       const detail = applyCommitHaste(player, action.tier);
@@ -1834,7 +1834,7 @@ export function applyTriggerReversal(
       detail: armor?.reversal?.effect,
     }),
   );
-  return `${playerLabel(player)} triggered Reversal (pending GM)`;
+  return `${playerLabel(player)} triggered Reversal — resolve pending`;
 }
 
 export function validateDeclineReversal(state: GameState, playerId: string): string | null {

@@ -951,7 +951,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   pointer-events: none;
   font-weight: 900;
   font-style: italic;
-  color: var(--color-muted);
+  color: var(--color-text);
   text-shadow: var(--shadow-text-strong);
   line-height: 1;
   animation: turn-ended-zzz-float 2.4s ease-in-out infinite;

@@ -73,7 +73,7 @@ export function resolveCountdownExpiry(ctx: CountdownContext): string[] {
       detail: `${label} — resolve countdown effect`,
     }),
   );
-  return [`Countdown expired (${label}) — pending GM`];
+  return [`Countdown expired (${label}) — resolve pending`];
 }
 
 export function trackCountdownKinds(state: GameState, unit: Player | Enemy, tokens: string[]): void {

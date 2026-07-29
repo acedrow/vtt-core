@@ -50,6 +50,12 @@ const speedLabel = computed(() => {
   return `${budget.value.movementRemaining}/${budget.value.movementMax}`;
 });
 
+const sprintLabel = computed(() => {
+  const b = budget.value;
+  if (!b || (b.sprintRemaining ?? 0) <= 0) return null;
+  return `${b.sprintRemaining}/${b.sprintMax ?? b.sprintRemaining}`;
+});
+
 const pills = computed(() => (activePlayer.value ? effectPills(activePlayer.value) : []));
 
 const showTowerStep = computed(
@@ -72,10 +78,7 @@ function onResetMovement() {
 
 function pickSprintMode() {
   if (mode.value === "sprint") clearMode();
-  else {
-    if (mode.value === "aegis") clearMode();
-    setMode("sprint");
-  }
+  else setMode("sprint");
 }
 
 function pickAegisToggle() {
@@ -113,6 +116,9 @@ function pickShoveMode() {
 
       <div class="speed-row">
         <span class="stat">Speed {{ speedLabel }}</span>
+        <span v-if="sprintLabel" class="stat sprint-budget" data-testid="sprint-remaining">
+          Sprint {{ sprintLabel }}
+        </span>
         <template v-if="showPlayerActionBar">
           <SheetActionButton
             :disabled="!canResetMovement"
@@ -121,7 +127,7 @@ function pickShoveMode() {
             Reset movement
           </SheetActionButton>
           <SheetActionButton
-            :active="mode === 'sprint'"
+            :active="mode === 'sprint' || !!sprintLabel"
             :disabled="mode !== 'sprint' && !canStartSprint"
             @click="pickSprintMode"
           >
@@ -248,6 +254,10 @@ function pickShoveMode() {
   font-size: 1rem;
   font-weight: 600;
   color: var(--color-muted);
+}
+
+.stat.sprint-budget {
+  color: var(--color-purple);
 }
 
 .equip-charges {

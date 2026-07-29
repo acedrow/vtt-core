@@ -1,0 +1,30 @@
+---
+description: kan.bn ticket workflow, commit prefixes, and MTWI rules
+alwaysApply: true
+---
+
+# Kan tickets
+
+Board: [vtt](https://kan.bn/boards/y0t45eyjddnf). Ticket ids are `VTT-<cardNumber>`. CLI: `npm run kan` (see `docs/kan-integration.md`). Requires `KAN_API_KEY` in root `.env`.
+
+## Agent workflow
+
+When asked to do / work / finish a ticket:
+
+1. Read the card (`npm run kan -- card VTT-n`); update the description if scope, clarifications, or testing notes change.
+2. Move **backlog → in-progress** when starting implementation.
+3. Implement and run verification (`build`, `test`, `lint`, `test:e2e`).
+4. Move **in-progress → done** after verification passes.
+5. Commit / push / open a PR only when the user asks (existing rule). Commit messages must start with `VTT-<n>:` (e.g. `VTT-42: Fix token animation snap`).
+
+## Multi-ticket work items (MTWI)
+
+- Titles: `[Slug] Specific subtask` (e.g. `[Engine Peel] Data panel config`).
+- Every related ticket description includes the same `Branch: <branch-name>`.
+- One shared branch and one PR to `main` for the whole MTWI; per-ticket commits still use each ticket’s `VTT-n`.
+
+## Ticket content
+
+- Concise title and description of the work.
+- Keep the description current when work changes.
+- Description must include a **Testing** section listing new/updated tests that guard the fix or support the feature.

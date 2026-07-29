@@ -80,6 +80,12 @@ const speedLabel = computed(() => {
   return `${budget.value.movementRemaining}/${budget.value.movementMax}`;
 });
 
+const sprintLabel = computed(() => {
+  const b = budget.value;
+  if (!b || (b.sprintRemaining ?? 0) <= 0) return null;
+  return `${b.sprintRemaining}/${b.sprintMax ?? b.sprintRemaining}`;
+});
+
 const sabaothAttackSpec = computed(() => {
   const weapon = activePlayer.value?.weapon;
   if (!weapon) return null;
@@ -122,6 +128,9 @@ function weaponSwap() {
         @commit-haste="commitHaste"
       />
       <span class="chip speed">Speed {{ speedLabel }}</span>
+      <span v-if="sprintLabel" class="chip sprint" data-testid="sprint-remaining">
+        Sprint {{ sprintLabel }}
+      </span>
     </div>
     <div class="actions-row">
       <button type="button" class="action-btn" :class="{ active: mode === 'move' }" @click="pickMode('move')">
@@ -148,7 +157,7 @@ function weaponSwap() {
       <button
         type="button"
         class="action-btn"
-        :class="{ active: mode === 'sprint' }"
+        :class="{ active: mode === 'sprint' || !!sprintLabel }"
         :disabled="mode !== 'sprint' && !canStartSprint"
         @click="pickMode('sprint')"
       >
@@ -329,6 +338,11 @@ function weaponSwap() {
 
 .chip.speed {
   margin-left: auto;
+}
+
+.chip.sprint {
+  color: var(--color-purple);
+  border-color: var(--color-purple-outline);
 }
 
 .action-btn {

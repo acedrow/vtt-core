@@ -246,7 +246,7 @@ export class GameRoom {
     } satisfies Attachment);
 
     await this.sendConsoleSync(server);
-    await this.broadcastState();
+    this.sendStateTo(server);
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -287,7 +287,7 @@ export class GameRoom {
           gmPermissions: false,
         } satisfies Attachment);
         await this.broadcastConsole(await this.actorForSocket(ws), CONSOLE_MSG_CONNECTED);
-        await this.broadcastState();
+        this.sendStateTo(ws);
         return;
       }
 
@@ -309,7 +309,7 @@ export class GameRoom {
         gmPermissions: profile?.gmPermissions === true,
       } satisfies Attachment);
       await this.broadcastConsole(await this.actorForSocket(ws), CONSOLE_MSG_CONNECTED);
-      await this.broadcastState();
+      this.sendStateTo(ws);
       return;
     }
 
@@ -909,6 +909,16 @@ export class GameRoom {
 
   private sendError(ws: WebSocket, message: string): void {
     const msg: ServerMessage = { type: "error", message };
+    ws.send(JSON.stringify(msg));
+  }
+
+  private sendStateTo(ws: WebSocket): void {
+    const att = ws.deserializeAttachment() as Attachment | null;
+    const msg: ServerMessage = {
+      type: "state",
+      state: structuredClone(this.gameState),
+      yourPlayerId: this.playerIdForAtt(att),
+    };
     ws.send(JSON.stringify(msg));
   }
 
