@@ -104,6 +104,33 @@ describe("useTokenMoveAnimations", () => {
     });
   });
 
+  it("does not reverse optimistic slide on interim state before server move", async () => {
+    const gameState = ref<GameState | null>(
+      makeState({
+        enemies: [enemy("e1", 0, 0)],
+      }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activeEnemyMoves, startEnemyMove } = useTokenMoveAnimations(gameState, boardKey);
+    await nextTick();
+
+    startEnemyMove("e1", { x: 0, y: 0 }, { x: 1, y: 0 });
+
+    gameState.value = makeState({
+      round: 2,
+      enemies: [enemy("e1", 0, 0)],
+    });
+    await nextTick();
+
+    expect(activeEnemyMoves.value).toHaveLength(1);
+    expect(activeEnemyMoves.value[0]).toMatchObject({
+      fromX: 0,
+      fromY: 0,
+      toX: 1,
+      toY: 0,
+    });
+  });
+
   it("dedupes optimistic start with matching state update", async () => {
     const gameState = ref<GameState | null>(
       makeState({

@@ -97,9 +97,6 @@ export function useTokenMoveAnimations(
       toY: to.y,
       animating: false,
     });
-    if (prevPositions) {
-      prevPositions.set(id, { x: to.x, y: to.y, kind });
-    }
     scheduleBegin(id);
   }
 
