@@ -1,6 +1,8 @@
 import type { Player } from "@vtt-core/shared";
 import {
   aegisFlyingRemaining,
+  collectAttackTiles,
+  elevationBonusTileCandidates,
   isRangeTargetAttack,
   isRangedPatternAttack,
   rangeTargetMax,
@@ -159,6 +161,26 @@ export function useCombatModeHints(opts: {
     return plugin.hint(ctx);
   });
 
+  const elevationBonusHint = computed(() => {
+    const attackMode = mode.value === "attack" || isPackEquipmentAttack.value;
+    if (!attackMode || !attackAimed.value || !opts.player.value || !opts.weaponName.value) {
+      return null;
+    }
+    const s = gameState.value;
+    if (!s) return null;
+    const spec = resolveCombatAttackSpec(opts.player.value, opts.weaponName.value);
+    if (!spec || isRangeTargetAttack(spec) || usesAnchoredPatternPlacement(spec)) return null;
+    const origin =
+      packUi.value.equipmentUse === true && packUi.value.attackOrigin
+        ? packUi.value.attackOrigin
+        : { x: opts.player.value.x, y: opts.player.value.y };
+    const baseTiles = collectAttackTiles(s, origin, spec, attackDirection.value);
+    if (elevationBonusTileCandidates(s, origin, baseTiles, opts.player.value).length === 0) {
+      return null;
+    }
+    return "choose extra tile due to elevation";
+  });
+
   const boardHintRows = computed(() => {
     const rows: { key: string; text: string }[] = [];
     if (mode.value === "sprint") {
@@ -185,6 +207,9 @@ export function useCombatModeHints(opts: {
     }
     if (mode.value === "attack" || isPackEquipmentAttack.value) {
       rows.push({ key: "attack", text: attackHint.value });
+    }
+    if (elevationBonusHint.value) {
+      rows.push({ key: "elevationBonus", text: elevationBonusHint.value });
     }
     if (omnistrikeHint.value) rows.push({ key: "omnistrike", text: omnistrikeHint.value });
     if (warhookHint.value) rows.push({ key: "warhook", text: warhookHint.value });
