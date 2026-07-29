@@ -901,6 +901,14 @@ const outOfLineOfSightKeys = computed(() => {
   return outOfLineOfSightTileKeys(s, observer.x, observer.y, viewer ? { viewer } : undefined);
 });
 
+const seenTileKeys = computed(() => {
+  if (!playerFogActive.value) return new Set<string>();
+  const id = yourPlayerId.value;
+  const s = gameState.value;
+  if (!id || !s?.seenTilesByPlayerId?.[id]) return new Set<string>();
+  return new Set(s.seenTilesByPlayerId[id]);
+});
+
 const towerTeleportPrimaryKeys = computed(() => {
   if (boardActionMode.value !== "towerTeleport") return new Set<string>();
   const id = yourPlayerId.value;
@@ -1939,7 +1947,14 @@ const cellStateByKey = computed(() => {
           : null,
       tileEffects: tile?.tileEffects,
       outOfLineOfSight: !playerFogActive.value && outOfLineOfSightKeys.value.has(ck),
-      sightlineFog: playerFogActive.value && outOfLineOfSightKeys.value.has(ck),
+      sightlineFog:
+        playerFogActive.value &&
+        outOfLineOfSightKeys.value.has(ck) &&
+        !seenTileKeys.value.has(ck),
+      sightlineExplored:
+        playerFogActive.value &&
+        outOfLineOfSightKeys.value.has(ck) &&
+        seenTileKeys.value.has(ck),
       allyThroughFog:
         playerFogActive.value && !!player && player.id !== yourPlayerId.value,
       tileAppearanceUrl: tile?.appearanceKey ? tileAppearanceUrlFor(tile.appearanceKey) : null,
@@ -4778,6 +4793,7 @@ onUnmounted(() => {
                   row.stackedEnemyKey,
                   row.cell.outOfLineOfSight,
                   row.cell.sightlineFog,
+                  row.cell.sightlineExplored,
                 ]"
                 :x="row.x"
                 :y="row.y"

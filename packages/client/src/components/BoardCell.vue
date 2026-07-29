@@ -61,7 +61,10 @@ export type CellRenderState = {
   towerOwnerHue?: number | null;
   tileEffects?: EffectStacks;
   outOfLineOfSight?: boolean;
+  /** Unexplored fog — fully obscure tile contents. */
   sightlineFog?: boolean;
+  /** Previously seen but not currently visible — desaturate/darken. */
+  sightlineExplored?: boolean;
   /** Other player token should pierce enforce-sightlines fog. */
   allyThroughFog?: boolean;
   tileAppearanceUrl?: string | null;
@@ -379,6 +382,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       'bulk-tile-selected': isBulkTileSelected,
       'out-of-los': cell.outOfLineOfSight,
       'sightline-fog': cell.sightlineFog,
+      'sightline-explored': cell.sightlineExplored,
       'gm-inherit-cursor': gmInheritCursor,
     }"
     @click="emit('click')"
@@ -388,6 +392,11 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
     <Transition name="los-fog">
       <span v-if="cell.sightlineFog" class="sightline-fog-overlay" aria-hidden="true" />
     </Transition>
+    <span
+      v-if="cell.sightlineExplored"
+      class="sightline-explored-overlay"
+      aria-hidden="true"
+    />
     <template v-if="!cell.sightlineFog">
     <span
       v-if="cell.tileBaseColor && !cell.paintbrushPreview"
@@ -490,7 +499,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       </div>
     </Transition>
     <span
-      v-if="cell.enemyAnchor && !enemyAnimating"
+      v-if="cell.enemyAnchor && !enemyAnimating && !cell.sightlineExplored"
       class="piece enemy"
       :class="[
         {
@@ -555,7 +564,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
     </span>
     <span
       v-for="(stacked, stackedIndex) in cell.stackedEnemies"
-      v-show="!stacked.animating"
+      v-show="!stacked.animating && !cell.sightlineExplored"
       :key="stacked.enemy.id"
       class="piece enemy stacked"
       :class="{
@@ -693,6 +702,18 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   inset: 0;
   z-index: 20;
   background: #000;
+  pointer-events: none;
+}
+
+.cell.sightline-explored {
+  filter: saturate(0.35) brightness(0.62);
+}
+
+.sightline-explored-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: color-mix(in srgb, #000 28%, transparent);
   pointer-events: none;
 }
 
