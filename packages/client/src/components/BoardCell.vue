@@ -67,6 +67,8 @@ export type CellRenderState = {
   sightlineExplored?: boolean;
   /** Other player token should pierce enforce-sightlines fog. */
   allyThroughFog?: boolean;
+  /** Show "?" for a fogged enemy on a previously seen tile (range ≤3). */
+  fogUnknownToken?: boolean;
   tileAppearanceUrl?: string | null;
   tileOverlayUrl?: string | null;
   tileFeatureUrl?: string | null;
@@ -498,6 +500,13 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         <NoLosIcon class="no-los-overlay" :size="20" />
       </div>
     </Transition>
+    <span
+      v-if="cell.fogUnknownToken && cell.enemyAnchor && !enemyAnimating"
+      class="piece fog-unknown-token"
+      aria-label="Unknown token"
+    >
+      ?
+    </span>
     <span
       v-if="cell.enemyAnchor && !enemyAnimating && !cell.sightlineExplored"
       class="piece enemy"
@@ -941,6 +950,19 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 .piece.ally-through-fog {
   z-index: 21;
   animation: ally-through-fog-fade 1s ease forwards;
+}
+
+.piece.fog-unknown-token {
+  z-index: 21;
+  display: grid;
+  place-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
 }
 
 @keyframes ally-through-fog-fade {

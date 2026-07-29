@@ -6,6 +6,7 @@ import { areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMov
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
+import { fogTokenDisplay } from "../lib/fogTokenDisplay.js";
 import { BOARD_CELL_GAP, boardContentHeightPx, boardContentWidthPx } from "../lib/boardLayout.js";
 import { boardCellMetrics, buildElevationContourPaths, buildOccupiedRegionContourPaths } from "../lib/elevationContours.js";
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
@@ -1957,6 +1958,20 @@ const cellStateByKey = computed(() => {
         seenTileKeys.value.has(ck),
       allyThroughFog:
         playerFogActive.value && !!player && player.id !== yourPlayerId.value,
+      fogUnknownToken: (() => {
+        if (!playerFogActive.value || !enemyAnchor || !me) return false;
+        const currentlyVisible = !outOfLineOfSightKeys.value.has(ck);
+        const previouslySeen = seenTileKeys.value.has(ck);
+        const range = Math.abs(enemyAnchor.x - me.x) + Math.abs(enemyAnchor.y - me.y);
+        return (
+          fogTokenDisplay({
+            enforceSightlines: true,
+            currentlyVisible,
+            previouslySeen,
+            rangeFromViewer: range,
+          }) === "unknown"
+        );
+      })(),
       tileAppearanceUrl: tile?.appearanceKey ? tileAppearanceUrlFor(tile.appearanceKey) : null,
       tileOverlayUrl: tile?.overlayKey ? tileAppearanceUrlFor(tile.overlayKey) : null,
       tileFeatureUrl: tile?.featureKey ? tileAppearanceUrlFor(tile.featureKey) : null,
@@ -4794,6 +4809,7 @@ onUnmounted(() => {
                   row.cell.outOfLineOfSight,
                   row.cell.sightlineFog,
                   row.cell.sightlineExplored,
+                  row.cell.fogUnknownToken,
                 ]"
                 :x="row.x"
                 :y="row.y"

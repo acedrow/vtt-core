@@ -119,6 +119,7 @@ function emptyCellFlags(): Omit<
     deploymentZoneHighlight: false,
     sightlineExplored: false,
     allyThroughFog: false,
+    fogUnknownToken: false,
     gmMovable: false,
     gmSpawnable: false,
     patternPrimary: false,
