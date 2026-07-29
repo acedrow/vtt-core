@@ -173,6 +173,7 @@ function resetPlayerTurnActions(state: GameState, playerId: string): void {
   if (speed) player.actionBudget = createDefaultActionBudget(speed);
   player.turnStartX = player.x;
   player.turnStartY = player.y;
+  clearAegisFlyingUsed(player);
   if (state.combat) {
     state.combat.pendingActions = state.combat.pendingActions.filter(
       (p) => p.actorPlayerId !== playerId,
