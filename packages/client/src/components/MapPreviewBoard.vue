@@ -116,6 +116,7 @@ function emptyCellFlags(): Omit<
     moveSecondary: false,
     moveAegis: false,
     deployable: false,
+    deploymentZoneHighlight: false,
     gmMovable: false,
     gmSpawnable: false,
     patternPrimary: false,

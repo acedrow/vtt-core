@@ -34,6 +34,7 @@ export type CellRenderState = {
   moveSecondary: boolean;
   moveAegis: boolean;
   deployable: boolean;
+  deploymentZoneHighlight: boolean;
   gmMovable: boolean;
   gmSpawnable: boolean;
   patternPrimary: boolean;
@@ -360,6 +361,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       'move-secondary': cell.moveSecondary,
       'move-aegis': cell.moveAegis,
       deployable: cell.deployable,
+      'deployment-zone': cell.deploymentZoneHighlight,
       'gm-movable': cell.gmMovable,
       'gm-spawnable': cell.gmSpawnable,
       'pattern-primary': cell.patternPrimary,
@@ -754,6 +756,15 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 .cell.deployable {
   cursor: pointer;
   outline: 1px dashed var(--color-success-outline);
+}
+
+.cell.deployment-zone {
+  outline: 2px solid var(--color-success-outline);
+  background: color-mix(in srgb, var(--color-success-outline) 14%, transparent);
+}
+
+.cell.deployment-zone.deployable {
+  outline: 2px solid var(--color-success-outline);
 }
 
 .cell.gm-movable {

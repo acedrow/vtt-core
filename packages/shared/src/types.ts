@@ -64,6 +64,7 @@ export type MapTile = {
   overlayFlip?: boolean;
   featureRotation?: TileImageRotation;
   featureFlip?: boolean;
+  deploymentZone?: boolean;
 };
 
 export type TilePaintPreset = {
@@ -540,6 +541,7 @@ export type ClientMessage =
       overlayFlip?: boolean | null;
       featureRotation?: TileImageRotation | null;
       featureFlip?: boolean | null;
+      deploymentZone?: boolean;
     }
   | {
       type: "confirmPending";

@@ -1539,6 +1539,7 @@ export type GmPaintTileFields = {
   overlayFlip?: boolean | null;
   featureRotation?: TileImageRotation | null;
   featureFlip?: boolean | null;
+  deploymentZone?: boolean;
 };
 
 function hasGmPaintTileFields(fields: GmPaintTileFields): boolean {
@@ -1560,7 +1561,8 @@ function hasGmPaintTileFields(fields: GmPaintTileFields): boolean {
     fields.overlayRotation !== undefined ||
     fields.overlayFlip !== undefined ||
     fields.featureRotation !== undefined ||
-    fields.featureFlip !== undefined
+    fields.featureFlip !== undefined ||
+    fields.deploymentZone !== undefined
   );
 }
 
@@ -1688,6 +1690,9 @@ export function validateGmPaintTile(
   ) {
     return "featureFlip must be a boolean";
   }
+  if (fields.deploymentZone !== undefined && typeof fields.deploymentZone !== "boolean") {
+    return "deploymentZone must be a boolean";
+  }
   return null;
 }
 
@@ -1785,6 +1790,11 @@ export function applyGmPaintTile(
   if (fields.featureFlip !== undefined) {
     if (fields.featureFlip) tile.featureFlip = true;
     else delete tile.featureFlip;
+  }
+
+  if (fields.deploymentZone !== undefined) {
+    if (fields.deploymentZone) tile.deploymentZone = true;
+    else delete tile.deploymentZone;
   }
 
   return `Painted (${x}, ${y})`;
@@ -2061,6 +2071,7 @@ export function handleCombatMessage(
         ...(parsed.overlayFlip !== undefined ? { overlayFlip: parsed.overlayFlip } : {}),
         ...(parsed.featureRotation !== undefined ? { featureRotation: parsed.featureRotation } : {}),
         ...(parsed.featureFlip !== undefined ? { featureFlip: parsed.featureFlip } : {}),
+        ...(parsed.deploymentZone !== undefined ? { deploymentZone: parsed.deploymentZone } : {}),
       };
       for (const { x, y } of parsed.coords) {
         const err = validateGmPaintTile(state, x, y, fields);

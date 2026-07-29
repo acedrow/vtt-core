@@ -89,6 +89,8 @@ const paintbrushFeatureSetId = ref(persistedGm.paintbrushFeatureSetId);
 const paintbrushEnableElevation = ref(persistedGm.paintbrushEnableElevation);
 const paintbrushEnableTerrain = ref(persistedGm.paintbrushEnableTerrain);
 const paintbrushEnableEffect = ref(persistedGm.paintbrushEnableEffect);
+const paintbrushEnableDeploymentZone = ref(persistedGm.paintbrushEnableDeploymentZone);
+const paintbrushDeploymentZone = ref(persistedGm.paintbrushDeploymentZone);
 const paintbrushEnableName = ref(persistedGm.paintbrushEnableName);
 const paintbrushEnableColor = ref(persistedGm.paintbrushEnableColor);
 const paintbrushEnableAppearance = ref(persistedGm.paintbrushEnableAppearance);
@@ -144,6 +146,7 @@ type PaintbrushDragPaintFields = {
   overlayFlip?: boolean | null;
   featureRotation?: TileImageRotation | null;
   featureFlip?: boolean | null;
+  deploymentZone?: boolean;
 };
 
 type PendingDragPaint = {
@@ -239,6 +242,13 @@ function tileMatchesDragPaint(tile: MapTile, fields: PaintbrushDragPaintFields):
   if (!tileFlipMatches(tile.appearanceFlip, fields.appearanceFlip)) return false;
   if (!tileFlipMatches(tile.overlayFlip, fields.overlayFlip)) return false;
   if (!tileFlipMatches(tile.featureFlip, fields.featureFlip)) return false;
+  if (fields.deploymentZone !== undefined) {
+    if (fields.deploymentZone) {
+      if (!tile.deploymentZone) return false;
+    } else if (tile.deploymentZone) {
+      return false;
+    }
+  }
   return true;
 }
 
@@ -310,6 +320,8 @@ export function snapshotGmTools(): PersistedGmTools {
     paintbrushEnableElevation: paintbrushEnableElevation.value,
     paintbrushEnableTerrain: paintbrushEnableTerrain.value,
     paintbrushEnableEffect: paintbrushEnableEffect.value,
+    paintbrushEnableDeploymentZone: paintbrushEnableDeploymentZone.value,
+    paintbrushDeploymentZone: paintbrushDeploymentZone.value,
     paintbrushEnableName: paintbrushEnableName.value,
     paintbrushEnableColor: paintbrushEnableColor.value,
     paintbrushEnableAppearance: paintbrushEnableAppearance.value,
@@ -352,6 +364,8 @@ export const gmToolsWatchSources = [
   paintbrushEnableElevation,
   paintbrushEnableTerrain,
   paintbrushEnableEffect,
+  paintbrushEnableDeploymentZone,
+  paintbrushDeploymentZone,
   paintbrushEnableName,
   paintbrushEnableColor,
   paintbrushEnableAppearance,
@@ -403,6 +417,8 @@ export function applyPersistedGmTools(gm: PersistedGmTools) {
   paintbrushEnableElevation.value = gm.paintbrushEnableElevation;
   paintbrushEnableTerrain.value = gm.paintbrushEnableTerrain;
   paintbrushEnableEffect.value = gm.paintbrushEnableEffect;
+  paintbrushEnableDeploymentZone.value = gm.paintbrushEnableDeploymentZone;
+  paintbrushDeploymentZone.value = gm.paintbrushDeploymentZone;
   paintbrushEnableName.value = gm.paintbrushEnableName;
   paintbrushEnableColor.value = gm.paintbrushEnableColor;
   paintbrushEnableAppearance.value = gm.paintbrushEnableAppearance;
@@ -581,6 +597,8 @@ export function useGmTools() {
     const tile = tileAt(s.tiles, x, y);
     if (!tile) return;
     applyPresetToBrush(tileToPaintPreset(tile));
+    paintbrushEnableDeploymentZone.value = true;
+    paintbrushDeploymentZone.value = !!tile.deploymentZone;
   }
 
   function setActiveTool(tool: GmTool) {
@@ -747,6 +765,8 @@ export function useGmTools() {
     paintbrushEnableRotation.value = false;
     paintbrushEnableFlip.value = false;
     paintbrushAutoRotate.value = false;
+    paintbrushEnableDeploymentZone.value = false;
+    paintbrushDeploymentZone.value = true;
     paintbrushPresetLoadId.value = "";
     paintbrushPresetError.value = "";
   }
@@ -1052,6 +1072,9 @@ export function useGmTools() {
           ? [`${paintbrushEffectId.value}:${paintbrushEffectStacks.value}`]
           : [];
     }
+    if (paintbrushEnableDeploymentZone.value) {
+      shared.deploymentZone = paintbrushDeploymentZone.value;
+    }
     if (paintbrushEnableName.value) shared.tileName = paintbrushTileName.value;
     if (paintbrushEnableColor.value) shared.baseColor = paintbrushBaseColor.value;
     if (paintbrushEnableAppearanceTint.value) {
@@ -1098,6 +1121,7 @@ export function useGmTools() {
       shared.elevation === undefined &&
       shared.terrain === undefined &&
       shared.tileEffects === undefined &&
+      shared.deploymentZone === undefined &&
       shared.tileName === undefined &&
       shared.obstacleHp === undefined &&
       shared.baseColor === undefined &&
@@ -1348,6 +1372,8 @@ export function useGmTools() {
     paintbrushEnableElevation,
     paintbrushEnableTerrain,
     paintbrushEnableEffect,
+    paintbrushEnableDeploymentZone,
+    paintbrushDeploymentZone,
     paintbrushEnableName,
     paintbrushEnableColor,
     paintbrushEnableAppearance,

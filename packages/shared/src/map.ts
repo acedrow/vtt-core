@@ -361,6 +361,14 @@ export function parseGameMap(raw: unknown): GameMap {
       if (Object.keys(stacks).length > 0) tile.tileEffects = stacks;
     }
 
+    const deploymentZone = t.deploymentZone;
+    if (deploymentZone !== undefined) {
+      if (typeof deploymentZone !== "boolean") {
+        throw new Error(`Tile (${x}, ${y}) deploymentZone must be a boolean`);
+      }
+      if (deploymentZone) tile.deploymentZone = true;
+    }
+
     tile.walkable = computeWalkable(tile);
     tiles.push(tile);
   }
@@ -598,6 +606,7 @@ export function cloneMapTile(tile: MapTile): MapTile {
     ...(tile.overlayFlip ? { overlayFlip: true } : {}),
     ...(tile.featureRotation ? { featureRotation: tile.featureRotation } : {}),
     ...(tile.featureFlip ? { featureFlip: true } : {}),
+    ...(tile.deploymentZone ? { deploymentZone: true } : {}),
   };
 }
 
@@ -723,6 +732,8 @@ export function persistMapTileFromState(map: GameMap, source: MapTile): void {
   else delete mapTile.featureRotation;
   if (source.featureFlip) mapTile.featureFlip = true;
   else delete mapTile.featureFlip;
+  if (source.deploymentZone) mapTile.deploymentZone = true;
+  else delete mapTile.deploymentZone;
   delete mapTile.tileEffects;
 }
 

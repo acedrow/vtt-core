@@ -28,6 +28,8 @@ const {
   paintbrushEnableElevation,
   paintbrushEnableTerrain,
   paintbrushEnableEffect,
+  paintbrushEnableDeploymentZone,
+  paintbrushDeploymentZone,
   paintbrushEnableName,
   paintbrushEnableColor,
   paintbrushEnableAppearance,
@@ -178,6 +180,30 @@ const featureTintModalOpen = ref(false);
           }
         "
       />
+    </div>
+
+    <div class="control-group effect-group">
+      <span class="control-label">Deploy zone</span>
+      <input
+        v-model="paintbrushEnableDeploymentZone"
+        type="checkbox"
+        class="option-enable"
+        aria-label="Enable deployment zone"
+      />
+      <select
+        class="effect-select"
+        :value="paintbrushDeploymentZone ? 'paint' : 'clear'"
+        aria-label="Deployment zone mode"
+        @change="
+          (e) => {
+            paintbrushDeploymentZone = (e.target as HTMLSelectElement).value === 'paint';
+            paintbrushEnableDeploymentZone = true;
+          }
+        "
+      >
+        <option value="paint">Paint</option>
+        <option value="clear">Clear</option>
+      </select>
     </div>
 
     <div class="control-group">
