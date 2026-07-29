@@ -1,10 +1,19 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-import { getEffectSummary, getArmorByName } from "@vtt-core/shared";
-import { sheetFieldForArmor } from "../client-content-pack.js";
+import {
+  getClassActiveTier,
+  getEffectSummary,
+  getArmorByName,
+  getWeaponAttackSpec,
+  hasSabaothBombSelected,
+  isHeavenBurningWeaponName,
+  isSabaothWeaponName,
+} from "@vtt-core/shared";
+import { boardModeForEquipment, sheetFieldForArmor } from "../client-content-pack.js";
+import { sheetTierMenuItems } from "../lib/sheetTierActions.js";
 
-import { useBoardActionMode } from "../composables/useBoardActionMode.js";
+import { useBoardActionMode, type BoardActionMode } from "../composables/useBoardActionMode.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useCombatModeActions } from "../composables/useCombatModeActions.js";
 import AbilityBlock from "./AbilityBlock.vue";
@@ -19,7 +28,9 @@ const {
   canGmRestoreActionTier,
   budget,
   canMain,
+  canSupport,
   canAux,
+  canUseEquipment,
   hasteRemaining,
   actionBudgetChips,
   sandboxMode,
@@ -34,13 +45,31 @@ const {
   aegisLabel,
   activePlayer,
   hasEquipmentCharge,
+  hasWeaponAttack,
+  canUseWeaponActive,
+  canUseHeavenBurningUnfold,
+  canUseClassActive,
+  hasFreeWeaponSwap,
+  armorStructured,
+  classActiveTier,
+  sendPlayerAction,
   effectPills,
   isGm,
 } = useCombatActions(() => props.playerId);
 
-const { mode, setMode, clearMode } = useBoardActionMode();
+const { mode, setMode, clearMode, attackAimed, attackAnchor } = useBoardActionMode();
 
-const { pickTowerTeleportMode, pickAssistedLaunchMode, pickAegisMode } = useCombatModeActions({
+const {
+  pickTowerTeleportMode,
+  pickAssistedLaunchMode,
+  pickAegisMode,
+  pickArmorMode,
+  useClassActive,
+  useWeaponActive,
+  toggleWeaponAttack,
+  recallHarpeTrap,
+  showHarpeRecall,
+} = useCombatModeActions({
   playerId: () => props.playerId,
 });
 
@@ -65,6 +94,95 @@ const assistedLaunchAbility = computed(() =>
   activePlayer.value ? getArmorByName(activePlayer.value.armor ?? "")?.specialMovement : undefined,
 );
 
+const canUseWeaponAttack = computed(() => {
+  const p = activePlayer.value;
+  if (!p || !hasWeaponAttack.value) return false;
+  if (isSabaothWeaponName(p.weapon) && !hasSabaothBombSelected(p)) return false;
+  return true;
+});
+
+const replacesWeaponActive = computed(() => isHeavenBurningWeaponName(activePlayer.value?.weapon));
+
+const tierMenuItems = computed(() => {
+  const p = activePlayer.value;
+  if (!p || !showPlayerActionBar.value) return undefined;
+  const classTier = classActiveTier.value ?? getClassActiveTier(p.class);
+  return sheetTierMenuItems([
+    {
+      id: "attack",
+      label: "Attack",
+      tier: "main",
+      include: !!getWeaponAttackSpec(p.weapon),
+      disabled: !canMain.value || !canUseWeaponAttack.value,
+    },
+    { id: "rez", label: "Rez", tier: "main", include: true, disabled: !canMain.value },
+    {
+      id: "weaponActive",
+      label: "Weapon",
+      tier: "main",
+      include: !!p.weapon && !replacesWeaponActive.value,
+      disabled: !canUseWeaponActive.value,
+    },
+    {
+      id: "classActive",
+      label: "Class",
+      tier: classTier,
+      include: !!p.class,
+      disabled: !canUseClassActive.value,
+    },
+    {
+      id: "armor",
+      label: "Armor",
+      tier: "support",
+      include: !!armorStructured.value,
+      disabled: !canSupport.value || !armorStructured.value,
+    },
+    {
+      id: "equipment",
+      label: "Equip",
+      tier: "support",
+      include: !!p.equipment,
+      disabled: !canUseEquipment.value,
+    },
+    {
+      id: "gear",
+      label: "Gear",
+      tier: "support",
+      include: !!p.gear,
+      disabled: !canSupport.value,
+    },
+    {
+      id: "harpeRecall",
+      label: "Recall trap",
+      tier: "support",
+      include: showHarpeRecall.value,
+      disabled: !canSupport.value,
+    },
+    { id: "shove", label: "Shove", tier: "aux", include: true, disabled: !canAux.value },
+    {
+      id: "sprint",
+      label: "Sprint",
+      tier: "aux",
+      include: true,
+      disabled: mode.value !== "sprint" && !canStartSprint.value,
+    },
+    {
+      id: "swap",
+      label: hasFreeWeaponSwap.value ? "Swap (free)" : "Swap",
+      tier: "aux",
+      include: !!p.weapon2 || hasFreeWeaponSwap.value,
+      disabled: !canAux.value && !hasFreeWeaponSwap.value,
+    },
+    {
+      id: "unfold",
+      label: "Unfold",
+      tier: "aux",
+      include: replacesWeaponActive.value,
+      disabled: !canUseHeavenBurningUnfold.value,
+    },
+  ]);
+});
+
 function pillTitle(token: string) {
   const id = token.split(":")[0] ?? token;
   return getEffectSummary(id) ?? token;
@@ -88,6 +206,39 @@ function pickShoveMode() {
   if (mode.value === "shove") clearMode();
   else setMode("shove");
 }
+
+function useEquipmentItem() {
+  const equipment = activePlayer.value?.equipment;
+  if (!equipment) return;
+  const boardMode = boardModeForEquipment(equipment);
+  if (boardMode) {
+    if (mode.value === boardMode) clearMode();
+    else {
+      attackAimed.value = false;
+      attackAnchor.value = null;
+      setMode(boardMode as BoardActionMode);
+    }
+    return;
+  }
+  sendPlayerAction({ action: "useEquipment", detail: equipment });
+}
+
+function onSelectMenuItem(id: string) {
+  if (id === "attack") toggleWeaponAttack();
+  else if (id === "rez") pickRezMode();
+  else if (id === "weaponActive") useWeaponActive(activePlayer.value?.weapon);
+  else if (id === "classActive") useClassActive();
+  else if (id === "armor") pickArmorMode(armorStructured.value);
+  else if (id === "equipment") useEquipmentItem();
+  else if (id === "gear") sendPlayerAction({ action: "interact", detail: activePlayer.value?.gear });
+  else if (id === "harpeRecall") recallHarpeTrap();
+  else if (id === "shove") pickShoveMode();
+  else if (id === "sprint") pickSprintMode();
+  else if (id === "swap") {
+    clearMode();
+    sendPlayerAction({ action: "weaponSwap" });
+  } else if (id === "unfold") useWeaponActive(activePlayer.value?.weapon);
+}
 </script>
 
 <template>
@@ -98,10 +249,13 @@ function pickShoveMode() {
           fill
           :interactive="showPlayerActionBar && !sandboxMode"
           :gm-restore="canGmRestoreActionTier"
+          :menu-enabled="showPlayerActionBar"
+          :menu-items="tierMenuItems"
           v-bind="actionBudgetChips"
           :haste-stacks="hasteRemaining"
           @commit-haste="commitHaste"
           @restore-tier="restorePlayerActionTier"
+          @select-menu-item="onSelectMenuItem"
         />
         <span class="stat equip-charges" :data-charges="activePlayer.equipmentUses ?? 1">
           Equip {{ hasEquipmentCharge ? "●" : "○" }}

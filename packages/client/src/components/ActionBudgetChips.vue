@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { actionTierLabel, actionTierTooltip, type ActionTier } from "@vtt-core/shared";
-import { ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 
+import type { SheetTierMenuItem } from "../lib/sheetTierActions.js";
 import ModalDialog from "./ModalDialog.vue";
 
 const props = defineProps<{
   interactive?: boolean;
   gmRestore?: boolean;
   fill?: boolean;
+  menuEnabled?: boolean;
+  menuItems?: Partial<Record<ActionTier, SheetTierMenuItem[]>>;
   mainSpent: boolean;
   supportSpent: boolean;
   auxSpent: boolean;
@@ -23,10 +26,12 @@ const props = defineProps<{
 const emit = defineEmits<{
   commitHaste: [tier: ActionTier];
   restoreTier: [tier: ActionTier];
+  selectMenuItem: [id: string];
 }>();
 
 const pendingHasteTier = ref<ActionTier | null>(null);
 const pendingRestoreTier = ref<ActionTier | null>(null);
+const openMenuTier = ref<ActionTier | null>(null);
 
 const tiers: { tier: ActionTier; spent: () => boolean; granted: () => boolean; canCommit: () => boolean }[] = [
   { tier: "main", spent: () => props.mainSpent, granted: () => props.mainGranted, canCommit: () => props.canCommitMain },
@@ -39,27 +44,53 @@ const tiers: { tier: ActionTier; spent: () => boolean; granted: () => boolean; c
   { tier: "aux", spent: () => props.auxSpent, granted: () => props.auxGranted, canCommit: () => props.canCommitAux },
 ];
 
-function chipClass(spent: boolean, granted: boolean, canCommit: boolean) {
-  if (granted) return "chip haste-granted";
+function menuFor(tier: ActionTier): SheetTierMenuItem[] {
+  return props.menuItems?.[tier] ?? [];
+}
+
+function canOpenMenu(tier: ActionTier, spent: boolean, granted: boolean) {
+  if (props.gmRestore || !props.menuEnabled) return false;
+  if (!menuFor(tier).length) return false;
+  return !spent || granted;
+}
+
+function chipClass(spent: boolean, granted: boolean, canCommit: boolean, tier: ActionTier) {
+  if (granted) {
+    return canOpenMenu(tier, spent, granted) ? "chip haste-granted menuable" : "chip haste-granted";
+  }
   if (spent && props.gmRestore) return "chip spent clickable";
   if (spent && canCommit && props.interactive) return "chip spent clickable";
   if (spent) return "chip spent";
+  if (canOpenMenu(tier, spent, granted)) return "chip menuable";
   return "chip";
 }
 
-function chipDisabled(spent: boolean, canCommit: boolean) {
+function chipDisabled(spent: boolean, granted: boolean, canCommit: boolean, tier: ActionTier) {
   if (props.gmRestore) return !spent;
+  if (canOpenMenu(tier, spent, granted)) return false;
   return !props.interactive || !spent || !canCommit;
 }
 
-function onChipClick(tier: ActionTier, spent: boolean, canCommit: boolean) {
+function onChipClick(tier: ActionTier, spent: boolean, granted: boolean, canCommit: boolean) {
   if (props.gmRestore) {
     if (!spent) return;
+    openMenuTier.value = null;
     pendingRestoreTier.value = tier;
     return;
   }
+  if (canOpenMenu(tier, spent, granted)) {
+    openMenuTier.value = openMenuTier.value === tier ? null : tier;
+    return;
+  }
   if (!props.interactive || !spent || !canCommit) return;
+  openMenuTier.value = null;
   pendingHasteTier.value = tier;
+}
+
+function selectMenuItem(id: string, disabled?: boolean) {
+  if (disabled) return;
+  openMenuTier.value = null;
+  emit("selectMenuItem", id);
 }
 
 function confirmHaste() {
@@ -81,22 +112,61 @@ function confirmRestore() {
 function cancelRestore() {
   pendingRestoreTier.value = null;
 }
+
+function onDocumentPointerDown(event: PointerEvent) {
+  if (openMenuTier.value == null) return;
+  const target = event.target;
+  if (!(target instanceof Node)) return;
+  const root = document.querySelector(`[data-chip-menu-tier="${openMenuTier.value}"]`);
+  if (root?.contains(target)) return;
+  openMenuTier.value = null;
+}
+
+onMounted(() => {
+  document.addEventListener("pointerdown", onDocumentPointerDown, true);
+});
+
+onUnmounted(() => {
+  document.removeEventListener("pointerdown", onDocumentPointerDown, true);
+});
 </script>
 
 <template>
   <div class="chip-row" :class="{ fill }">
-    <button
+    <div
       v-for="{ tier, spent, granted, canCommit } in tiers"
       :key="tier"
-      type="button"
-      class="chip-btn"
-      :class="chipClass(spent(), granted(), canCommit())"
-      :disabled="chipDisabled(spent(), canCommit())"
-      @click="onChipClick(tier, spent(), canCommit())"
+      class="chip-wrap"
+      :data-chip-menu-tier="tier"
     >
-      <span class="chip-label">{{ actionTierLabel(tier) }}</span>
-      <span class="chip-tooltip" role="tooltip">{{ actionTierTooltip(tier) }}</span>
-    </button>
+      <button
+        type="button"
+        class="chip-btn"
+        :class="chipClass(spent(), granted(), canCommit(), tier)"
+        :disabled="chipDisabled(spent(), granted(), canCommit(), tier)"
+        :aria-expanded="openMenuTier === tier"
+        :aria-haspopup="canOpenMenu(tier, spent(), granted()) ? 'menu' : undefined"
+        @click="onChipClick(tier, spent(), granted(), canCommit())"
+      >
+        <span class="chip-label">{{ actionTierLabel(tier) }}</span>
+        <span v-if="openMenuTier !== tier" class="chip-tooltip" role="tooltip">{{
+          actionTierTooltip(tier)
+        }}</span>
+      </button>
+      <div v-if="openMenuTier === tier" class="chip-menu" role="menu">
+        <button
+          v-for="item in menuFor(tier)"
+          :key="item.id"
+          type="button"
+          class="chip-menu-item"
+          role="menuitem"
+          :disabled="item.disabled"
+          @click="selectMenuItem(item.id, item.disabled)"
+        >
+          {{ item.label }}
+        </button>
+      </div>
+    </div>
     <span v-if="(hasteStacks ?? 0) > 0" class="chip haste">Haste {{ hasteStacks }}</span>
   </div>
 
@@ -144,6 +214,20 @@ function cancelRestore() {
   justify-content: center;
   font-size: 0.85rem;
   padding: 0.25rem 0.5rem;
+}
+
+.chip-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.chip-row.fill .chip-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.chip-row.fill .chip-wrap .chip-btn {
+  width: 100%;
 }
 
 .chip-btn {
@@ -211,12 +295,18 @@ function cancelRestore() {
   opacity: 0.75;
 }
 
-.chip-btn.clickable:hover:not(:disabled) {
+.chip-btn.clickable:hover:not(:disabled),
+.chip-btn.menuable:hover:not(:disabled) {
   background: var(--color-accent-muted);
 }
 
 .chip-btn.clickable:hover:not(:disabled) .chip-label {
   opacity: 1;
+}
+
+.chip-btn.menuable {
+  cursor: pointer;
+  border-color: var(--color-accent);
 }
 
 .chip-btn:disabled {
@@ -236,6 +326,43 @@ function cancelRestore() {
 .chip.haste {
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+.chip-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  min-width: 9rem;
+  padding: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-popover);
+}
+
+.chip-menu-item {
+  display: block;
+  width: 100%;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.78rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.chip-menu-item:hover:not(:disabled) {
+  background: var(--color-surface-raised);
+}
+
+.chip-menu-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .prompt {
