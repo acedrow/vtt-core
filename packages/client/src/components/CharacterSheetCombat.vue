@@ -26,7 +26,6 @@ const {
   commitHaste,
   restorePlayerActionTier,
   canStartSprint,
-  canResetMovement,
   canTowerTeleport,
   showAssistedLaunch,
   canAssistedLaunch,
@@ -36,7 +35,6 @@ const {
   activePlayer,
   hasEquipmentCharge,
   effectPills,
-  resetMovement,
 } = useCombatActions(() => props.playerId);
 
 const { mode, setMode, clearMode } = useBoardActionMode();
@@ -69,11 +67,6 @@ const assistedLaunchAbility = computed(() =>
 function pillTitle(token: string) {
   const id = token.split(":")[0] ?? token;
   return getEffectSummary(id) ?? token;
-}
-
-function onResetMovement() {
-  clearMode();
-  resetMovement();
 }
 
 function pickSprintMode() {
@@ -120,12 +113,6 @@ function pickShoveMode() {
           Sprint {{ sprintLabel }}
         </span>
         <template v-if="showPlayerActionBar">
-          <SheetActionButton
-            :disabled="!canResetMovement"
-            @click="onResetMovement"
-          >
-            Reset movement
-          </SheetActionButton>
           <SheetActionButton
             :active="mode === 'sprint' || !!sprintLabel"
             :disabled="mode !== 'sprint' && !canStartSprint"
