@@ -244,6 +244,25 @@ export function canPlayerMove(state: GameState, playerId: string): boolean {
   );
 }
 
+export function countDeploymentZoneTiles(state: Pick<GameState, "tiles">): number {
+  let count = 0;
+  for (const tile of state.tiles) {
+    if (tile.deploymentZone) count += 1;
+  }
+  return count;
+}
+
+/** Deployment (or sandbox+deployment) restricts placement when there are more zones than players. */
+export function areDeploymentZonesEnforced(state: GameState): boolean {
+  if (state.roundPhase !== "deployment") return false;
+  return countDeploymentZoneTiles(state) > state.players.length;
+}
+
+export function isAllowedDeploymentDestination(state: GameState, x: number, y: number): boolean {
+  if (!areDeploymentZonesEnforced(state)) return true;
+  return tileAt(state.tiles, x, y)?.deploymentZone === true;
+}
+
 export function shouldHideTaccomMapFromPlayer(state: GameState, hasBoardToken: boolean): boolean {
   if (state.enforceSightlines !== true || hasBoardToken) return false;
   return state.roundPhase === "deployment" || state.roundPhase === "startRoundEffects";
@@ -928,6 +947,8 @@ export function validateMove(
     if (!isOrthogonallyAdjacent({ x: player.x, y: player.y }, { x: toX, y: toY })) {
       return "Must move to an adjacent tile";
     }
+  } else if (!isAllowedDeploymentDestination(state, toX, toY)) {
+    return "Must deploy on a deployment zone";
   }
 
   if (isTileOccupied(state, toX, toY)) return "Tile occupied";
