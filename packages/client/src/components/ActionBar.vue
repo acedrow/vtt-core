@@ -27,7 +27,6 @@ const {
   canUseWeaponActive,
   armorStructured,
   canTowerTeleport,
-  canInteractSeed,
   showAssistedLaunch,
   canAssistedLaunch,
   showAegis,
@@ -106,10 +105,6 @@ const boardObjectLegend = computed(() => {
 
 function useEquipment() {
   sendPlayerAction({ action: "useEquipment" });
-}
-
-function useInteract() {
-  sendPlayerAction({ action: "interact" });
 }
 
 function weaponSwap() {
@@ -246,9 +241,6 @@ function weaponSwap() {
       </button>
       <button type="button" class="action-btn" :disabled="!canUseEquipment" @click="useEquipment">
         Equip
-      </button>
-      <button type="button" class="action-btn" :disabled="!canSupport && !canInteractSeed" @click="useInteract">
-        Use
       </button>
       <button
         type="button"
