@@ -1759,7 +1759,7 @@ const cellStateByKey = computed(() => {
       !enemy &&
       adjacent &&
       showStepMoveHighlights &&
-      (inAegisMode || inSprintMode) &&
+      inAegisMode &&
       me != null &&
       isFlyingStepReachable(s, me, { x: me.x, y: me.y }, c);
     const stepCost = me && stepBase ? movementStepCost(s, me, c.x, c.y) : Infinity;
@@ -1773,11 +1773,11 @@ const cellStateByKey = computed(() => {
       !inAegisMode &&
       (sandbox || (stepCost <= movementRemaining && movementRemaining > 0));
     const showSprintStep = stepBase && inSprintMode && stepCost <= sprintRemaining && sprintRemaining > 0;
-    const aegisUsesSprint = sprintRemaining > 0 && (inSprintMode || inAegisMode);
+    const aegisUsesSprint = sprintRemaining > 0 && inAegisMode;
     const aegisMoveBudget = aegisUsesSprint ? sprintRemaining : movementRemaining;
     const showAegisStep =
       aegisStepBase &&
-      (inAegisMode || inSprintMode) &&
+      inAegisMode &&
       aegisStepCost <= aegisMoveBudget &&
       aegisMoveBudget > 0 &&
       aegisRemaining > 0 &&
@@ -3339,12 +3339,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
     const s = gameState.value;
     const id = yourPlayerId.value;
     if (!s || !id) return true;
-    if (cell?.moveAegis) {
-      gateProvoke(previewSprintProvokes(s, id, x, y, { flying: true }), () => {
-        sendPlayerAction({ action: "sprintMove", x, y, flying: true });
-      });
-      return true;
-    }
     if (!cell?.moveSecondary) return true;
     gateProvoke(previewSprintProvokes(s, id, x, y), () => {
       sendPlayerAction({ action: "sprintMove", x, y });
