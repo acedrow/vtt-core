@@ -9,6 +9,7 @@ import {
   hasSabaothBombSelected,
   isHeavenBurningWeaponName,
   isSabaothWeaponName,
+  ASSISTED_ASCENSION_GEAR,
 } from "@vtt-core/shared";
 import { boardModeForEquipment, sheetFieldForArmor } from "../client-content-pack.js";
 import { sheetTierMenuItems } from "../lib/sheetTierActions.js";
@@ -148,7 +149,7 @@ const tierMenuItems = computed(() => {
       id: "gear",
       label: "Gear",
       tier: "support",
-      include: !!p.gear,
+      include: !!p.gear && p.gear !== ASSISTED_ASCENSION_GEAR,
       disabled: !canSupport.value,
     },
     {

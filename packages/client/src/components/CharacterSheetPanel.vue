@@ -9,7 +9,7 @@ import {
   visibleSheetFields,
 } from "../client-content-pack.js";
 import type { CharacterSheet, PlayerProfile } from "@vtt-core/shared";
-import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, isSabaothWeaponName } from "@vtt-core/shared";
+import { getArmorByName, getClassByName, classGrantsSecondWeapon, classGrantsDualGear, getEquipmentByName, getGearByName, getWeaponByName, getClassMaxHp, getHeavenBurningLevel, getSabaothChargesRemaining, hasSabaothBombSelected, isSabaothWeaponName, ASSISTED_ASCENSION_GEAR } from "@vtt-core/shared";
 import { computed, nextTick, onUnmounted, ref, watch } from "vue";
 
 import AbilityBlock from "./AbilityBlock.vue";
@@ -970,7 +970,11 @@ onUnmounted(() => {
             @start-edit="startGearFieldEdit('gear')"
           >
             <template v-if="showSheetCombatActions && selectedGear && form.gear" #actions>
-              <SheetActionButton :disabled="!canSupport" @click="useGearItem">
+              <SheetActionButton
+                v-if="form.gear !== ASSISTED_ASCENSION_GEAR"
+                :disabled="!canSupport"
+                @click="useGearItem"
+              >
                 Use
                 <template #tooltip>
                   <RuleText :text="selectedGear.effect" />
