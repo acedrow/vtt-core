@@ -57,6 +57,18 @@ describe("GameBoard", () => {
     expect(wrapper.findAll("button.cell").length).toBe(9);
   });
 
+  it("shows deployment zones to the GM before TACCOM starts", async () => {
+    const state = makeTestGameState();
+    state.roundPhase = "taccomNotStarted";
+    state.tiles[4]!.deploymentZone = true;
+    useGameState().setGameState(state, null);
+
+    const wrapper = mount(GameBoard, { props: { role: "gm" } });
+    await flushPromises();
+
+    expect(wrapper.findAll("button.cell")[4]!.classes()).toContain("deployment-zone");
+  });
+
   it("highlights, previews, and sends a full reachable player path", async () => {
     const state = makeTestGameState(4, 3);
     state.roundPhase = "playerTurn";

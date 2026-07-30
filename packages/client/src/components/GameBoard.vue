@@ -1946,7 +1946,11 @@ const cellStateByKey = computed(() => {
         !player &&
         !enemy &&
         (!areDeploymentZonesEnforced(s) || !!tile?.deploymentZone),
-      deploymentZoneHighlight: (isDeployment || sandbox) && !!tile?.deploymentZone,
+      deploymentZoneHighlight:
+        (isDeployment ||
+          sandbox ||
+          (canUseGmTools.value && s.roundPhase === "taccomNotStarted")) &&
+        !!tile?.deploymentZone,
       gmMovable: canUseGmTools.value && gmEnemyMoveTargetKeys.value.has(c.key),
       gmSpawnable:
         canUseGmTools.value &&
