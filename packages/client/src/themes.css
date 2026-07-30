@@ -9,4 +9,8 @@
   --color-board-target-heal-bg: #388bfd22;
   --color-board-target-heal-bg-faint: #388bfd11;
   --color-enemy-piece: hsl(0 70% 45%);
+
+  /* Token pulse glow — overridden inline per Settings > Tokens swatch pickers. */
+  --color-token-pulse-enemy: #ff3b30;
+  --color-token-pulse-player: #3fb950;
 }

@@ -15,6 +15,19 @@ export const ELEVATION_CONTOUR_COLORS = [
 
 export type ElevationContourColor = (typeof ELEVATION_CONTOUR_COLORS)[number];
 
+export const TOKEN_PULSE_COLORS = [
+  "#ff3b30",
+  "#3fb950",
+  "#79c0ff",
+  "#ffa657",
+  "#ffd700",
+  "#d2a8ff",
+  "#ff7b72",
+  "#ffffff",
+] as const;
+
+export type TokenPulseColor = (typeof TOKEN_PULSE_COLORS)[number];
+
 type PlayerSettings = {
   showHealthBars: boolean;
   showTokenBackgrounds: boolean;
@@ -23,6 +36,8 @@ type PlayerSettings = {
   showElevationContours: boolean;
   elevationContourColor: ElevationContourColor;
   legacyFont: boolean;
+  enemyPulseColor: TokenPulseColor;
+  playerPulseColor: TokenPulseColor;
 };
 
 const DEFAULT_SETTINGS: PlayerSettings = {
@@ -33,10 +48,16 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   showElevationContours: true,
   elevationContourColor: "#ffffff",
   legacyFont: false,
+  enemyPulseColor: "#ff3b30",
+  playerPulseColor: "#3fb950",
 };
 
 function isElevationContourColor(value: unknown): value is ElevationContourColor {
   return typeof value === "string" && (ELEVATION_CONTOUR_COLORS as readonly string[]).includes(value);
+}
+
+function isTokenPulseColor(value: unknown): value is TokenPulseColor {
+  return typeof value === "string" && (TOKEN_PULSE_COLORS as readonly string[]).includes(value);
 }
 
 function settingsKey(role: "gm" | "player" | null, playerId: string | null): string | null {
@@ -58,6 +79,12 @@ function parseSettings(raw: string): PlayerSettings {
         ? parsed.elevationContourColor
         : DEFAULT_SETTINGS.elevationContourColor,
       legacyFont: parsed.legacyFont === true,
+      enemyPulseColor: isTokenPulseColor(parsed.enemyPulseColor)
+        ? parsed.enemyPulseColor
+        : DEFAULT_SETTINGS.enemyPulseColor,
+      playerPulseColor: isTokenPulseColor(parsed.playerPulseColor)
+        ? parsed.playerPulseColor
+        : DEFAULT_SETTINGS.playerPulseColor,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -93,6 +120,8 @@ const showLineOfSightIndicator = ref(readSettings(currentKey).showLineOfSightInd
 const showElevationContours = ref(readSettings(currentKey).showElevationContours);
 const elevationContourColor = ref(readSettings(currentKey).elevationContourColor);
 const legacyFont = ref(readSettings(currentKey).legacyFont);
+const enemyPulseColor = ref(readSettings(currentKey).enemyPulseColor);
+const playerPulseColor = ref(readSettings(currentKey).playerPulseColor);
 
 function applyLegacyFont(value: boolean) {
   if (typeof document === "undefined") return;
@@ -103,6 +132,13 @@ function applyLegacyFont(value: boolean) {
   }
 }
 applyLegacyFont(legacyFont.value);
+
+function applyTokenPulseColors(enemy: string, player: string) {
+  if (typeof document === "undefined") return;
+  document.documentElement.style.setProperty("--color-token-pulse-enemy", enemy);
+  document.documentElement.style.setProperty("--color-token-pulse-player", player);
+}
+applyTokenPulseColors(enemyPulseColor.value, playerPulseColor.value);
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -117,6 +153,8 @@ function schedulePersist() {
       showElevationContours: showElevationContours.value,
       elevationContourColor: elevationContourColor.value,
       legacyFont: legacyFont.value,
+      enemyPulseColor: enemyPulseColor.value,
+      playerPulseColor: playerPulseColor.value,
     });
   }, 150);
 }
@@ -130,11 +168,14 @@ watch(
     showElevationContours,
     elevationContourColor,
     legacyFont,
+    enemyPulseColor,
+    playerPulseColor,
   ],
   schedulePersist,
 );
 
 watch(legacyFont, applyLegacyFont);
+watch([enemyPulseColor, playerPulseColor], ([enemy, player]) => applyTokenPulseColors(enemy, player));
 
 watch(
   [role, playerProfile],
@@ -150,6 +191,8 @@ watch(
     showElevationContours.value = next.showElevationContours;
     elevationContourColor.value = next.elevationContourColor;
     legacyFont.value = next.legacyFont;
+    enemyPulseColor.value = next.enemyPulseColor;
+    playerPulseColor.value = next.playerPulseColor;
   },
   { deep: true },
 );
@@ -163,5 +206,7 @@ export function usePlayerSettings() {
     showElevationContours,
     elevationContourColor,
     legacyFont,
+    enemyPulseColor,
+    playerPulseColor,
   };
 }

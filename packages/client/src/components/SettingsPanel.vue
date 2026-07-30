@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 
 import {
   ELEVATION_CONTOUR_COLORS,
+  TOKEN_PULSE_COLORS,
   usePlayerSettings,
 } from "../composables/usePlayerSettings.js";
 import { useGameState } from "../composables/useGameState.js";
@@ -18,6 +19,8 @@ const {
   showElevationContours,
   elevationContourColor,
   legacyFont,
+  enemyPulseColor,
+  playerPulseColor,
 } = usePlayerSettings();
 const { theme, themes } = useTheme();
 const { hasGmCapabilities, role } = useSession();
@@ -125,6 +128,40 @@ function toggleLosSetting() {
             <span class="toggle-thumb" />
           </button>
         </label>
+        <div class="setting-subrow" role="radiogroup" aria-label="Enemy token pulse color">
+          <span class="setting-sublabel">Enemy pulse color</span>
+          <div class="contour-swatches">
+            <button
+              v-for="color in TOKEN_PULSE_COLORS"
+              :key="color"
+              type="button"
+              role="radio"
+              class="contour-swatch"
+              :class="{ active: enemyPulseColor === color }"
+              :aria-checked="enemyPulseColor === color"
+              :aria-label="`Enemy pulse color ${color}`"
+              :style="{ background: color }"
+              @click="enemyPulseColor = color"
+            />
+          </div>
+        </div>
+        <div class="setting-subrow" role="radiogroup" aria-label="Player token pulse color">
+          <span class="setting-sublabel">Player pulse color</span>
+          <div class="contour-swatches">
+            <button
+              v-for="color in TOKEN_PULSE_COLORS"
+              :key="color"
+              type="button"
+              role="radio"
+              class="contour-swatch"
+              :class="{ active: playerPulseColor === color }"
+              :aria-checked="playerPulseColor === color"
+              :aria-label="`Player pulse color ${color}`"
+              :style="{ background: color }"
+              @click="playerPulseColor = color"
+            />
+          </div>
+        </div>
       </section>
 
       <section class="settings-category">
