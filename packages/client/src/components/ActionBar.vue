@@ -321,8 +321,9 @@ function weaponSwap() {
   gap: 0.5rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
+  box-shadow: var(--shadow-emboss-lo);
 }
 
 .action-bar.pending {
@@ -370,7 +371,7 @@ function weaponSwap() {
 .legend-chip {
   font-size: 0.68rem;
   padding: 0.1rem 0.4rem;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   color: var(--color-muted);
 }

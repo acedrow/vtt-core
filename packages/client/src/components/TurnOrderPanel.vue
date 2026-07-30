@@ -212,7 +212,7 @@ function sendGmAction(action: PhaseAction) {
 
 .control-btn {
   border: 1px solid var(--color-accent-muted);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-accent-subtle-bg);
   color: var(--color-accent-bright);
   padding: 0.35rem 0.65rem;
@@ -273,7 +273,7 @@ function sendGmAction(action: PhaseAction) {
 
 .turn-item {
   padding: 0.35rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 3px;
   font-size: 0.9rem;
   color: var(--color-text);
 }

@@ -1161,7 +1161,7 @@ onUnmounted(() => {
   width: 88px;
   height: 88px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   overflow: hidden;
   background: var(--color-surface);
   display: grid;
@@ -1194,7 +1194,7 @@ onUnmounted(() => {
   place-items: center;
   width: 1.65rem;
   height: 1.65rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg-translucent);
   color: var(--color-text);
@@ -1300,7 +1300,7 @@ onUnmounted(() => {
   width: 1.4rem;
   height: 1.4rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
@@ -1320,7 +1320,7 @@ onUnmounted(() => {
 
 .cta {
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0.45rem 0.75rem;

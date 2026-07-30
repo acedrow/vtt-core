@@ -5310,7 +5310,7 @@ onUnmounted(() => {
   transform: translateX(-50%);
   z-index: 2;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-bg-board);
   color: var(--color-text);
   padding: 0.35rem 0.75rem;
@@ -5477,7 +5477,7 @@ onUnmounted(() => {
 }
 
 .enemy-move-overlay.fortification-overlay {
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .enemy-move-overlay .portrait-img {
@@ -5489,7 +5489,7 @@ onUnmounted(() => {
 }
 
 .enemy-move-overlay.fortification-overlay .portrait-img {
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .teleport-overlay.pending,

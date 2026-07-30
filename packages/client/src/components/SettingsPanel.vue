@@ -278,7 +278,7 @@ function toggleLosSetting() {
 .contour-swatch {
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--color-border-strong);
   padding: 0;
   cursor: pointer;
@@ -345,7 +345,7 @@ function toggleLosSetting() {
   gap: 0.75rem;
   width: 100%;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0.55rem 0.65rem;
@@ -369,7 +369,7 @@ function toggleLosSetting() {
   overflow: hidden;
   width: 2.75rem;
   height: 1.25rem;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
 }
 
@@ -385,7 +385,7 @@ function toggleLosSetting() {
 .manage-players-btn {
   width: 100%;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0.55rem 0.65rem;

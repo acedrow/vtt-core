@@ -208,7 +208,7 @@ watch(pendingClassReaction, (r) => {
 .class-reaction-banner {
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--color-accent);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
   display: flex;
   flex-direction: column;

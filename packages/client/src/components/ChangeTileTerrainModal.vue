@@ -112,7 +112,7 @@ function apply() {
   max-height: 280px;
   overflow-y: auto;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   padding: 0.35rem;
 }
 
@@ -123,7 +123,7 @@ function apply() {
   width: 100%;
   padding: 0.35rem 0.5rem;
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-text);
   cursor: pointer;

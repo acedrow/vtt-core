@@ -242,7 +242,7 @@ function runAttack() {
   gap: 0.5rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
 }
 
@@ -270,7 +270,7 @@ function runAttack() {
   max-width: 10rem;
   padding: 0.25rem 0.4rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-bg);
   color: inherit;
   font: inherit;
@@ -279,7 +279,7 @@ function runAttack() {
 .action-btn {
   padding: 0.3rem 0.65rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-bg);
   color: inherit;
   font: inherit;

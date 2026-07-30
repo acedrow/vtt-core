@@ -244,9 +244,10 @@ function joinAsSelectedPlayer() {
   max-width: 420px;
   padding: 2rem 1.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 3px;
   background: var(--color-surface);
   text-align: center;
+  box-shadow: var(--shadow-emboss-lo);
 }
 
 .title {
@@ -317,7 +318,7 @@ function joinAsSelectedPlayer() {
 }
 .cta {
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0.65rem 1rem;

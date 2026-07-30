@@ -60,7 +60,7 @@ const parsed = computed(() => {
 .ability-block {
   margin-top: 0.5rem;
   padding: 0.55rem 0.65rem;
-  border-radius: 8px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   line-height: 1.45;

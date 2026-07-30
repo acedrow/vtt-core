@@ -1120,11 +1120,11 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 }
 
 .piece.enemy.fortification-piece {
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .piece.enemy.fortification-piece .portrait-img {
-  border-radius: 4px;
+  border-radius: 3px;
   clip-path: none;
 }
 
@@ -1186,7 +1186,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 
 .tower-piece {
   border: 2px solid var(--color-accent);
-  border-radius: 5px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
 }
 

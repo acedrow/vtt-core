@@ -108,7 +108,7 @@ watch(
 .sheet-action-btn {
   font-size: 0.72rem;
   padding: 0.2rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-surface-raised);
   color: var(--color-text);
@@ -138,7 +138,7 @@ watch(
   z-index: 1000;
   min-width: 9rem;
   padding: 0.55rem 0.65rem;
-  border-radius: 8px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);

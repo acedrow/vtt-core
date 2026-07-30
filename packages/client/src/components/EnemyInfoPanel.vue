@@ -343,7 +343,7 @@ function spawnUnit() {
   aspect-ratio: 1;
   margin: 0 auto 1rem;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
 }
 
@@ -415,7 +415,7 @@ function spawnUnit() {
   margin-top: 0.4rem;
   font-size: 0.75rem;
   padding: 0.25rem 0.55rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-accent-muted);
   background: var(--color-accent-subtle-bg);
   color: var(--color-accent);
@@ -464,7 +464,7 @@ function spawnUnit() {
 .spawn-btn {
   align-self: flex-start;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
   color: var(--color-text);
   font-family: inherit;
