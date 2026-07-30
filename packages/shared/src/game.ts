@@ -916,15 +916,17 @@ function isOccupied(state: GameState, x: number, y: number, occupancy?: BoardOcc
 
 export function findSpawn(state: GameState): { x: number; y: number } | null {
   const occupancy = buildBoardOccupancy(state);
+  let fallback: { x: number; y: number } | null = null;
   for (let y = 1; y < state.height - 1; y++) {
     for (let x = 1; x < state.width - 1; x++) {
       const tile = tileAt(state.tiles, x, y);
       if (!isWalkable(tile)) continue;
       if (isOccupied(state, x, y, occupancy)) continue;
-      return { x, y };
+      if (tile?.deploymentZone) return { x, y };
+      if (!fallback) fallback = { x, y };
     }
   }
-  return null;
+  return fallback;
 }
 
 export function validateMove(

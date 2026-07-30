@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   areDeploymentZonesEnforced,
+  findSpawn,
   validateMove,
 } from "./game.js";
 import { addTestPlayer, makeGameState } from "./test/fixtures.js";
@@ -33,5 +34,18 @@ describe("deployment zone placement", () => {
     tileAt(state.tiles, 3, 2)!.deploymentZone = true;
     expect(areDeploymentZonesEnforced(state)).toBe(false);
     expect(validateMove(state, "p1", 3, 2)).toBeNull();
+  });
+
+  it("findSpawn prefers deployment zone tiles when present", () => {
+    const state = makeGameState({ roundPhase: "deployment" });
+    tileAt(state.tiles, 4, 4)!.deploymentZone = true;
+    const spawn = findSpawn(state);
+    expect(spawn).toEqual({ x: 4, y: 4 });
+  });
+
+  it("findSpawn falls back when no deployment zones exist", () => {
+    const state = makeGameState({ roundPhase: "deployment" });
+    const spawn = findSpawn(state);
+    expect(spawn).toEqual({ x: 1, y: 1 });
   });
 });
