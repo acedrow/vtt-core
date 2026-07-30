@@ -4903,7 +4903,11 @@ onUnmounted(() => {
                   <path d="M0,0 L5,2.5 L0,5 Z" />
                 </marker>
               </defs>
-              <polyline :points="movementPreview.points" marker-end="url(#movement-path-arrow)" />
+              <polyline
+                :points="movementPreview.points"
+                marker-end="url(#movement-path-arrow)"
+                vector-effect="non-scaling-stroke"
+              />
             </svg>
             <BoardCell
                 v-for="row in boardCellRows"
