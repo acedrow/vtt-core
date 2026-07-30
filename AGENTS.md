@@ -95,7 +95,7 @@ flowchart LR
   inProgress[in-progress]
   done[done]
   backlog -->|"start ticket"| inProgress
-  inProgress -->|"verify green"| done
+  inProgress -->|"verify green + Resolution"| done
   done -->|"VTT-n: commit / push"| git[git]
 ```
 
@@ -108,8 +108,9 @@ flowchart LR
   1. Read the card (`npm run kan -- card VTT-n`); update the description if scope, clarifications, or testing notes change.
   2. Move **backlog → in-progress** when starting implementation.
   3. Implement + run verification (`build`, `test`, `lint`, `test:e2e`).
-  4. Move **in-progress → done** after verification passes.
-  5. Commit (with `VTT-n:` prefix) and push / open a PR when the user asked (do **not** commit/push/PR unless asked).
+  4. Add a **Resolution** section to the card description before marking done — what the issue was (symptom / root cause) and what was fixed (concrete changes). Use `npm run kan -- set-description VTT-n --file …` when editing a long description.
+  5. Move **in-progress → done** after verification passes and the Resolution section is written.
+  6. Commit (with `VTT-n:` prefix) and push / open a PR when the user asked (do **not** commit/push/PR unless asked).
 
 ### Ticket authoring rules
 
@@ -118,6 +119,17 @@ When creating or updating cards (API or UI):
 - Concise **title** + **description** of the work.
 - Keep the description current (changes, clarifications).
 - Description must include a **Testing** section: new/updated tests that guard the fix or support the feature (see [ADR 006](docs/adr/006-testing-strategy.md) — engine Vitest vs content repo).
+- On completion, description must include a **Resolution** section: what the issue was (symptom / root cause) and what was fixed (concrete changes). Add this before moving the card to **done** — not at ticket creation.
+
+  Example:
+
+  ```markdown
+  ## Resolution
+
+  **Issue:** Token animation snapped to the destination cell instead of sliding.
+
+  **Fix:** BoardCell transition now keys off move id so Vue reuses the animating element across state updates.
+  ```
 - **MTWI titles:** `[Slug] Specific subtask title` (e.g. `[Engine Peel] Data panel config`).
 - **MTWI descriptions:** include **`Branch: <branch-name>`** — same branch name on all tickets in that MTWI.
 
