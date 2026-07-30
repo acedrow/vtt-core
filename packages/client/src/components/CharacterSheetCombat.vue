@@ -45,6 +45,7 @@ const {
   canUseAegis,
   aegisLabel,
   activePlayer,
+  playerMovePending,
   hasEquipmentCharge,
   hasWeaponAttack,
   canUseWeaponActive,
@@ -244,7 +245,13 @@ function onSelectMenuItem(id: string) {
 
 <template>
   <div v-if="activePlayer && (showSheetCombatPanel || pills.length)" class="sheet-combat-wrap">
-    <div v-if="showSheetCombatPanel" class="sheet-combat">
+    <div
+      v-if="showSheetCombatPanel"
+      class="sheet-combat"
+      :class="{ pending: playerMovePending }"
+      :inert="playerMovePending || undefined"
+      :aria-disabled="playerMovePending"
+    >
       <div class="budget-row">
         <ActionBudgetChips
           fill
@@ -373,6 +380,10 @@ function onSelectMenuItem(id: string) {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+}
+
+.sheet-combat.pending {
+  opacity: 0.55;
 }
 
 .budget-row {

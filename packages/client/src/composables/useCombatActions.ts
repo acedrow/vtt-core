@@ -5,10 +5,12 @@ import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 
 import { useGameState } from "./useGameState.js";
 import { useSession } from "./useSession.js";
+import { usePendingTokenMoves } from "./useTokenMoveAnimations.js";
 
 export function useCombatActions(playerId?: () => string | null) {
   const { gameState, yourPlayerId, send } = useGameState();
   const { isGm, hasGmCapabilities } = useSession();
+  const { optimisticPlayerIds } = usePendingTokenMoves();
 
   const activePlayerId = computed(() => playerId?.() ?? yourPlayerId.value);
 
@@ -17,6 +19,10 @@ export function useCombatActions(playerId?: () => string | null) {
     const s = gameState.value;
     if (!id || !s) return null;
     return s.players.find((p) => p.id === id) ?? null;
+  });
+  const playerMovePending = computed(() => {
+    const id = activePlayerId.value;
+    return !!id && optimisticPlayerIds.value.has(id);
   });
 
   const sandboxMode = computed(() => gameState.value?.sandboxMode === true);
@@ -49,6 +55,7 @@ export function useCombatActions(playerId?: () => string | null) {
     () =>
       hasGmCapabilities.value &&
       !sandboxMode.value &&
+      !playerMovePending.value &&
       !!activePlayerId.value &&
       !showPlayerActionBar.value,
   );
@@ -73,11 +80,13 @@ export function useCombatActions(playerId?: () => string | null) {
   });
 
   const canMain = computed(() => {
+    if (playerMovePending.value) return false;
     if (sandboxMode.value) return true;
     const p = activePlayer.value;
     return !!p && canUseActionTier(p, "main");
   });
   const canSupport = computed(() => {
+    if (playerMovePending.value) return false;
     if (sandboxMode.value) return true;
     const p = activePlayer.value;
     return !!p && canUseActionTier(p, "support");
@@ -89,6 +98,7 @@ export function useCombatActions(playerId?: () => string | null) {
   });
   const canUseEquipment = computed(() => canSupport.value && hasEquipmentCharge.value);
   const canAux = computed(() => {
+    if (playerMovePending.value) return false;
     if (sandboxMode.value) return true;
     const p = activePlayer.value;
     return !!p && canUseActionTier(p, "aux");
@@ -307,19 +317,22 @@ export function useCombatActions(playerId?: () => string | null) {
 
   function restorePlayerActionTier(tier: ActionTier) {
     const id = activePlayerId.value;
-    if (!id) return;
+    if (!id || playerMovePending.value) return;
     send({ type: "restorePlayerActionTier", playerId: id, tier });
   }
 
   function sendPlayerAction(action: import("@vtt-core/shared").PlayerAction) {
+    if (playerMovePending.value) return;
     send({ type: "playerAction", action });
   }
 
   function resetMovement() {
+    if (playerMovePending.value) return;
     send({ type: "resetMovement" });
   }
 
   function sendMovePath(path: { x: number; y: number }[], flying?: boolean) {
+    if (playerMovePending.value) return;
     send({ type: "movePath", path, ...(flying ? { flying: true } : {}) });
   }
 
@@ -356,6 +369,7 @@ export function useCombatActions(playerId?: () => string | null) {
     gameState,
     activePlayer,
     activePlayerId,
+    playerMovePending,
     sandboxMode,
     isPlayerTurn,
     combatUiUnlocked,

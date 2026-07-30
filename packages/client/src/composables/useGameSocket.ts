@@ -25,7 +25,7 @@ export function useGameSocket(opts: {
   onError: (message: string) => void;
   onSelectionInvalidated?: (state: ServerMessage & { type: "state" }) => void;
 }) {
-  const { connection } = useGameConnection();
+  const { connection, reportServerError } = useGameConnection();
   const { setGameState, registerSend, clearGameState } = useGameState();
   const { token, clearSession } = useSession();
   let socket: WebSocket | null = null;
@@ -110,6 +110,7 @@ export function useGameSocket(opts: {
       } else if (msg.type === "mapPing") {
         applyRemoteMapPing(msg);
       } else if (msg.type === "error") {
+        reportServerError();
         opts.onError(msg.message);
         if (msg.message === "Authentication required") {
           intentionalClose = true;
