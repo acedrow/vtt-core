@@ -58,7 +58,6 @@ export type PersistedGmTools = {
   paintbrushEnableTerrain: boolean;
   paintbrushEnableEffect: boolean;
   paintbrushEnableDeploymentZone: boolean;
-  paintbrushDeploymentZone: boolean;
   paintbrushEnableName: boolean;
   paintbrushEnableColor: boolean;
   paintbrushEnableAppearance: boolean;
@@ -129,7 +128,6 @@ export const DEFAULT_GM_TOOLS: PersistedGmTools = {
   paintbrushEnableTerrain: true,
   paintbrushEnableEffect: true,
   paintbrushEnableDeploymentZone: false,
-  paintbrushDeploymentZone: true,
   paintbrushEnableName: true,
   paintbrushEnableColor: true,
   paintbrushEnableAppearance: true,
@@ -318,7 +316,6 @@ export function parsePersistedGmTools(raw: unknown): PersistedGmTools {
     paintbrushEnableTerrain: g.paintbrushEnableTerrain !== false,
     paintbrushEnableEffect: g.paintbrushEnableEffect !== false,
     paintbrushEnableDeploymentZone: g.paintbrushEnableDeploymentZone === true,
-    paintbrushDeploymentZone: g.paintbrushDeploymentZone !== false,
     paintbrushEnableName: g.paintbrushEnableName !== false,
     paintbrushEnableColor: g.paintbrushEnableColor !== false,
     paintbrushEnableAppearance: g.paintbrushEnableAppearance !== false,
