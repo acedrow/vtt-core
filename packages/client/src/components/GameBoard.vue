@@ -1849,7 +1849,6 @@ const cellStateByKey = computed(() => {
         isWalkable(tile) &&
         !player &&
         !enemy &&
-        (!playerFogActive.value || !outOfLineOfSightKeys.value.has(ck)) &&
         (!areDeploymentZonesEnforced(s) || !!tile?.deploymentZone),
       deploymentZoneHighlight: (isDeployment || sandbox) && !!tile?.deploymentZone,
       gmMovable: canUseGmTools.value && gmEnemyMoveTargetKeys.value.has(c.key),
