@@ -18,6 +18,7 @@ export type TokenMoveAnimation = {
   acknowledged: boolean;
   pending: boolean;
   path?: { x: number; y: number }[];
+  expectIntermediateStates?: boolean;
 };
 
 type PrevPos = { x: number; y: number; kind: TokenMoveKind };
@@ -167,6 +168,7 @@ export function useTokenMoveAnimations(
     from: { x: number; y: number },
     to: { x: number; y: number },
     path?: { x: number; y: number }[],
+    expectIntermediateStates = false,
   ): boolean {
     const existing = active.value.get(id);
     if (existing?.optimistic && !existing.acknowledged) return false;
@@ -183,6 +185,7 @@ export function useTokenMoveAnimations(
       acknowledged: false,
       pending: false,
       path,
+      expectIntermediateStates,
     });
     optimisticTimeouts.set(
       id,
@@ -202,8 +205,9 @@ export function useTokenMoveAnimations(
     from: { x: number; y: number },
     to: { x: number; y: number },
     path?: { x: number; y: number }[],
+    expectIntermediateStates = false,
   ) {
-    return startOptimisticMove("enemy", enemyId, from, to, path);
+    return startOptimisticMove("enemy", enemyId, from, to, path, expectIntermediateStates);
   }
 
   function startOptimisticPlayerMove(
@@ -211,8 +215,9 @@ export function useTokenMoveAnimations(
     from: { x: number; y: number },
     to: { x: number; y: number },
     path?: { x: number; y: number }[],
+    expectIntermediateStates = false,
   ) {
-    return startOptimisticMove("player", playerId, from, to, path);
+    return startOptimisticMove("player", playerId, from, to, path, expectIntermediateStates);
   }
 
   function finishMove(id: string) {
@@ -242,13 +247,13 @@ export function useTokenMoveAnimations(
       else upsert({ ...move, acknowledged: true });
       return true;
     }
-    const isExpectedIntermediate = move.path?.some(
+    const isExpectedIntermediate = move.path?.slice(0, -1).some(
       (step) => step.x === position.x && step.y === position.y,
     );
     if (
       prev &&
       (prev.x !== position.x || prev.y !== position.y) &&
-      !isExpectedIntermediate
+      !(isExpectedIntermediate && move.expectIntermediateStates)
     ) {
       remove(id);
       onOptimisticFailure?.("Server corrected token position");

@@ -225,6 +225,47 @@ describe("useTokenMoveAnimations", () => {
     expect(onFailure).toHaveBeenCalledWith("Server corrected token position");
   });
 
+  it("treats a movePath interruption at an intermediate tile as a correction", async () => {
+    const onFailure = vi.fn();
+    const gameState = ref<GameState | null>(
+      makeState({ players: [player("p1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activePlayerMoves, startOptimisticPlayerMove } =
+      useTokenMoveAnimations(gameState, boardKey, onFailure);
+    await nextTick();
+
+    const path = [{ x: 1, y: 0 }, { x: 2, y: 0 }];
+    startOptimisticPlayerMove("p1", { x: 0, y: 0 }, { x: 2, y: 0 }, path);
+    gameState.value = makeState({ players: [player("p1", 1, 0)] });
+    await nextTick();
+
+    expect(activePlayerMoves.value).toHaveLength(0);
+    expect(onFailure).toHaveBeenCalledWith("Server corrected token position");
+  });
+
+  it("waits through expected intermediate sprint acknowledgements", async () => {
+    const gameState = ref<GameState | null>(
+      makeState({ players: [player("p1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activePlayerMoves, startOptimisticPlayerMove, finishMove } =
+      useTokenMoveAnimations(gameState, boardKey);
+    await nextTick();
+
+    const path = [{ x: 1, y: 0 }, { x: 2, y: 0 }];
+    startOptimisticPlayerMove("p1", { x: 0, y: 0 }, { x: 2, y: 0 }, path, true);
+    gameState.value = makeState({ players: [player("p1", 1, 0)] });
+    await nextTick();
+    expect(activePlayerMoves.value).toHaveLength(1);
+
+    gameState.value = makeState({ players: [player("p1", 2, 0)] });
+    await nextTick();
+    expect(activePlayerMoves.value[0]).toMatchObject({ acknowledged: true });
+    finishMove("p1");
+    expect(activePlayerMoves.value).toHaveLength(0);
+  });
+
   it("clears optimistic locks on server errors and disconnects", async () => {
     const gameState = ref<GameState | null>(
       makeState({ enemies: [enemy("e1", 0, 0)] }),

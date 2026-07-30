@@ -2887,7 +2887,7 @@ function sendSprintPath(path: { x: number; y: number }[], flying?: boolean) {
   for (const step of path) {
     sendPlayerActionRaw({ action: "sprintMove", x: step.x, y: step.y, ...(flying ? { flying: true } : {}) });
   }
-  startOptimisticPlayerMove(me.id, me, destination, path);
+  startOptimisticPlayerMove(me.id, me, destination, path, true);
 }
 
 function canDragDeploy(player: Player): boolean {
