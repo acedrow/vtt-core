@@ -2171,11 +2171,28 @@ const tooltipData = computed(() => {
         const solo =
           isSoloSwarmMemberSelected.value && selectedEnemyId.value === anchor.id;
         const memberHp = getCombatBoardHelpers().getSwarmMemberHp(group.currentHp, group.size);
+        const obscureCount =
+          playerFogActive.value &&
+          group.memberIds.some((id) => {
+            const member = s.enemies.find((e) => e.id === id);
+            if (!member) return true;
+            return outOfLineOfSightKeys.value.has(coordKey(member.x, member.y));
+          });
+        const swarmLabel = obscureCount
+          ? `${baseName} (swarm - ?)`
+          : solo
+            ? `${baseName} (Swarm member)`
+            : `${baseName} (Swarm · ${group.size})`;
         return {
           ...anchor,
-          displayName: solo ? `${baseName} (Swarm member)` : `${baseName} (Swarm · ${group.size})`,
-          displayHp: showHp ? (solo ? memberHp : group.currentHp) : null,
-          displayMaxHp: showHp ? (solo ? getCombatBoardHelpers().getSwarmMaxHp(1) : group.maxHp) : null,
+          displayName: swarmLabel,
+          displayHp: showHp && !obscureCount ? (solo ? memberHp : group.currentHp) : null,
+          displayMaxHp:
+            showHp && !obscureCount
+              ? solo
+                ? getCombatBoardHelpers().getSwarmMaxHp(1)
+                : group.maxHp
+              : null,
         };
       }
       return {
