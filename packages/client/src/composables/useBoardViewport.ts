@@ -28,6 +28,7 @@ export function useBoardViewport(
   isReady: Ref<boolean>,
   viewportKey: Ref<string | null>,
   topInsetPx: Ref<number> = ref(0),
+  bottomInsetPx: Ref<number> = ref(0),
   options: BoardViewportOptions = {},
 ) {
   const lockedFit = options.interaction === "lockedFit";
@@ -81,7 +82,7 @@ export function useBoardViewport(
   function computeFitTransform(vw: number, vh: number) {
     const { w, h } = getContentSize();
     const inset = topInsetPx.value;
-    const availH = Math.max(1, vh - inset);
+    const availH = Math.max(1, vh - inset - bottomInsetPx.value);
     const s = Math.min(vw / w, availH / h);
     return { scale: s, panX: (vw - w * s) / 2, panY: inset + (availH - h * s) / 2 };
   }
@@ -160,12 +161,15 @@ export function useBoardViewport(
     updateFitState();
     const maxS = fitScale.value * ZOOM_MAX_FACTOR;
     const availW = Math.max(1, size.vw - padding * 2);
-    const availH = Math.max(1, size.vh - topInsetPx.value - padding * 2);
+    const availH = Math.max(1, size.vh - topInsetPx.value - bottomInsetPx.value - padding * 2);
     const nextScale = Math.min(maxS, Math.min(availW / contentW, availH / contentH));
     const cx = contentX + contentW / 2;
     const cy = contentY + contentH / 2;
     let nextPanX = size.vw / 2 - cx * nextScale;
-    let nextPanY = topInsetPx.value + (size.vh - topInsetPx.value) / 2 - cy * nextScale;
+    let nextPanY =
+      topInsetPx.value +
+      (size.vh - topInsetPx.value - bottomInsetPx.value) / 2 -
+      cy * nextScale;
     const { w, h } = getContentSize();
     nextPanX = clampPanAxis(nextPanX, w * nextScale, el.clientWidth);
     nextPanY = clampPanAxis(nextPanY, h * nextScale, el.clientHeight);
@@ -181,7 +185,8 @@ export function useBoardViewport(
     const cx = contentX + contentW / 2;
     const cy = contentY + contentH / 2;
     let nextPanX = size.vw / 2 - cx * s;
-    let nextPanY = topInsetPx.value + (size.vh - topInsetPx.value) / 2 - cy * s;
+    let nextPanY =
+      topInsetPx.value + (size.vh - topInsetPx.value - bottomInsetPx.value) / 2 - cy * s;
     const { w, h } = getContentSize();
     nextPanX = clampPanAxis(nextPanX, w * s, el.clientWidth);
     nextPanY = clampPanAxis(nextPanY, h * s, el.clientHeight);
@@ -328,7 +333,7 @@ export function useBoardViewport(
     { immediate: true },
   );
 
-  watch(topInsetPx, () => {
+  watch([topInsetPx, bottomInsetPx], () => {
     if (lockedFit) {
       fitToView();
       return;

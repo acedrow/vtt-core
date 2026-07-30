@@ -69,6 +69,7 @@ const { stageStyle, observeViewport, disconnect: disconnectViewport } = useBoard
   isReady,
   boardKey,
   ref(0),
+  ref(0),
   { interaction: "lockedFit" },
 );
 

@@ -71,6 +71,7 @@ useGmTools();
 const { remotePingOnTaccom, remotePingOnOverworld } = useMapPing();
 
 const boardOverlaysEl = ref<HTMLElement | null>(null);
+const boardActionBarDockEl = ref<HTMLElement | null>(null);
 
 const showTaccomPingBadge = computed(
   () => remotePingOnTaccom.value && activeMainTab.value !== "taccom",
@@ -403,10 +404,13 @@ function selectMainTab(tab: MainSectionTab) {
             :gm-capabilities="hasGmCapabilities"
             :player-profile="playerProfile"
             :overlay-el="boardOverlaysEl"
+            :bottom-overlay-el="boardActionBarDockEl"
           />
           <div ref="boardOverlaysEl" class="board-overlays">
             <component :is="combatBoard.overlays" v-if="combatBoard.overlays" />
             <ClassReactionPrompt />
+          </div>
+          <div ref="boardActionBarDockEl" class="board-action-bar-dock">
             <ActionBar />
             <GmActionBar />
           </div>
@@ -636,6 +640,23 @@ function selectMainTab(tab: MainSectionTab) {
 }
 
 .board-overlays > * {
+  pointer-events: auto;
+}
+
+.board-action-bar-dock {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.75rem 0.75rem;
+  pointer-events: none;
+}
+
+.board-action-bar-dock > * {
   pointer-events: auto;
 }
 </style>
