@@ -7,6 +7,7 @@ import {
   canPlayerMove,
   isSandboxMode,
   occupancyBlockedByEnemy,
+  validateEnemyFootprint,
   type BoardOccupancy,
 } from "../game.js";
 import { playerLabel } from "../console.js";
@@ -36,6 +37,16 @@ export type TerrainStepCostOpts = {
 };
 
 export type MovementStep = { x: number; y: number; cost: number };
+export type MovementPathResult = { path: BoardCoord[]; cost: number };
+export type PlayerMovementPathOptions = {
+  budget?: number;
+  flying?: boolean;
+  maxSteps?: number;
+};
+export type EnemyMovementPathOptions = {
+  budget?: number;
+  swarm?: boolean;
+};
 
 export const MALAKBEL_ARMOR_NAME = "MALAKBEL";
 
@@ -73,6 +84,43 @@ function movementStepDeltas(player: Player): [number, number][] {
   return playerAllowsDiagonalMovement(player)
     ? [...ORTHOGONAL_DELTAS, ...DIAGONAL_DELTAS]
     : ORTHOGONAL_DELTAS;
+}
+
+function reachableMovementPaths(
+  origin: BoardCoord,
+  deltas: [number, number][],
+  budget: number,
+  maxSteps: number,
+  canEnter: (from: BoardCoord, to: BoardCoord) => boolean,
+  stepCost: (from: BoardCoord, to: BoardCoord) => number,
+): Map<string, MovementPathResult> {
+  const reachable = new Map<string, MovementPathResult>();
+  const queue: { coord: BoardCoord; path: BoardCoord[]; cost: number }[] = [
+    { coord: origin, path: [], cost: 0 },
+  ];
+  const best = new Map<string, number>([[coordKey(origin.x, origin.y), 0]]);
+
+  while (queue.length > 0) {
+    queue.sort((a, b) => a.cost - b.cost);
+    const current = queue.shift()!;
+    if (current.cost !== best.get(coordKey(current.coord.x, current.coord.y))) continue;
+    if (current.path.length >= maxSteps) continue;
+
+    for (const [dx, dy] of deltas) {
+      const to = { x: current.coord.x + dx, y: current.coord.y + dy };
+      if (!canEnter(current.coord, to)) continue;
+      const cost = current.cost + stepCost(current.coord, to);
+      if (cost > budget) continue;
+      const key = coordKey(to.x, to.y);
+      if (cost >= (best.get(key) ?? Infinity)) continue;
+      const path = [...current.path, to];
+      best.set(key, cost);
+      reachable.set(key, { path, cost });
+      queue.push({ coord: to, path, cost });
+    }
+  }
+
+  return reachable;
 }
 
 function terrainMoveCost(
@@ -180,34 +228,84 @@ export function findPlayerMovementPath(
   playerId: string,
   dest: BoardCoord,
 ): BoardCoord[] | null {
+  return findPlayerMovementPathWithCost(state, playerId, dest)?.path ?? null;
+}
+
+export function playerMovementReachability(
+  state: GameState,
+  playerId: string,
+  opts: PlayerMovementPathOptions = {},
+): Map<string, MovementPathResult> {
   const player = state.players.find((p) => p.id === playerId);
-  if (!player) return null;
-  if (player.x === dest.x && player.y === dest.y) return [];
+  if (!player) return new Map();
+  if ((player.effects?.Pin ?? 0) > 0 || isUnitFalling(player)) return new Map();
+  if (runMovementBlockReason(state, player)) return new Map();
 
   const occupancy = buildBoardOccupancy(state);
-  const queue: { x: number; y: number; path: BoardCoord[] }[] = [
-    { x: player.x, y: player.y, path: [] },
-  ];
-  const visited = new Set<string>([coordKey(player.x, player.y)]);
+  const flying = opts.flying === true;
+  return reachableMovementPaths(
+    player,
+    movementStepDeltas(player),
+    opts.budget ?? Infinity,
+    opts.maxSteps ?? Infinity,
+    (_from, to) => {
+      if (!isInBounds(to.x, to.y, state.width, state.height)) return false;
+      const key = coordKey(to.x, to.y);
+      const otherPlayer = occupancy.playerByKey.get(key);
+      if (otherPlayer && otherPlayer.id !== player.id) return false;
+      if (occupancyBlockedByEnemy(occupancy, to.x, to.y)) return false;
+      return flying || isWalkable(tileAt(state.tiles, to.x, to.y));
+    },
+    (from, to) => stepMoveCost(state, player, from, to, flying),
+  );
+}
 
-  while (queue.length > 0) {
-    const { x, y, path } = queue.shift()!;
-    for (const [dx, dy] of movementStepDeltas(player)) {
-      const nx = x + dx;
-      const ny = y + dy;
-      const key = coordKey(nx, ny);
-      if (visited.has(key)) continue;
-      if (!isInBounds(nx, ny, state.width, state.height)) continue;
-      if (!isWalkable(tileAt(state.tiles, nx, ny))) continue;
-      if (occupancy.playerByKey.has(key)) continue;
-      if (occupancyBlockedByEnemy(occupancy, nx, ny)) continue;
-      visited.add(key);
-      const nextPath = [...path, { x: nx, y: ny }];
-      if (nx === dest.x && ny === dest.y) return nextPath;
-      queue.push({ x: nx, y: ny, path: nextPath });
-    }
-  }
-  return null;
+export function findPlayerMovementPathWithCost(
+  state: GameState,
+  playerId: string,
+  dest: BoardCoord,
+  opts: PlayerMovementPathOptions = {},
+): MovementPathResult | null {
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return null;
+  if (player.x === dest.x && player.y === dest.y) return { path: [], cost: 0 };
+  return playerMovementReachability(state, playerId, opts).get(coordKey(dest.x, dest.y)) ?? null;
+}
+
+export function enemyMovementReachability(
+  state: GameState,
+  enemyId: string,
+  opts: EnemyMovementPathOptions = {},
+): Map<string, MovementPathResult> {
+  const enemy = state.enemies.find((e) => e.id === enemyId);
+  if (!enemy || runMovementBlockReason(state, enemy)) return new Map();
+  const occupancy = buildBoardOccupancy(state);
+  const scale = getEnemyScale(enemy);
+  return reachableMovementPaths(
+    enemy,
+    ORTHOGONAL_DELTAS,
+    opts.budget ?? Infinity,
+    Infinity,
+    (_from, to) =>
+      isInBounds(to.x, to.y, state.width, state.height) &&
+      validateEnemyFootprint(state, to.x, to.y, scale, enemyId, occupancy, enemy) === null,
+    (from, to) =>
+      enemyMoveStepCost(state, enemy, from.x, from.y, to.x, to.y, {
+        swarm: opts.swarm,
+      }),
+  );
+}
+
+export function findEnemyMovementPathWithCost(
+  state: GameState,
+  enemyId: string,
+  dest: BoardCoord,
+  opts: EnemyMovementPathOptions = {},
+): MovementPathResult | null {
+  const enemy = state.enemies.find((e) => e.id === enemyId);
+  if (!enemy) return null;
+  if (enemy.x === dest.x && enemy.y === dest.y) return { path: [], cost: 0 };
+  return enemyMovementReachability(state, enemyId, opts).get(coordKey(dest.x, dest.y)) ?? null;
 }
 
 export function normalizeMovementPath(
