@@ -69,9 +69,8 @@ export function useDamageIndicators(gameState: Ref<GameState | null>) {
             const swarmKey = group.canonicalId;
             if (seenSwarmKeys.has(swarmKey)) continue;
             seenSwarmKeys.add(swarmKey);
-            const displayId = getCombatBoardHelpers().swarmCanonicalDisplayId(state, group.memberIds);
-            const anchor = state.enemies.find((e) => e.id === displayId);
-            if (anchor) addIndicator(anchor.x, anchor.y, delta);
+            // Use the damaged member's tile, not the swarm canonical display.
+            addIndicator(cur.x, cur.y, delta);
             continue;
           }
         }

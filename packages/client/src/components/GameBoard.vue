@@ -2312,6 +2312,12 @@ const visibleEnemyMoveOverlays = computed(() => {
   });
 });
 
+const visibleDamageIndicators = computed(() => {
+  const fogKeys = playerFogActive.value ? outOfLineOfSightKeys.value : null;
+  if (!fogKeys) return damageIndicators.value;
+  return damageIndicators.value.filter((ind) => !fogKeys.has(coordKey(ind.x, ind.y)));
+});
+
 const visiblePlayerMoveOverlays = computed(() => {
   const fogKeys = playerFogActive.value ? outOfLineOfSightKeys.value : null;
   const s = gameState.value;
@@ -4974,7 +4980,7 @@ onUnmounted(() => {
         </div>
 
         <div
-          v-for="indicator in damageIndicators"
+          v-for="indicator in visibleDamageIndicators"
           :key="indicator.id"
           class="damage-indicator"
           :style="damageIndicatorStyle(indicator.x, indicator.y)"

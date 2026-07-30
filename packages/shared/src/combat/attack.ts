@@ -44,7 +44,6 @@ import {
   snapshotSwarmGroups,
   swarmEnemyStrikeCap,
   swarmGroupForEnemy,
-  swarmCanonicalDisplayId,
   swarmMembersHitByTiles,
   weaponHasBreakerTag,
 } from "./swarm.js";
@@ -591,8 +590,9 @@ export function applyDamageToEnemy(
     if (opts?.recordDamage !== false) {
       if (!state.damageEvents) state.damageEvents = [];
       if (group) {
-        const displayId = swarmCanonicalDisplayId(state, group.memberIds);
-        const anchor = state.enemies.find((e) => e.id === displayId) ?? enemy;
+        // Anchor the float to the hit tile (or damaged member), not the swarm
+        // canonical display — otherwise fogged adjacent members get revealed.
+        const eventPos = opts?.hitTile ?? { x: enemy.x, y: enemy.y };
         let merged = false;
         for (const evt of state.damageEvents) {
           const atEnemy = state.enemies.find((e) => e.x === evt.x && e.y === evt.y);
@@ -604,7 +604,7 @@ export function applyDamageToEnemy(
           }
         }
         if (!merged) {
-          state.damageEvents.push({ x: anchor.x, y: anchor.y, amount: adjusted });
+          state.damageEvents.push({ x: eventPos.x, y: eventPos.y, amount: adjusted });
         }
       } else {
         state.damageEvents.push({ x: enemy.x, y: enemy.y, amount: adjusted });

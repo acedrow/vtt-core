@@ -641,7 +641,11 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
         :max-hp="stacked.hp.maxHp"
       />
     </span>
-    <div v-if="effectEntries.length" class="effect-badges" :style="effectBadgeStyle(cell.enemyAnchor)">
+    <div
+      v-if="effectEntries.length && !cell.sightlineExplored"
+      class="effect-badges"
+      :style="effectBadgeStyle(cell.enemyAnchor)"
+    >
       <span
         v-for="effect in visibleEffects"
         :key="effect.id"
