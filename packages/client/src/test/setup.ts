@@ -26,6 +26,7 @@ const moduleKeys = [
   "yadathan",
   "provoke",
   "heavenBurning",
+  "reversals",
 ];
 
 const pack = createFixtureContentPack();

@@ -190,8 +190,8 @@ export function useCombatModeHints(opts: {
         key: "sprint",
         text:
           rem > 0
-            ? `Sprint — ${rem}/${max} movement remaining. Click adjacent tiles to move.`
-            : "Sprint — click adjacent tiles to move up to half your Speed.",
+            ? `Sprint — ${rem}/${max} movement remaining. Click a highlighted destination to move.`
+            : "Sprint — click a highlighted destination to move up to half your Speed.",
       });
     }
     if (mode.value === "aegis") {
@@ -201,8 +201,8 @@ export function useCombatModeHints(opts: {
         key: "aegis",
         text:
           sprintRem > 0
-            ? `Aegis flight — spends Sprint budget (${sprintRem} left). Does not Provoke.`
-            : `Aegis flight — ${flyRem} remaining. Does not Provoke.`,
+            ? `Aegis flight — choose a highlighted destination; spends Sprint budget (${sprintRem} left). Does not Provoke.`
+            : `Aegis flight — choose a highlighted destination (${flyRem} remaining). Does not Provoke.`,
       });
     }
     if (mode.value === "attack" || isPackEquipmentAttack.value) {

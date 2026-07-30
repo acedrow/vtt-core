@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { coordKey, tileAt } from "../map.js";
 import { addTestEnemy, addTestPlayer, makeGameState } from "../test/fixtures.js";
+import { validateGmEnemyAction } from "./messages.js";
 import {
   enemyMovementReachability,
   findEnemyMovementPathWithCost,
@@ -82,5 +83,26 @@ describe("movement reachability", () => {
         swarm: true,
       }),
     ).toMatchObject({ cost: 1 });
+  });
+
+  it("validates GM enemy paths from each preceding step", () => {
+    const state = makeGameState({ roundPhase: "gmTurn" });
+    const enemy = addTestEnemy(state, "e1", 1, 1);
+    enemy.movementRemaining = 2;
+
+    expect(
+      validateGmEnemyAction(state, {
+        action: "move",
+        enemyId: enemy.id,
+        path: [{ x: 2, y: 1 }, { x: 3, y: 1 }],
+      }),
+    ).toBeNull();
+    expect(
+      validateGmEnemyAction(state, {
+        action: "move",
+        enemyId: enemy.id,
+        path: [{ x: 2, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 }],
+      }),
+    ).toBe("Not enough movement");
   });
 });
