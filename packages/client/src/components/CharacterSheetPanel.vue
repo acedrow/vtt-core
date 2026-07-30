@@ -84,6 +84,12 @@ const boardPlayer = computed(() =>
 );
 
 const boardPlayerId = computed(() => boardPlayer.value?.id ?? null);
+const spawnTokenDisabledReason = computed(() => {
+  if (role.value === "gm") return null;
+  if (gameState.value?.gmDeployment === true) return "GM Deployment enabled on map";
+  if (gameState.value?.roundPhase !== "deployment") return "can only deploy during deployment";
+  return null;
+});
 
 // Read equipmentUses from gameState directly so charge UI updates on every state broadcast
 const equipmentUsesRemaining = computed(() => {
@@ -566,7 +572,7 @@ async function deleteSheet() {
 }
 
 function spawnToken() {
-  if (!sheet.value || boardPlayer.value) return;
+  if (!sheet.value || boardPlayer.value || spawnTokenDisabledReason.value) return;
   send({ type: "spawnPlayerToken", characterSheetId: props.sheetId });
 }
 
@@ -1015,15 +1021,20 @@ onUnmounted(() => {
     </div>
 
     <div v-if="canEdit && sheet" class="panel-footer">
-      <button
+      <span
         v-if="!boardPlayer"
-        class="cta"
-        type="button"
-        :disabled="saving"
-        @click="spawnToken"
+        class="spawn-token-control"
+        :title="spawnTokenDisabledReason ?? undefined"
       >
-        Spawn token
-      </button>
+        <button
+          class="cta"
+          type="button"
+          :disabled="saving || !!spawnTokenDisabledReason"
+          @click="spawnToken"
+        >
+          Spawn token
+        </button>
+      </span>
       <button
         v-else
         class="cta secondary"
@@ -1063,6 +1074,10 @@ onUnmounted(() => {
   display: flex;
   gap: 0.5rem;
   padding-top: 1rem;
+}
+
+.spawn-token-control {
+  display: inline-flex;
 }
 
 .icon-defs {
