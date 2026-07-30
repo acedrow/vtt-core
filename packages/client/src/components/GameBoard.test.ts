@@ -115,6 +115,41 @@ describe("GameBoard", () => {
     wrapper.unmount();
   });
 
+  it("does not preview paths through unexplored fog", async () => {
+    const state = makeTestGameState(4, 1);
+    state.roundPhase = "playerTurn";
+    state.turn = { role: "player", playerId: "p1" };
+    state.enforceSightlines = true;
+    state.tiles[1]!.terrain = ["obstacle"];
+    state.seenTilesByPlayerId = { p1: ["3,0"] };
+    state.players.push({
+      id: "p1",
+      x: 0,
+      y: 0,
+      speed: 5,
+      hp: 10,
+      actionBudget: {
+        main: true,
+        support: true,
+        aux: true,
+        movementRemaining: 5,
+        movementMax: 5,
+      },
+    });
+    useGameState().setGameState(state, "p1");
+    const wrapper = mount(GameBoard, { props: { role: "player" } });
+    await flushPromises();
+
+    const hiddenDestination = wrapper.findAll("button.cell")[2]!;
+    const seenDestinationBeyondFog = wrapper.findAll("button.cell")[3]!;
+    expect(hiddenDestination.classes()).not.toContain("move-secondary");
+    expect(seenDestinationBeyondFog.classes()).not.toContain("move-secondary");
+
+    await seenDestinationBeyondFog.trigger("mouseenter");
+    expect(wrapper.find(".movement-path-overlay").exists()).toBe(false);
+    expect(wrapper.find(".tooltip-move-cost").exists()).toBe(false);
+  });
+
   it("sends a full reachable path for a selected non-swarm enemy", async () => {
     const state = makeTestGameState(4, 3);
     state.roundPhase = "gmTurn";

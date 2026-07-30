@@ -1676,11 +1676,23 @@ const playerMovementPaths = computed(() => {
         ? sprintRemaining
         : (player.actionBudget?.movementRemaining ?? 0);
   if (budget <= 0) return new Map<string, MovementPathResult>();
-  return playerMovementReachability(s, player.id, {
+  const paths = playerMovementReachability(s, player.id, {
     budget,
     flying,
     ...(flying ? { maxSteps: aegisFlyingRemaining(player) } : {}),
   });
+  if (!playerFogActive.value) return paths;
+  for (const [key, result] of paths) {
+    if (
+      result.path.some(({ x, y }) => {
+        const pathKey = coordKey(x, y);
+        return outOfLineOfSightKeys.value.has(pathKey) && !seenTileKeys.value.has(pathKey);
+      })
+    ) {
+      paths.delete(key);
+    }
+  }
+  return paths;
 });
 
 const movementPreview = computed(() => {
