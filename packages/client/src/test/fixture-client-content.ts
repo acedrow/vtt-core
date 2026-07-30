@@ -38,6 +38,10 @@ export function createFixtureClientContribution(): ClientContribution {
     combatBoard: {
       cellOverlays: [],
       pieceDecorations: [],
+      derivedTileEffects: (state, x, y) =>
+        state.tiles.find((tile) => tile.x === x && tile.y === y)?.name === "Fixture effect"
+          ? { Fortified: 1 }
+          : undefined,
       // enemyInfoExtras / gmActionBarExtras intentionally undefined (fixture)
     },
     boardModes: [

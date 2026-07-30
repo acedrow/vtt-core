@@ -1,6 +1,7 @@
 import type { Component } from "vue";
 import type {
   AttackPreviewState,
+  EffectStacks,
   GameState,
   MapPingSurface,
   PatternDirection,
@@ -103,6 +104,7 @@ export type ClientCombatBoard = {
   pieceDecorations?: PieceDecorationPlugin[];
   /** Optional full-cell overlay images keyed by tile effect id (addition-order stack). */
   tileEffectImageUrls?: Record<string, string>;
+  derivedTileEffects?: (state: GameState, x: number, y: number) => EffectStacks | undefined;
   enemyInfoExtras?: Component;
   gmActionBarExtras?: Component;
 };

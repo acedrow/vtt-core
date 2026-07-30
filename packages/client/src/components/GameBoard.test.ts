@@ -69,6 +69,17 @@ describe("GameBoard", () => {
     expect(wrapper.findAll("button.cell")[4]!.classes()).toContain("deployment-zone");
   });
 
+  it("renders tile effects derived by the client content pack", async () => {
+    const state = makeTestGameState();
+    state.tiles[4]!.name = "Fixture effect";
+    useGameState().setGameState(state, null);
+
+    const wrapper = mount(GameBoard, { props: { role: "gm" } });
+    await flushPromises();
+
+    expect(wrapper.findAll("button.cell")[4]!.find(".tile-effect-overlay").exists()).toBe(true);
+  });
+
   it("highlights, previews, and sends a full reachable player path", async () => {
     const state = makeTestGameState(4, 3);
     state.roundPhase = "playerTurn";

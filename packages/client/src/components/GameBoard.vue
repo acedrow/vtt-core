@@ -1896,6 +1896,7 @@ const cellStateByKey = computed(() => {
       enemiesByAnchorKey.get(ck) ?? [],
     ) ?? (enemiesByAnchorKey.get(ck) ?? []);
     const enemyAnchor = enemiesAtTile[0];
+    const derivedTileEffects = combatBoard.derivedTileEffects?.(s, c.x, c.y);
     const reachablePlayerDestination =
       showStepMoveHighlights && playerMovementPaths.value.has(ck);
     const showRegularStep = reachablePlayerDestination && !inSprintMode && !inAegisMode;
@@ -2057,7 +2058,9 @@ const cellStateByKey = computed(() => {
         enemyAnchor?.kind === "tower" && enemyAnchor.ownerPlayerId
           ? hueFromId(enemyAnchor.ownerPlayerId)
           : null,
-      tileEffects: tile?.tileEffects,
+      tileEffects: derivedTileEffects
+        ? { ...derivedTileEffects, ...tile?.tileEffects }
+        : tile?.tileEffects,
       outOfLineOfSight: !playerFogActive.value && outOfLineOfSightKeys.value.has(ck),
       sightlineFog:
         playerFogActive.value &&
