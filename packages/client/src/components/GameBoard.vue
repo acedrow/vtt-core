@@ -2077,12 +2077,25 @@ const cellStateByKey = computed(() => {
         const currentlyVisible = !outOfLineOfSightKeys.value.has(ck);
         const previouslySeen = seenTileKeys.value.has(ck);
         const range = Math.abs(enemyAnchor.x - me.x) + Math.abs(enemyAnchor.y - me.y);
+        const group = getCombatBoardHelpers().swarmGroupForEnemy(
+          s,
+          enemyAnchor.id,
+          swarmGroups,
+        );
+        const linkedVisibleToken =
+          !!group &&
+          group.size > 1 &&
+          group.memberIds.some((id) => {
+            const member = s.enemies.find((enemy) => enemy.id === id);
+            return !!member && !outOfLineOfSightKeys.value.has(coordKey(member.x, member.y));
+          });
         return (
           fogTokenDisplay({
             enforceSightlines: true,
             currentlyVisible,
             previouslySeen,
             rangeFromViewer: range,
+            linkedVisibleToken,
           }) === "unknown"
         );
       })(),

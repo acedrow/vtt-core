@@ -51,4 +51,16 @@ describe("fogTokenDisplay", () => {
       }),
     ).toBe("hidden");
   });
+
+  it("shows a previously seen linked token when another group member is visible", () => {
+    expect(
+      fogTokenDisplay({
+        enforceSightlines: true,
+        currentlyVisible: false,
+        previouslySeen: true,
+        rangeFromViewer: 8,
+        linkedVisibleToken: true,
+      }),
+    ).toBe("unknown");
+  });
 });
