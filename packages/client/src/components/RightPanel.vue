@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-import { getClientDetailPanels } from "../client-content-pack.js";
+import { clientDataCategoryPanel, getClientDetailPanels } from "../client-content-pack.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCharacterSheetSelection } from "../composables/useCharacterSheetSelection.js";
 import { selectedFactionId } from "../composables/useFactionSelection.js";
@@ -41,6 +41,7 @@ const {
   factionEnemies: FactionEnemiesPanel,
   overworldLocationVisibility: OverworldLocationVisibilityPanel,
 } = getClientDetailPanels();
+const packDataCategoryPanel = computed(() => clientDataCategoryPanel(dataCategory.value));
 
 const boardPlayerSheetId = computed(() => {
   if (boardSelection.value?.kind !== "player") return null;
@@ -170,6 +171,11 @@ const activeSheetId = computed(() => boardPlayerSheetId.value ?? selectedSheetId
           <PartyResourcesPanel
             v-else-if="dataCategory === 'resources'"
             key="resources"
+          />
+          <component
+            :is="packDataCategoryPanel"
+            v-else-if="packDataCategoryPanel && dataCategory"
+            :key="dataCategory"
           />
           <PlayerDataPanel
             v-else-if="gearPickCategory"

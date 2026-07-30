@@ -3,6 +3,7 @@ import {
   boardModeForEquipment,
   extrasFromSheetData,
   extrasPayload,
+  listClientSheetSections,
   sheetChromeForSlot,
   sheetFieldForArmor,
   visibleSheetFields,
@@ -41,6 +42,8 @@ const { gameState, yourPlayerId, send } = useGameState();
 const { selectSheet, notifySheetsChanged, startGearPick, gearPick } = useCharacterSheetSelection();
 const { closeRightPanel } = useBoardSelection();
 const { hasEquipmentSlot, hasGearSlot, hasSecondWeaponSlot } = useCampaignUnlocks();
+
+const packSheetSections = listClientSheetSections();
 
 const sheet = ref<CharacterSheet | null>(null);
 const profiles = ref<PlayerProfileOption[]>([]);
@@ -493,6 +496,11 @@ function parseTagsDraft(text: string): string[] {
   return text.split("\n").map((t) => t.trim()).filter(Boolean);
 }
 
+function onPackSheetSectionSaved(next: CharacterSheet) {
+  sheet.value = next;
+  notifySheetsChanged();
+}
+
 function startFieldEdit(field: EditableField) {
   if (!canEdit.value) return;
   if (field === "tags") tagsDraft.value = form.value.tags.join("\n");
@@ -729,6 +737,14 @@ onUnmounted(() => {
       <p v-if="error" class="error">{{ error }}</p>
 
       <div class="fields">
+          <component
+            :is="section.component"
+            v-for="section in packSheetSections"
+            :key="section.id"
+            :sheet="sheet"
+            :can-edit="canEdit"
+            @saved="onPackSheetSectionSaved"
+          />
           <div v-if="role === 'gm'" class="field-row">
             <template v-if="editingField !== 'player'">
               <span class="field-label">Player:</span>

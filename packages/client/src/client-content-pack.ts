@@ -70,6 +70,14 @@ export type ClientSideNavSection = {
 export type ClientDataCategoryPlugin = {
   id: string;
   label: string;
+  /** When set, RightPanel renders this for the category (pack-owned data browsers). */
+  component?: Component;
+};
+
+export type ClientSheetSectionPlugin = {
+  id: string;
+  /** Receives `sheet` + `canEdit`; emit `saved` with the updated CharacterSheet after PATCH. */
+  component: Component;
 };
 
 export type ClientTileSetLabels = {
@@ -232,6 +240,7 @@ export type ClientContribution = {
   combatBoard?: ClientCombatBoard;
   boardModes?: ClientBoardModePlugin[];
   sheetFields?: ClientSheetFieldPlugin[];
+  sheetSections?: ClientSheetSectionPlugin[];
   sheetChrome?: ClientSheetChromePlugin[];
 };
 
@@ -257,6 +266,7 @@ let detailPanels: ClientDetailPanels = {};
 let combatBoard: ClientCombatBoard = {};
 let boardModes: ClientBoardModePlugin[] = [];
 let sheetFields: ClientSheetFieldPlugin[] = [];
+let sheetSections: ClientSheetSectionPlugin[] = [];
 let sheetChrome: ClientSheetChromePlugin[] = [];
 
 function applyContribution(pack: ClientContribution): void {
@@ -277,6 +287,7 @@ function applyContribution(pack: ClientContribution): void {
   combatBoard = { ...(pack.combatBoard ?? {}) };
   boardModes = (pack.boardModes ?? []).slice();
   sheetFields = (pack.sheetFields ?? []).slice();
+  sheetSections = (pack.sheetSections ?? []).slice();
   sheetChrome = (pack.sheetChrome ?? []).slice();
 }
 
@@ -294,6 +305,7 @@ function clearContribution(): void {
   combatBoard = {};
   boardModes = [];
   sheetFields = [];
+  sheetSections = [];
   sheetChrome = [];
 }
 
@@ -448,6 +460,16 @@ export function boardModeForEquipment(equipmentName: string): string | null {
 export function listClientSheetFields(): ClientSheetFieldPlugin[] {
   if (!registered) return [];
   return sheetFields;
+}
+
+export function listClientSheetSections(): ClientSheetSectionPlugin[] {
+  if (!registered) return [];
+  return sheetSections;
+}
+
+export function clientDataCategoryPanel(id: string | null | undefined): Component | undefined {
+  if (!id || !registered) return undefined;
+  return dataCategories.find((category) => category.id === id)?.component;
 }
 
 export function sheetFieldMatches(

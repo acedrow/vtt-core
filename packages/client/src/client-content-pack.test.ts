@@ -13,6 +13,7 @@ import {
   listClientMainSections,
   listClientSheetChrome,
   listClientSheetFields,
+  listClientSheetSections,
   listClientSideNavSections,
   listClientThemes,
   mainSectionOpensResources,
@@ -65,7 +66,7 @@ function createOtherClientContribution(): ClientContribution {
       { id: "factions", label: "Factions", channel: "faction" },
       { id: "tables", label: "Tables", channel: "table" },
     ],
-    dataCategories: [{ id: "resources", label: "Resources" }],
+    dataCategories: [{ id: "resources", label: "Resources", component: OtherPanel }],
     sheetFields: [
       {
         id: "extra",
@@ -75,6 +76,7 @@ function createOtherClientContribution(): ClientContribution {
         clearWhenHidden: true,
       },
     ],
+    sheetSections: [{ id: "notes", component: OtherPanel }],
     sheetChrome: [
       {
         id: "class-passive",
@@ -153,14 +155,18 @@ describe("client content pack registry", () => {
     expect(listClientSheetChrome().map((p) => p.id)).toEqual(["class-passive"]);
   });
 
-  it("exposes sideNavSections, dataCategories, and mainSection metadata", () => {
+  it("exposes sideNavSections, dataCategories, sheetSections, and mainSection metadata", () => {
     resetClientContentPackForTests();
     registerClientContentPack(createOtherClientContribution());
+    expect(listClientSheetSections().map((s) => s.id)).toEqual(["notes"]);
+    expect(listClientDataCategories()[0]?.component).toBeTruthy();
     expect(getClientMainSection("other-section")?.label).toBe("Other Section");
     expect(mainSectionPingChannel("other-section")).toBe("overworld");
     expect(mainSectionOpensResources("other-section")).toBe(true);
     expect(listClientSideNavSections().map((s) => s.channel)).toEqual(["faction", "table"]);
-    expect(listClientDataCategories()).toEqual([{ id: "resources", label: "Resources" }]);
+    expect(listClientDataCategories().map((c) => ({ id: c.id, label: c.label }))).toEqual([
+      { id: "resources", label: "Resources" },
+    ]);
     expect(isClientDataCategoryId("resources")).toBe(true);
     expect(isClientDataCategoryId("armor")).toBe(false);
   });
