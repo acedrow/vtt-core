@@ -64,4 +64,4 @@ npm run kan -- delete VTT-42
 
 Pass `--json` for machine-readable output. Ticket refs may be `VTT-<n>` or a card `publicId`.
 
-Agent workflow and ticket authoring rules: [AGENTS.md](../AGENTS.md) (Kan tickets section).
+Agent workflow and ticket authoring rules: [AGENTS.md](../AGENTS.md) (Kan tickets section). Before moving a card to **done**, agents must add a **Resolution** section to the description (issue + fix).

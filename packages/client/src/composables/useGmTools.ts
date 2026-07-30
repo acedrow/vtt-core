@@ -91,7 +91,6 @@ const paintbrushEnableElevation = ref(persistedGm.paintbrushEnableElevation);
 const paintbrushEnableTerrain = ref(persistedGm.paintbrushEnableTerrain);
 const paintbrushEnableEffect = ref(persistedGm.paintbrushEnableEffect);
 const paintbrushEnableDeploymentZone = ref(persistedGm.paintbrushEnableDeploymentZone);
-const paintbrushDeploymentZone = ref(persistedGm.paintbrushDeploymentZone);
 const paintbrushEnableName = ref(persistedGm.paintbrushEnableName);
 const paintbrushEnableColor = ref(persistedGm.paintbrushEnableColor);
 const paintbrushEnableAppearance = ref(persistedGm.paintbrushEnableAppearance);
@@ -331,7 +330,6 @@ export function snapshotGmTools(): PersistedGmTools {
     paintbrushEnableTerrain: paintbrushEnableTerrain.value,
     paintbrushEnableEffect: paintbrushEnableEffect.value,
     paintbrushEnableDeploymentZone: paintbrushEnableDeploymentZone.value,
-    paintbrushDeploymentZone: paintbrushDeploymentZone.value,
     paintbrushEnableName: paintbrushEnableName.value,
     paintbrushEnableColor: paintbrushEnableColor.value,
     paintbrushEnableAppearance: paintbrushEnableAppearance.value,
@@ -375,7 +373,6 @@ export const gmToolsWatchSources = [
   paintbrushEnableTerrain,
   paintbrushEnableEffect,
   paintbrushEnableDeploymentZone,
-  paintbrushDeploymentZone,
   paintbrushEnableName,
   paintbrushEnableColor,
   paintbrushEnableAppearance,
@@ -428,7 +425,6 @@ export function applyPersistedGmTools(gm: PersistedGmTools) {
   paintbrushEnableTerrain.value = gm.paintbrushEnableTerrain;
   paintbrushEnableEffect.value = gm.paintbrushEnableEffect;
   paintbrushEnableDeploymentZone.value = gm.paintbrushEnableDeploymentZone;
-  paintbrushDeploymentZone.value = gm.paintbrushDeploymentZone;
   paintbrushEnableName.value = gm.paintbrushEnableName;
   paintbrushEnableColor.value = gm.paintbrushEnableColor;
   paintbrushEnableAppearance.value = gm.paintbrushEnableAppearance;
@@ -608,7 +604,6 @@ export function useGmTools() {
     if (!tile) return;
     applyPresetToBrush(tileToPaintPreset(tile));
     paintbrushEnableDeploymentZone.value = true;
-    paintbrushDeploymentZone.value = !!tile.deploymentZone;
   }
 
   function setActiveTool(tool: GmTool) {
@@ -776,7 +771,6 @@ export function useGmTools() {
     paintbrushEnableFlip.value = false;
     paintbrushAutoRotate.value = false;
     paintbrushEnableDeploymentZone.value = false;
-    paintbrushDeploymentZone.value = true;
     paintbrushPresetLoadId.value = "";
     paintbrushPresetError.value = "";
   }
@@ -1082,9 +1076,6 @@ export function useGmTools() {
           ? [`${paintbrushEffectId.value}:${paintbrushEffectStacks.value}`]
           : [];
     }
-    if (paintbrushEnableDeploymentZone.value) {
-      shared.deploymentZone = paintbrushDeploymentZone.value;
-    }
     if (paintbrushEnableName.value) shared.tileName = paintbrushTileName.value;
     if (paintbrushEnableColor.value) shared.baseColor = paintbrushBaseColor.value;
     if (paintbrushEnableAppearanceTint.value) {
@@ -1127,6 +1118,7 @@ export function useGmTools() {
     brushOverlay: string | null | undefined,
     brushFeature: string | null | undefined,
   ): boolean {
+    if (paintbrushEnableDeploymentZone.value) return true;
     return !(
       shared.elevation === undefined &&
       shared.terrain === undefined &&
@@ -1168,8 +1160,12 @@ export function useGmTools() {
 
     const placement = takePendingTilePlacement(x, y);
     const rotation = autoRotate ? (placement.imageRotation ?? null) : undefined;
+    const tile = gameState.value ? tileAt(gameState.value.tiles, x, y) : undefined;
     return {
       ...shared,
+      ...(paintbrushEnableDeploymentZone.value
+        ? { deploymentZone: !tile?.deploymentZone }
+        : {}),
       ...(placement.appearanceKey !== undefined ? { appearanceKey: placement.appearanceKey } : {}),
       ...(placement.overlayKey !== undefined ? { overlayKey: placement.overlayKey } : {}),
       ...(placement.featureKey !== undefined ? { featureKey: placement.featureKey } : {}),
@@ -1300,6 +1296,7 @@ export function useGmTools() {
     }
 
     const needsPerTileResolve =
+      paintbrushEnableDeploymentZone.value ||
       autoRotate ||
       (brushAppearance !== undefined &&
         brushAppearance !== null &&
@@ -1312,10 +1309,16 @@ export function useGmTools() {
       for (const coord of coords) {
         const placement = takePendingTilePlacement(coord.x, coord.y);
         const rotation = autoRotate ? (placement.imageRotation ?? null) : undefined;
+        const tile = gameState.value
+          ? tileAt(gameState.value.tiles, coord.x, coord.y)
+          : undefined;
         send({
           type: "gmPaintTile",
           coords: [coord],
           ...shared,
+          ...(paintbrushEnableDeploymentZone.value
+            ? { deploymentZone: !tile?.deploymentZone }
+            : {}),
           ...(placement.appearanceKey !== undefined
             ? { appearanceKey: placement.appearanceKey }
             : {}),
@@ -1383,7 +1386,6 @@ export function useGmTools() {
     paintbrushEnableTerrain,
     paintbrushEnableEffect,
     paintbrushEnableDeploymentZone,
-    paintbrushDeploymentZone,
     paintbrushEnableName,
     paintbrushEnableColor,
     paintbrushEnableAppearance,

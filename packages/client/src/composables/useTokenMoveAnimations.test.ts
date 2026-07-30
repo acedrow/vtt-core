@@ -2,7 +2,8 @@ import type { Enemy, GameState, MapTile, Player } from "@vtt-core/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { nextTick, ref } from "vue";
 
-import { useTokenMoveAnimations } from "./useTokenMoveAnimations.js";
+import { useGameConnection } from "./useGameConnection.js";
+import { usePendingTokenMoves, useTokenMoveAnimations } from "./useTokenMoveAnimations.js";
 
 function makeTiles(width: number, height: number): MapTile[] {
   const tiles: MapTile[] = [];
@@ -47,10 +48,12 @@ function enemy(id: string, x: number, y: number): Enemy {
 
 describe("useTokenMoveAnimations", () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
       cb(0);
       return 0;
     });
+    useGameConnection().connection.value = "connected";
   });
 
   it("does not animate on initial state seed", async () => {
@@ -151,6 +154,158 @@ describe("useTokenMoveAnimations", () => {
 
     expect(activeEnemyMoves.value).toHaveLength(1);
     expect(activeEnemyMoves.value[0]?.toX).toBe(1);
+  });
+
+  it("keeps an optimistic move pending after animation until server acknowledgement", async () => {
+    const gameState = ref<GameState | null>(
+      makeState({ players: [player("p1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activePlayerMoves, startOptimisticPlayerMove, finishMove } =
+      useTokenMoveAnimations(gameState, boardKey);
+    const { optimisticPlayerIds } = usePendingTokenMoves();
+    await nextTick();
+
+    expect(startOptimisticPlayerMove("p1", { x: 0, y: 0 }, { x: 2, y: 0 })).toBe(true);
+    expect(optimisticPlayerIds.value.has("p1")).toBe(true);
+
+    finishMove("p1");
+    expect(activePlayerMoves.value[0]).toMatchObject({
+      toX: 2,
+      toY: 0,
+      pending: true,
+    });
+
+    gameState.value = makeState({ players: [player("p1", 2, 0)] });
+    await nextTick();
+
+    expect(activePlayerMoves.value).toHaveLength(0);
+    expect(optimisticPlayerIds.value.has("p1")).toBe(false);
+  });
+
+  it("does not double animate when acknowledgement arrives during the optimistic slide", async () => {
+    const gameState = ref<GameState | null>(
+      makeState({ enemies: [enemy("e1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activeEnemyMoves, startOptimisticEnemyMove, finishMove } =
+      useTokenMoveAnimations(gameState, boardKey);
+    await nextTick();
+
+    startOptimisticEnemyMove("e1", { x: 0, y: 0 }, { x: 2, y: 0 });
+    gameState.value = makeState({ enemies: [enemy("e1", 2, 0)] });
+    await nextTick();
+
+    expect(activeEnemyMoves.value).toHaveLength(1);
+    expect(activeEnemyMoves.value[0]).toMatchObject({
+      optimistic: true,
+      acknowledged: true,
+      toX: 2,
+    });
+
+    finishMove("e1");
+    expect(activeEnemyMoves.value).toHaveLength(0);
+  });
+
+  it("reconciles a corrected server destination and clears the lock", async () => {
+    const onFailure = vi.fn();
+    const gameState = ref<GameState | null>(
+      makeState({ players: [player("p1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activePlayerMoves, startOptimisticPlayerMove } =
+      useTokenMoveAnimations(gameState, boardKey, onFailure);
+    await nextTick();
+
+    startOptimisticPlayerMove("p1", { x: 0, y: 0 }, { x: 3, y: 0 });
+    gameState.value = makeState({ players: [player("p1", 1, 1)] });
+    await nextTick();
+
+    expect(activePlayerMoves.value).toHaveLength(0);
+    expect(onFailure).toHaveBeenCalledWith("Server corrected token position");
+  });
+
+  it("treats a movePath interruption at an intermediate tile as a correction", async () => {
+    const onFailure = vi.fn();
+    const gameState = ref<GameState | null>(
+      makeState({ players: [player("p1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activePlayerMoves, startOptimisticPlayerMove } =
+      useTokenMoveAnimations(gameState, boardKey, onFailure);
+    await nextTick();
+
+    const path = [{ x: 1, y: 0 }, { x: 2, y: 0 }];
+    startOptimisticPlayerMove("p1", { x: 0, y: 0 }, { x: 2, y: 0 }, path);
+    gameState.value = makeState({ players: [player("p1", 1, 0)] });
+    await nextTick();
+
+    expect(activePlayerMoves.value).toHaveLength(0);
+    expect(onFailure).toHaveBeenCalledWith("Server corrected token position");
+  });
+
+  it("waits through expected intermediate sprint acknowledgements", async () => {
+    const gameState = ref<GameState | null>(
+      makeState({ players: [player("p1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activePlayerMoves, startOptimisticPlayerMove, finishMove } =
+      useTokenMoveAnimations(gameState, boardKey);
+    await nextTick();
+
+    const path = [{ x: 1, y: 0 }, { x: 2, y: 0 }];
+    startOptimisticPlayerMove("p1", { x: 0, y: 0 }, { x: 2, y: 0 }, path, true);
+    gameState.value = makeState({ players: [player("p1", 1, 0)] });
+    await nextTick();
+    expect(activePlayerMoves.value).toHaveLength(1);
+
+    gameState.value = makeState({ players: [player("p1", 2, 0)] });
+    await nextTick();
+    expect(activePlayerMoves.value[0]).toMatchObject({ acknowledged: true });
+    finishMove("p1");
+    expect(activePlayerMoves.value).toHaveLength(0);
+  });
+
+  it("clears optimistic locks on server errors and disconnects", async () => {
+    const gameState = ref<GameState | null>(
+      makeState({ enemies: [enemy("e1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activeEnemyMoves, startOptimisticEnemyMove } =
+      useTokenMoveAnimations(gameState, boardKey);
+    const connection = useGameConnection();
+    await nextTick();
+
+    startOptimisticEnemyMove("e1", { x: 0, y: 0 }, { x: 1, y: 0 });
+    connection.reportServerError();
+    await nextTick();
+    expect(activeEnemyMoves.value).toHaveLength(0);
+
+    startOptimisticEnemyMove("e1", { x: 0, y: 0 }, { x: 1, y: 0 });
+    connection.connection.value = "connecting";
+    await nextTick();
+    expect(activeEnemyMoves.value).toHaveLength(0);
+  });
+
+  it("times out an unacknowledged optimistic lock", async () => {
+    vi.useFakeTimers();
+    const onFailure = vi.fn();
+    const gameState = ref<GameState | null>(
+      makeState({ players: [player("p1", 0, 0)] }),
+    );
+    const boardKey = ref<string | null>("test:5x5");
+    const { activePlayerMoves, startOptimisticPlayerMove, finishMove } =
+      useTokenMoveAnimations(gameState, boardKey, onFailure);
+    await nextTick();
+
+    startOptimisticPlayerMove("p1", { x: 0, y: 0 }, { x: 1, y: 0 });
+    finishMove("p1");
+    vi.advanceTimersByTime(10_000);
+
+    expect(activePlayerMoves.value).toHaveLength(0);
+    expect(onFailure).toHaveBeenCalledWith(
+      "Move confirmation timed out; restored server position",
+    );
   });
 
   it("clears animations on boardKey change without animating", async () => {

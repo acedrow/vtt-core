@@ -1000,9 +1000,11 @@ export function validateGmEnemyAction(state: GameState, action: GmEnemyAction): 
       if (!isSandboxMode(state) && enemy.exhausted) return "Enemy has ended turn";
       const chipErr = requireSwarmChipResolved(state, action.enemyId);
       if (chipErr) return chipErr;
+      const previewState = structuredClone(state);
       for (const step of action.path) {
-        const err = validateEnemyMove(state, action.enemyId, step.x, step.y);
+        const err = validateEnemyMove(previewState, action.enemyId, step.x, step.y);
         if (err) return err;
+        applyEnemyMove(previewState, action.enemyId, step.x, step.y);
       }
       return null;
     }

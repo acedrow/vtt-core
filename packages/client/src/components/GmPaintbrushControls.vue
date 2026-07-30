@@ -29,7 +29,6 @@ const {
   paintbrushEnableTerrain,
   paintbrushEnableEffect,
   paintbrushEnableDeploymentZone,
-  paintbrushDeploymentZone,
   paintbrushEnableName,
   paintbrushEnableColor,
   paintbrushEnableAppearance,
@@ -193,20 +192,6 @@ const featureTintModalOpen = ref(false);
         class="option-enable"
         aria-label="Enable deployment zone"
       />
-      <select
-        class="effect-select"
-        :value="paintbrushDeploymentZone ? 'paint' : 'clear'"
-        aria-label="Deployment zone mode"
-        @change="
-          (e) => {
-            paintbrushDeploymentZone = (e.target as HTMLSelectElement).value === 'paint';
-            paintbrushEnableDeploymentZone = true;
-          }
-        "
-      >
-        <option value="paint">Paint</option>
-        <option value="clear">Clear</option>
-      </select>
     </div>
 
     <div class="control-group">

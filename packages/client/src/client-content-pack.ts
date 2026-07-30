@@ -133,6 +133,8 @@ export type BoardModeContext = {
 };
 
 export type BoardModeHost = {
+  // Combat actions that relocate tokens are optimistically animated by GameBoard.
+  // Overworld campaign entities use the content-owned OverworldPanel DOM/state flow.
   sendPlayerAction: (action: PlayerAction) => void;
   clearMode: () => void;
   showToast: (message: string) => void;

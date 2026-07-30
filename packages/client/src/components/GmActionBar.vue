@@ -9,6 +9,7 @@ import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useGameState } from "../composables/useGameState.js";
 import { gmActionBarExtrasKey } from "../composables/useGmActionBarExtras.js";
+import { usePendingTokenMoves } from "../composables/useTokenMoveAnimations.js";
 
 const { showGmCombatUi } = useCombatActions();
 const { selectedEnemyId } = useBoardSelection();
@@ -16,6 +17,7 @@ const { gameState, send } = useGameState();
 const { mode, gmEnemyAttack, attackAimed, startGmEnemyAttack, startGmSwarmAttack, clearMode } =
   useBoardActionMode();
 const combatBoard = getClientCombatBoard();
+const { optimisticEnemyIds } = usePendingTokenMoves();
 
 const attackIndex = ref(0);
 
@@ -27,6 +29,9 @@ const activeEnemy = computed(() => {
 
 const activeIsTower = computed(() =>
   activeEnemy.value ? getCombatBoardHelpers().isTowerEnemy(activeEnemy.value) : false,
+);
+const enemyMovePending = computed(
+  () => !!activeEnemy.value && optimisticEnemyIds.value.has(activeEnemy.value.id),
 );
 
 const listing = computed(() => getEnemyListingByName(activeEnemy.value?.name));
@@ -131,7 +136,7 @@ const targetingFlowerbudPlant = computed(
 
 function exhaustEnemy() {
   const enemy = activeEnemy.value;
-  if (!enemy) return;
+  if (!enemy || enemyMovePending.value) return;
   send({ type: "gmEnemyAction", action: { action: "exhaust", enemyId: enemy.id } });
 }
 
@@ -183,7 +188,13 @@ function runAttack() {
 </script>
 
 <template>
-  <div v-if="showGmCombatUi && activeEnemy" class="action-bar gm-bar">
+  <div
+    v-if="showGmCombatUi && activeEnemy"
+    class="action-bar gm-bar"
+    :class="{ pending: enemyMovePending }"
+    :inert="enemyMovePending || undefined"
+    :aria-disabled="enemyMovePending"
+  >
     <div class="budget-row">
       <span class="chip enemy-name">{{ activeEnemy.name ?? activeEnemy.id }}</span>
       <span v-if="activeEnemy.exhausted && !activeIsTower" class="chip spent">Exhausted</span>
@@ -233,6 +244,10 @@ function runAttack() {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
+}
+
+.action-bar.pending {
+  opacity: 0.55;
 }
 
 .budget-row,

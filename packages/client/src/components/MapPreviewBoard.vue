@@ -156,6 +156,7 @@ const cells = computed(() => {
         cell: {
           ...emptyCellFlags(),
           terrainClass: terrainClass(tile),
+          deploymentZoneHighlight: !!tile?.deploymentZone,
           tile,
           player: undefined,
           enemyAnchor,

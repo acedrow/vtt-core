@@ -14,8 +14,9 @@ When asked to do / work / finish a ticket:
 1. Read the card (`npm run kan -- card VTT-n`); update the description if scope, clarifications, or testing notes change.
 2. Move **backlog → in-progress** when starting implementation.
 3. Implement and run verification (`build`, `test`, `lint`, `test:e2e`).
-4. Move **in-progress → done** after verification passes.
-5. Commit / push / open a PR only when the user asks (existing rule). Commit messages must start with `VTT-<n>:` (e.g. `VTT-42: Fix token animation snap`).
+4. Add a **Resolution** section to the card description (what the issue was; what you fixed). Use `npm run kan -- set-description VTT-n --file …` if easier than inline edits.
+5. Move **in-progress → done** after verification passes and the Resolution section is written.
+6. Commit / push / open a PR only when the user asks (existing rule). Commit messages must start with `VTT-<n>:` (e.g. `VTT-42: Fix token animation snap`).
 
 ## Multi-ticket work items (MTWI)
 
@@ -28,3 +29,4 @@ When asked to do / work / finish a ticket:
 - Concise title and description of the work.
 - Keep the description current when work changes.
 - Description must include a **Testing** section listing new/updated tests that guard the fix or support the feature.
+- On completion, description must include a **Resolution** section: what the issue was (symptom / root cause) and what was fixed (concrete changes). Add this before moving the card to **done**.

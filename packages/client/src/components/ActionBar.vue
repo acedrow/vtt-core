@@ -33,6 +33,7 @@ const {
   canUseAegis,
   aegisLabel,
   activePlayer,
+  playerMovePending,
   sendPlayerAction,
   canUseClassActive,
   hasFreeWeaponSwap,
@@ -114,7 +115,13 @@ function weaponSwap() {
 </script>
 
 <template>
-  <div v-if="showPlayerActionBar" class="action-bar">
+  <div
+    v-if="showPlayerActionBar"
+    class="action-bar"
+    :class="{ pending: playerMovePending }"
+    :inert="playerMovePending || undefined"
+    :aria-disabled="playerMovePending"
+  >
     <div class="budget-row">
       <ActionBudgetChips
         :interactive="showPlayerActionBar && !sandboxMode"
@@ -316,6 +323,10 @@ function weaponSwap() {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-surface);
+}
+
+.action-bar.pending {
+  opacity: 0.55;
 }
 
 .budget-row,

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
-import type { EffectStacks, Enemy, MapTile, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, fixedPatternTilesInBounds, findPlayerMovementPath, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isMovementStepAdjacent, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, movementStepCost, stepMoveCost, enemyMoveStepCost, isFlyingStepReachable, aegisFlyingRemaining, playerAllowsDiagonalMovement, playerAttackDirectionsAt, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
-import { computed, onMounted, onUnmounted, provide, ref, shallowRef, watch } from "vue";
+import type { EffectStacks, Enemy, GmEnemyAction, MapTile, MovementPathResult, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
+import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { computed, onMounted, onUnmounted, provide, ref, shallowRef, toRaw, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
 import { fogTokenDisplay } from "../lib/fogTokenDisplay.js";
@@ -15,7 +15,7 @@ import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useBoardViewport } from "../composables/useBoardViewport.js";
 import { useDamageIndicators } from "../composables/useDamageIndicators.js";
 import { useEnemyDeathAnimations } from "../composables/useEnemyDeathAnimations.js";
-import { useTokenMoveAnimations } from "../composables/useTokenMoveAnimations.js";
+import { usePendingTokenMoves, useTokenMoveAnimations } from "../composables/useTokenMoveAnimations.js";
 import type { TokenMoveAnimation } from "../composables/useTokenMoveAnimations.js";
 import { useCharacterSheets } from "../composables/useCharacterSheets.js";
 import { useEnemySpawnSelection } from "../composables/useEnemySpawnSelection.js";
@@ -241,7 +241,12 @@ const {
   registerRangeAttackConfirm,
   unregisterRangeAttackConfirm,
 } = useBoardActionMode();
-const { sendPlayerAction, sendMovePath, pendingReaction, reversalExtraAllyIds } = useCombatActions();
+const {
+  sendPlayerAction: sendPlayerActionRaw,
+  sendMovePath,
+  pendingReaction,
+  reversalExtraAllyIds,
+} = useCombatActions();
 
 function buildPackModeContext(): BoardModeContext | null {
   const m = boardActionMode.value;
@@ -415,10 +420,12 @@ const {
   activePlayerMoves,
   animatingEnemyIds,
   animatingPlayerIds,
-  startEnemyMove,
-  startPlayerMove,
+  startOptimisticEnemyMove,
+  startOptimisticPlayerMove,
   finishMove: finishTokenMove,
-} = useTokenMoveAnimations(gameState, boardKey);
+  clearAll: clearTokenMoves,
+} = useTokenMoveAnimations(gameState, boardKey, showToast);
+const { optimisticEnemyIds, optimisticPlayerIds } = usePendingTokenMoves();
 const moveOverlayAtDestIds = ref(new Set<string>());
 const moveOverlayFinishTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const breakerPromptOpen = ref(false);
@@ -441,6 +448,68 @@ const targetPickerEnemies = ref<TargetPickerEnemy[]>([]);
 const targetPickerMaxSelectable = ref(1);
 const targetPickerPreSelectedIds = ref<string[]>([]);
 const targetPickerTileIds = ref<string[]>([]);
+
+function startOptimisticPositionDiffs(
+  before: NonNullable<typeof gameState.value>,
+  after: NonNullable<typeof gameState.value>,
+) {
+  for (const player of before.players) {
+    const moved = after.players.find((candidate) => candidate.id === player.id);
+    if (moved && (moved.x !== player.x || moved.y !== player.y)) {
+      startOptimisticPlayerMove(player.id, player, moved);
+    }
+  }
+  for (const enemy of before.enemies) {
+    const moved = after.enemies.find((candidate) => candidate.id === enemy.id);
+    if (moved && (moved.x !== enemy.x || moved.y !== enemy.y)) {
+      startOptimisticEnemyMove(enemy.id, enemy, moved);
+    }
+  }
+}
+
+function sendPlayerAction(action: PlayerAction) {
+  const s = gameState.value;
+  const id = yourPlayerId.value;
+  if (!s || !id || optimisticPlayerIds.value.has(id)) return;
+  const preview = structuredClone(toRaw(s));
+  applyPlayerAction(preview, id, action);
+  sendPlayerActionRaw(action);
+  startOptimisticPositionDiffs(s, preview);
+}
+
+function sendGmEnemyAction(action: GmEnemyAction) {
+  const s = gameState.value;
+  if (!s || optimisticEnemyIds.value.has(action.enemyId)) return;
+  const preview = structuredClone(toRaw(s));
+  applyGmEnemyAction(preview, action);
+  send({ type: "gmEnemyAction", action });
+  startOptimisticPositionDiffs(s, preview);
+}
+
+function sendGmForceMove(
+  target: { kind: "player" | "enemy"; id: string },
+  x: number,
+  y: number,
+  soloSwarmMember?: boolean,
+) {
+  const s = gameState.value;
+  const pendingIds = target.kind === "player" ? optimisticPlayerIds.value : optimisticEnemyIds.value;
+  if (!s || pendingIds.has(target.id)) return;
+  const token =
+    target.kind === "player"
+      ? s.players.find((player) => player.id === target.id)
+      : s.enemies.find((enemy) => enemy.id === target.id);
+  if (!token) return;
+  send({
+    type: "gmForceMove",
+    target,
+    x,
+    y,
+    ...(soloSwarmMember ? { soloSwarmMember: true } : {}),
+  });
+  if (target.kind === "player") startOptimisticPlayerMove(target.id, token, { x, y });
+  else startOptimisticEnemyMove(target.id, token, { x, y });
+}
 
 function closeTargetPicker() {
   targetPickerOpen.value = false;
@@ -510,10 +579,7 @@ function onProvokeCancel() {
 function onSwarmChipConfirm(targetPlayerIds: string[]) {
   const enemyId = swarmChipEnemyId.value;
   if (!enemyId) return;
-  send({
-    type: "gmEnemyAction",
-    action: { action: "pack", kind: "swarmChip", enemyId, detail: { targetPlayerIds } },
-  });
+  sendGmEnemyAction({ action: "pack", kind: "swarmChip", enemyId, detail: { targetPlayerIds } });
   swarmChipOpen.value = false;
 }
 
@@ -1366,6 +1432,7 @@ const gmForceMovableKeys = computed(() => {
   if (!s || !canUseGmTools.value || gmActiveTool.value !== "forceMove") return keys;
 
   if (selectedPlayerId.value) {
+    if (optimisticPlayerIds.value.has(selectedPlayerId.value)) return keys;
     const target = { kind: "player" as const, id: selectedPlayerId.value };
     for (const c of cells.value) {
       if (validateGmForceMove(s, target, c.x, c.y) === null) keys.add(c.key);
@@ -1374,7 +1441,7 @@ const gmForceMovableKeys = computed(() => {
   }
 
   const id = selectedEnemyId.value;
-  if (!id) return keys;
+  if (!id || optimisticEnemyIds.value.has(id)) return keys;
   const target = { kind: "enemy" as const, id };
   const solo = isSoloSwarmMemberSelected.value ? { soloSwarmMember: true as const } : undefined;
   for (const c of cells.value) {
@@ -1383,12 +1450,50 @@ const gmForceMovableKeys = computed(() => {
   return keys;
 });
 
+const gmNonSwarmMovementPathsByKey = computed(() => {
+  const paths = new Map<string, MovementPathResult>();
+  const s = gameState.value;
+  const id = selectedEnemyId.value;
+  if (
+    !s ||
+    !id ||
+    optimisticEnemyIds.value.has(id) ||
+    !canUseGmTools.value ||
+    !canGmMoveEnemies(s)
+  ) {
+    return paths;
+  }
+  const enemy = s.enemies.find((e) => e.id === id);
+  if (
+    !enemy ||
+    enemy.exhausted ||
+    getCombatBoardHelpers().isTowerEnemy(enemy) ||
+    getCombatBoardHelpers().swarmGroupForEnemy(s, id)
+  ) {
+    return paths;
+  }
+  if (!isSandboxMode(s)) ensureEnemyMovement(enemy);
+  const reachable = enemyMovementReachability(s, id, {
+    budget: isSandboxMode(s) ? Infinity : (enemy.movementRemaining ?? 0),
+  });
+  const scale = getEnemyScale(enemy);
+  for (const result of reachable.values()) {
+    const dest = result.path[result.path.length - 1]!;
+    for (const tile of enemyFootprintTiles(dest.x, dest.y, scale)) {
+      const key = boardCellKey(tile.x, tile.y);
+      const prior = paths.get(key);
+      if (!prior || result.cost < prior.cost) paths.set(key, result);
+    }
+  }
+  return paths;
+});
+
 const gmEnemyMoveTargetKeys = computed(() => {
   const keys = new Set<string>();
   const s = gameState.value;
   const id = selectedEnemyId.value;
   if (gmActiveTool.value === "forceMove") return keys;
-  if (!s || !id || !canGmMoveEnemies(s)) return keys;
+  if (!s || !id || optimisticEnemyIds.value.has(id) || !canGmMoveEnemies(s)) return keys;
   const enemy = s.enemies.find((e) => e.id === id);
   if (!enemy || enemy.exhausted || getCombatBoardHelpers().isTowerEnemy(enemy)) return keys;
 
@@ -1433,30 +1538,7 @@ const gmEnemyMoveTargetKeys = computed(() => {
     return keys;
   }
 
-  if (!isSandboxMode(s)) {
-    ensureEnemyMovement(enemy);
-  }
-  const remaining = isSandboxMode(s) ? Infinity : (enemy.movementRemaining ?? 0);
-  if (remaining < 1) return keys;
-  const scale = getEnemyScale(enemy);
-  const deltas = [
-    { dx: 0, dy: -1 },
-    { dx: 0, dy: 1 },
-    { dx: -1, dy: 0 },
-    { dx: 1, dy: 0 },
-  ];
-  for (const { dx, dy } of deltas) {
-    const anchorX = enemy.x + dx;
-    const anchorY = enemy.y + dy;
-    const cost = enemyMoveStepCost(s, enemy, enemy.x, enemy.y, anchorX, anchorY);
-    if (cost > remaining) continue;
-    if (validateEnemyFootprint(s, anchorX, anchorY, scale, id, occupancy.value ?? undefined, enemy) !== null) {
-      continue;
-    }
-    for (const tile of enemyFootprintTiles(anchorX, anchorY, scale)) {
-      keys.add(boardCellKey(tile.x, tile.y));
-    }
-  }
+  for (const key of gmNonSwarmMovementPathsByKey.value.keys()) keys.add(key);
   return keys;
 });
 
@@ -1566,6 +1648,61 @@ const yourPlayer = computed(() => {
   const id = yourPlayerId.value;
   if (!s || !id) return undefined;
   return s.players.find((p) => p.id === id);
+});
+
+const playerMovementPaths = computed(() => {
+  const s = gameState.value;
+  const player = yourPlayer.value;
+  const mode = boardActionMode.value;
+  if (
+    !s ||
+    !player ||
+    optimisticPlayerIds.value.has(player.id) ||
+    props.role !== "player" ||
+    !activePlayerSelected.value ||
+    !canPlayerMove(s, player.id) ||
+    s.roundPhase === "deployment" ||
+    (mode != null && mode !== "move" && mode !== "sprint" && mode !== "aegis")
+  ) {
+    return new Map<string, MovementPathResult>();
+  }
+  const sandbox = isSandboxMode(s);
+  const sprintRemaining = player.actionBudget?.sprintRemaining ?? 0;
+  const flying = mode === "aegis";
+  const budget =
+    sandbox && !flying
+      ? Infinity
+      : mode === "sprint" || (flying && sprintRemaining > 0)
+        ? sprintRemaining
+        : (player.actionBudget?.movementRemaining ?? 0);
+  if (budget <= 0) return new Map<string, MovementPathResult>();
+  return playerMovementReachability(s, player.id, {
+    budget,
+    flying,
+    ...(flying ? { maxSteps: aegisFlyingRemaining(player) } : {}),
+  });
+});
+
+const movementPreview = computed(() => {
+  const cell = hoveredCell.value;
+  const s = gameState.value;
+  if (!cell || !s) return null;
+  const playerPath = playerMovementPaths.value.get(coordKey(cell.x, cell.y));
+  const enemyPath = gmNonSwarmMovementPathsByKey.value.get(boardCellKey(cell.x, cell.y));
+  const result = playerPath ?? enemyPath;
+  if (!result) return null;
+  const origin = playerPath
+    ? yourPlayer.value
+    : s.enemies.find((enemy) => enemy.id === selectedEnemyId.value);
+  if (!origin) return null;
+  const metrics = boardCellMetrics(s.width, s.height, boardWidthPx.value, BOARD_CELL_GAP);
+  const points = [origin, ...result.path]
+    .map(
+      (coord) =>
+        `${coord.x * (metrics.cellW + metrics.gap) + metrics.cellW / 2},${coord.y * (metrics.cellH + metrics.gap) + metrics.cellH / 2}`,
+    )
+    .join(" ");
+  return { ...result, points };
 });
 
 let sprintModePrev: typeof boardActionMode.value = null;
@@ -1685,9 +1822,6 @@ const cellStateByKey = computed(() => {
     !inCombatActionMode &&
     (sandbox || onPlayerTurn || inMoveMode || inSprintMode || inAegisMode);
   const me = yourPlayer.value;
-  const movementRemaining = me?.actionBudget?.movementRemaining ?? 0;
-  const sprintRemaining = me?.actionBudget?.sprintRemaining ?? 0;
-  const aegisRemaining = me ? aegisFlyingRemaining(me) : 0;
   const remotePreview = remoteAttackPreviewHighlights.value;
   const remotePrimary = remotePreview ? new Set(remotePreview.primary) : null;
   const remoteSecondary = remotePreview ? new Set(remotePreview.secondary) : null;
@@ -1750,47 +1884,11 @@ const cellStateByKey = computed(() => {
       enemiesByAnchorKey.get(ck) ?? [],
     ) ?? (enemiesByAnchorKey.get(ck) ?? []);
     const enemyAnchor = enemiesAtTile[0];
-    const adjacent =
-      me != null &&
-      isMovementStepAdjacent({ x: me.x, y: me.y }, c, playerAllowsDiagonalMovement(me));
-    const stepBase =
-      playerCanMove &&
-      !isDeployment &&
-      isWalkable(tile) &&
-      !player &&
-      !enemy &&
-      adjacent &&
-      showStepMoveHighlights;
-    const aegisStepBase =
-      playerCanMove &&
-      !isDeployment &&
-      !player &&
-      !enemy &&
-      adjacent &&
-      showStepMoveHighlights &&
-      inAegisMode &&
-      me != null &&
-      isFlyingStepReachable(s, me, { x: me.x, y: me.y }, c);
-    const stepCost = me && stepBase ? movementStepCost(s, me, c.x, c.y) : Infinity;
-    const aegisStepCost =
-      me && aegisStepBase
-        ? stepMoveCost(s, me, { x: me.x, y: me.y }, c, true)
-        : Infinity;
-    const showRegularStep =
-      stepBase &&
-      !inSprintMode &&
-      !inAegisMode &&
-      (sandbox || (stepCost <= movementRemaining && movementRemaining > 0));
-    const showSprintStep = stepBase && inSprintMode && stepCost <= sprintRemaining && sprintRemaining > 0;
-    const aegisUsesSprint = sprintRemaining > 0 && inAegisMode;
-    const aegisMoveBudget = aegisUsesSprint ? sprintRemaining : movementRemaining;
-    const showAegisStep =
-      aegisStepBase &&
-      inAegisMode &&
-      aegisStepCost <= aegisMoveBudget &&
-      aegisMoveBudget > 0 &&
-      aegisRemaining > 0 &&
-      (sandbox || onPlayerTurn);
+    const reachablePlayerDestination =
+      showStepMoveHighlights && playerMovementPaths.value.has(ck);
+    const showRegularStep = reachablePlayerDestination && !inSprintMode && !inAegisMode;
+    const showSprintStep = reachablePlayerDestination && inSprintMode;
+    const showAegisStep = reachablePlayerDestination && inAegisMode;
 
     const packLayers = packModeLayers.value;
     const combatPrimary =
@@ -1834,10 +1932,8 @@ const cellStateByKey = computed(() => {
         activePlayerSelected.value &&
         playerCanMove &&
         !isDeployment &&
-        isWalkable(tile) &&
-        !player &&
-        !enemy &&
-        (sandbox) &&
+        reachablePlayerDestination &&
+        sandbox &&
         inMoveMode,
       moveSecondary: showRegularStep || showSprintStep,
       moveAegis: showAegisStep,
@@ -1850,7 +1946,11 @@ const cellStateByKey = computed(() => {
         !player &&
         !enemy &&
         (!areDeploymentZonesEnforced(s) || !!tile?.deploymentZone),
-      deploymentZoneHighlight: (isDeployment || sandbox) && !!tile?.deploymentZone,
+      deploymentZoneHighlight:
+        (isDeployment ||
+          sandbox ||
+          (canUseGmTools.value && s.roundPhase === "taccomNotStarted")) &&
+        !!tile?.deploymentZone,
       gmMovable: canUseGmTools.value && gmEnemyMoveTargetKeys.value.has(c.key),
       gmSpawnable:
         canUseGmTools.value &&
@@ -2203,27 +2303,12 @@ const tooltipData = computed(() => {
       };
     });
   const towers = enemiesAtTile.filter((e) => getCombatBoardHelpers().isTowerEnemy(e));
-  const moveCost = (() => {
-    const sel = boardSelection.value;
-    if (!sel) return null;
-    if (sel.kind === "player") {
-      const player = s.players.find((p) => p.id === sel.id);
-      if (!player) return null;
-      if (!isMovementStepAdjacent(player, cell, playerAllowsDiagonalMovement(player))) return null;
-      return movementStepCost(s, player, cell.x, cell.y);
-    }
-    const enemy = s.enemies.find((e) => e.id === sel.id);
-    if (!enemy) return null;
-    if (!isMovementStepAdjacent(enemy, cell, false)) return null;
-    const swarm = getCombatBoardHelpers().swarmGroupForEnemy(s, enemy.id) != null;
-    return enemyMoveStepCost(s, enemy, enemy.x, enemy.y, cell.x, cell.y, { swarm });
-  })();
   return {
     x: cell.x,
     y: cell.y,
     tile,
     tileName: tile.name,
-    moveCost,
+    moveCost: movementPreview.value?.cost ?? null,
     players: occ.playerByKey.has(key) ? [occ.playerByKey.get(key)!] : [],
     enemies: enemyEntries,
     towers,
@@ -2418,7 +2503,7 @@ function onEnemyMoveOverlayTransitionEnd(id: string, e: TransitionEvent) {
 }
 
 function playerMoveOverlayStyle(anim: TokenMoveAnimation) {
-  const atDest = moveOverlayAtDestIds.value.has(anim.id);
+  const atDest = moveOverlayAtDestIds.value.has(anim.id) || anim.pending;
   const x = atDest ? anim.toX : anim.fromX;
   const y = atDest ? anim.toY : anim.fromY;
   return cellCenterStyle(x, y);
@@ -2427,7 +2512,7 @@ function playerMoveOverlayStyle(anim: TokenMoveAnimation) {
 function enemyMoveOverlayStyle(anim: TokenMoveAnimation) {
   const s = gameState.value;
   if (!s) return null;
-  const atDest = moveOverlayAtDestIds.value.has(anim.id);
+  const atDest = moveOverlayAtDestIds.value.has(anim.id) || anim.pending;
   const x = atDest ? anim.toX : anim.fromX;
   const y = atDest ? anim.toY : anim.fromY;
   const enemy = s.enemies.find((e) => e.id === anim.id);
@@ -2532,58 +2617,56 @@ function gmEnemyMoveDestAt(x: number, y: number): { x: number; y: number } | nul
   const group = getCombatBoardHelpers().swarmGroupForEnemy(s, id);
   if (group) return { x, y };
 
-  const enemy = s.enemies.find((e) => e.id === id);
-  if (!enemy) return null;
-  const scale = getEnemyScale(enemy);
-  const occ = occupancy.value ?? undefined;
-  const deltas = [
-    { dx: 0, dy: -1 },
-    { dx: 0, dy: 1 },
-    { dx: -1, dy: 0 },
-    { dx: 1, dy: 0 },
-  ];
-  const clickDx = x - enemy.x;
-  const clickDy = y - enemy.y;
-  let best: { x: number; y: number; score: number } | null = null;
-  for (const { dx, dy } of deltas) {
-    const anchorX = enemy.x + dx;
-    const anchorY = enemy.y + dy;
-    if (validateEnemyFootprint(s, anchorX, anchorY, scale, id, occ, enemy) !== null) continue;
-    let matches = false;
-    for (const tile of enemyFootprintTiles(anchorX, anchorY, scale)) {
-      if (tile.x === x && tile.y === y) {
-        matches = true;
-        break;
-      }
-    }
-    if (!matches) continue;
-    const score = dx * clickDx + dy * clickDy;
-    if (!best || score > best.score) best = { x: anchorX, y: anchorY, score };
-  }
-  return best ? { x: best.x, y: best.y } : null;
+  const path = gmNonSwarmMovementPathsByKey.value.get(key)?.path;
+  return path?.[path.length - 1] ?? null;
 }
 
 function sendEnemyMove(
   enemyId: string,
   destX: number,
   destY: number,
-  opts: { soloSwarmMember?: boolean; animateFrom?: { x: number; y: number }; animateMoverId?: string },
+  opts: {
+    soloSwarmMember?: boolean;
+    animateFrom?: { x: number; y: number };
+    animateMoverId?: string;
+    path?: { x: number; y: number }[];
+  },
 ) {
   const s = gameState.value;
   if (!s) return;
   const moverId = opts.animateMoverId ?? enemyId;
   const mover = s.enemies.find((e) => e.id === moverId);
   const from = opts.animateFrom ?? (mover ? { x: mover.x, y: mover.y } : { x: destX, y: destY });
-  gateProvoke(previewEnemyMoveProvokes(s, enemyId, destX, destY, opts), () => {
-    startEnemyMove(moverId, from, { x: destX, y: destY });
-    send({ type: "moveEnemy", enemyId, x: destX, y: destY, soloSwarmMember: opts.soloSwarmMember });
+  const path = opts.path ?? [{ x: destX, y: destY }];
+  const previewState = { ...s, enemies: s.enemies.map((enemy) => ({ ...enemy })) };
+  const triggers: ProvokeTrigger[] = [];
+  for (const step of path) {
+    triggers.push(...previewEnemyMoveProvokes(previewState, enemyId, step.x, step.y, opts));
+    const previewEnemy = previewState.enemies.find((enemy) => enemy.id === enemyId);
+    if (previewEnemy) {
+      previewEnemy.x = step.x;
+      previewEnemy.y = step.y;
+    }
+  }
+  gateProvoke(triggers, () => {
+    if (opts.path) {
+      sendGmEnemyAction({ action: "move", enemyId, path });
+    } else {
+      send({ type: "moveEnemy", enemyId, x: destX, y: destY, soloSwarmMember: opts.soloSwarmMember });
+      startOptimisticEnemyMove(moverId, from, { x: destX, y: destY }, path);
+    }
   });
 }
 
-function tryMoveSelectedEnemyToDest(destX: number, destY: number): boolean {
+function tryMoveSelectedEnemyToDest(
+  destX: number,
+  destY: number,
+  path?: { x: number; y: number }[],
+): boolean {
   const s = gameState.value;
   const selected = selectedEnemyId.value;
   if (!s || !selected) return false;
+  if (optimisticEnemyIds.value.has(selected)) return false;
   if (swarmChipOpen.value) return false;
   if (!ensureSwarmChipResolved(selected)) return false;
   const enemy = s.enemies.find((e) => e.id === selected);
@@ -2620,7 +2703,10 @@ function tryMoveSelectedEnemyToDest(destX: number, destY: number): boolean {
   if (validateEnemyFootprint(s, destX, destY, scale, selected, occupancy.value ?? undefined, enemy) !== null) {
     return false;
   }
-  sendEnemyMove(selected, destX, destY, { animateFrom: { x: enemy.x, y: enemy.y } });
+  sendEnemyMove(selected, destX, destY, {
+    animateFrom: { x: enemy.x, y: enemy.y },
+    path,
+  });
   return true;
 }
 
@@ -2680,13 +2766,12 @@ function onEnemyCellClick(x: number, y: number, enemyId: string) {
       gmActiveTool.value === "forceMove" &&
       gmForceMovableKeys.value.has(boardCellKey(x, y))
     ) {
-      send({
-        type: "gmForceMove",
-        target: { kind: "enemy", id: selectedEnemyId.value },
+      sendGmForceMove(
+        { kind: "enemy", id: selectedEnemyId.value },
         x,
         y,
-        ...(isSoloSwarmMemberSelected.value ? { soloSwarmMember: true } : {}),
-      });
+        isSoloSwarmMemberSelected.value,
+      );
       return;
     }
     if (selectedEnemyId.value && selectedEnemyId.value !== enemyId && tryMoveSelectedEnemy(x, y)) {
@@ -2778,13 +2863,35 @@ function tryMove(x: number, y: number) {
   if (deploying && !cell?.deployable) return;
   const s = gameState.value;
   const id = yourPlayerId.value;
-  const path = [{ x, y }];
+  if (optimisticPlayerIds.value.has(id)) return;
   if (deploying) {
     send({ type: "move", x, y });
     return;
   }
+  const result = playerMovementPaths.value.get(coordKey(x, y));
+  if (!result) return;
   const provokeOpts = flying ? { flying: true } : {};
-  gateProvoke(previewPathProvokes(s, id, path, provokeOpts), () => sendMovePath(path, flying));
+  gateProvoke(previewPathProvokes(s, id, result.path, provokeOpts), () =>
+    sendPlayerMovePath(result.path, flying),
+  );
+}
+
+function sendPlayerMovePath(path: { x: number; y: number }[], flying?: boolean) {
+  const me = yourPlayer.value;
+  const destination = path[path.length - 1];
+  if (!me || !destination || optimisticPlayerIds.value.has(me.id)) return;
+  sendMovePath(path, flying);
+  startOptimisticPlayerMove(me.id, me, destination, path);
+}
+
+function sendSprintPath(path: { x: number; y: number }[], flying?: boolean) {
+  const me = yourPlayer.value;
+  const destination = path[path.length - 1];
+  if (!me || !destination || optimisticPlayerIds.value.has(me.id)) return;
+  for (const step of path) {
+    sendPlayerActionRaw({ action: "sprintMove", x: step.x, y: step.y, ...(flying ? { flying: true } : {}) });
+  }
+  startOptimisticPlayerMove(me.id, me, destination, path, true);
 }
 
 function canDragDeploy(player: Player): boolean {
@@ -3193,7 +3300,6 @@ function commitWarhook(landing: { x: number; y: number }) {
   if (!me || !target || !s) return;
   const triggers = previewSprintProvokes(s, me.id, landing.x, landing.y);
   gateProvoke(triggers, () => {
-    startPlayerMove(me.id, { x: me.x, y: me.y }, landing);
     sendPlayerAction({
       action: "pack",
       kind: "weaponActive",
@@ -3334,6 +3440,7 @@ function handleOmnistrikeCellClick(x: number, y: number): boolean {
 function handleCombatCellClick(x: number, y: number): boolean {
   const m = boardActionMode.value;
   if (!m || !yourPlayer.value || !gameState.value) return false;
+  if (optimisticPlayerIds.value.has(yourPlayer.value.id)) return true;
   const occ = occupancy.value;
   if (!occ) return false;
   const key = coordKey(x, y);
@@ -3347,14 +3454,17 @@ function handleCombatCellClick(x: number, y: number): boolean {
     const s = gameState.value;
     const id = yourPlayerId.value;
     if (!s || !id) return true;
-    const path = [{ x, y }];
+    const path = playerMovementPaths.value.get(coordKey(x, y))?.path;
+    if (!path) return true;
     const sprintLeft = me.actionBudget?.sprintRemaining ?? 0;
     if (sprintLeft > 0) {
-      gateProvoke(previewSprintProvokes(s, id, x, y, { flying: true }), () => {
-        sendPlayerAction({ action: "sprintMove", x, y, flying: true });
+      gateProvoke(previewPathProvokes(s, id, path, { flying: true }), () => {
+        sendSprintPath(path, true);
       });
     } else {
-      gateProvoke(previewPathProvokes(s, id, path, { flying: true }), () => sendMovePath(path, true));
+      gateProvoke(previewPathProvokes(s, id, path, { flying: true }), () =>
+        sendPlayerMovePath(path, true),
+      );
     }
     return true;
   }
@@ -3363,16 +3473,8 @@ function handleCombatCellClick(x: number, y: number): boolean {
     const s = gameState.value;
     const id = yourPlayerId.value;
     if (!s || !id) return true;
-    if (isSandboxMode(s)) {
-      const path = findPlayerMovementPath(s, id, { x, y });
-      if (path) {
-        gateProvoke(previewPathProvokes(s, id, path), () => sendMovePath(path));
-      }
-    } else {
-      if (!cellStateByKey.value.get(boardCellKey(x, y))?.moveSecondary) return true;
-      const path = [{ x, y }];
-      gateProvoke(previewPathProvokes(s, id, path), () => sendMovePath(path));
-    }
+    const path = playerMovementPaths.value.get(coordKey(x, y))?.path;
+    if (path) gateProvoke(previewPathProvokes(s, id, path), () => sendPlayerMovePath(path));
     return true;
   }
   if (m === "attack") {
@@ -3415,13 +3517,13 @@ function handleCombatCellClick(x: number, y: number): boolean {
   }
   if (m === "sprint") {
     if (!activePlayerSelected.value) return true;
-    const cell = cellStateByKey.value.get(boardCellKey(x, y));
     const s = gameState.value;
     const id = yourPlayerId.value;
     if (!s || !id) return true;
-    if (!cell?.moveSecondary) return true;
-    gateProvoke(previewSprintProvokes(s, id, x, y), () => {
-      sendPlayerAction({ action: "sprintMove", x, y });
+    const path = playerMovementPaths.value.get(coordKey(x, y))?.path;
+    if (!path) return true;
+    gateProvoke(previewPathProvokes(s, id, path), () => {
+      sendSprintPath(path);
     });
     return true;
   }
@@ -3437,7 +3539,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
     const id = yourPlayerId.value;
     if (!s || !id) return true;
     gateProvoke(previewSprintProvokes(s, id, x, y), () => {
-      startPlayerMove(me.id, { x: me.x, y: me.y }, { x, y });
       sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: pendingTargetEnemyId.value!,
         landingX: x,
         landingY: y } });
@@ -3568,7 +3669,8 @@ function onPlayerCellClick(x: number, y: number) {
 function tryMoveSelectedEnemy(x: number, y: number): boolean {
   const dest = gmEnemyMoveDestAt(x, y);
   if (!dest) return false;
-  return tryMoveSelectedEnemyToDest(dest.x, dest.y);
+  const path = gmNonSwarmMovementPathsByKey.value.get(boardCellKey(x, y))?.path;
+  return tryMoveSelectedEnemyToDest(dest.x, dest.y, path);
 }
 
 function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
@@ -3589,9 +3691,7 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
     if (options.length === 0) return false;
 
     if (attackAimed.value && attackAnchor.value && gmEnemyPatternPrimaryKeys.value.has(key)) {
-      send({
-        type: "gmEnemyAction",
-        action: {
+      sendGmEnemyAction({
           action: "attack",
           enemyId: pending.enemyId,
           attackIndex: pending.attackIndex,
@@ -3599,7 +3699,6 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
           originX: attackAnchor.value.x,
           originY: attackAnchor.value.y,
           damage: pending.damage,
-        },
       });
       clearBoardActionMode();
       return true;
@@ -3625,15 +3724,12 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
     attackSpec.specialId === "flowerbud-plant" ||
     !!getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(attackSpec.specialId);
   if (plantFlowerbud) {
-    send({
-      type: "gmEnemyAction",
-      action: {
+    sendGmEnemyAction({
         action: "attack",
         enemyId: pending.enemyId,
         attackIndex: pending.attackIndex,
         destX: x,
         destY: y,
-      },
     });
     clearBoardActionMode();
     return true;
@@ -3643,9 +3739,7 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
     pending.stainTeleport || attackSpec.specialId === "stain-teleport";
 
   if (stainTeleport && (pending.targetPlayerId || pending.targetEnemyId)) {
-    send({
-      type: "gmEnemyAction",
-      action: {
+    sendGmEnemyAction({
         action: "attack",
         enemyId: pending.enemyId,
         attackIndex: pending.attackIndex,
@@ -3654,7 +3748,6 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
         destX: x,
         destY: y,
         damage: pending.damage,
-      },
     });
     clearBoardActionMode();
     return true;
@@ -3702,15 +3795,12 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
   }
 
   if (player) {
-    send({
-      type: "gmEnemyAction",
-      action: {
+    sendGmEnemyAction({
         action: "attack",
         enemyId: pending.enemyId,
         attackIndex: pending.attackIndex,
         targetPlayerId: player.id,
         damage: pending.damage,
-      },
     });
     clearBoardActionMode();
     return true;
@@ -3718,15 +3808,12 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
 
   if (enemyOnTile && enemyOnTile.id !== pending.enemyId) {
     const canon = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyOnTile.id)?.canonicalId ?? enemyOnTile.id;
-    send({
-      type: "gmEnemyAction",
-      action: {
+    sendGmEnemyAction({
         action: "attack",
         enemyId: pending.enemyId,
         attackIndex: pending.attackIndex,
         targetEnemyId: canon,
         damage: pending.damage,
-      },
     });
     clearBoardActionMode();
     return true;
@@ -3738,16 +3825,13 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
 function onSwarmAttackConfirm(strikeCount: number) {
   const pending = swarmAttackPending.value;
   if (!pending) return;
-  send({
-    type: "gmEnemyAction",
-    action: {
+  sendGmEnemyAction({
       action: "attack",
       enemyId: pending.enemyId,
       attackIndex: pending.attackIndex,
       targetPlayerId: pending.targetPlayerId,
       damage: pending.damage,
       swarmStrikes: strikeCount,
-    },
   });
   swarmAttackModalOpen.value = false;
   swarmAttackPending.value = null;
@@ -4136,22 +4220,16 @@ function onGmCellClick(x: number, y: number) {
 
   if (gmActiveTool.value === "forceMove") {
     if (selectedPlayerId.value && gmForceMovableKeys.value.has(boardCellKey(x, y))) {
-      send({
-        type: "gmForceMove",
-        target: { kind: "player", id: selectedPlayerId.value },
-        x,
-        y,
-      });
+      sendGmForceMove({ kind: "player", id: selectedPlayerId.value }, x, y);
       return;
     }
     if (selectedEnemyId.value && gmForceMovableKeys.value.has(boardCellKey(x, y))) {
-      send({
-        type: "gmForceMove",
-        target: { kind: "enemy", id: selectedEnemyId.value },
+      sendGmForceMove(
+        { kind: "enemy", id: selectedEnemyId.value },
         x,
         y,
-        ...(isSoloSwarmMemberSelected.value ? { soloSwarmMember: true } : {}),
-      });
+        isSoloSwarmMemberSelected.value,
+      );
       return;
     }
     if (selectOccupantAt(x, y)) return;
@@ -4746,6 +4824,7 @@ onUnmounted(() => {
   if (attackPreviewSyncTimer) clearTimeout(attackPreviewSyncTimer);
   for (const timer of moveOverlayFinishTimers.values()) clearTimeout(timer);
   moveOverlayFinishTimers.clear();
+  clearTokenMoves();
   window.removeEventListener("keydown", onKeydown);
   window.removeEventListener("keyup", onKeyup);
   window.removeEventListener("blur", onWindowBlur);
@@ -4809,6 +4888,30 @@ onUnmounted(() => {
                   :d="item.d"
                 />
               </template>
+            </svg>
+            <svg
+              v-if="movementPreview"
+              class="movement-path-overlay"
+              aria-hidden="true"
+              :viewBox="`0 0 ${boardWidthPx} ${contentHeightPx}`"
+            >
+              <defs>
+                <marker
+                  id="movement-path-arrow"
+                  markerWidth="5"
+                  markerHeight="5"
+                  refX="4"
+                  refY="2.5"
+                  orient="auto"
+                >
+                  <path d="M0,0 L5,2.5 L0,5 Z" />
+                </marker>
+              </defs>
+              <polyline
+                :points="movementPreview.points"
+                marker-end="url(#movement-path-arrow)"
+                vector-effect="non-scaling-stroke"
+              />
             </svg>
             <BoardCell
                 v-for="row in boardCellRows"
@@ -4901,7 +5004,7 @@ onUnmounted(() => {
               Obstacle HP: {{ getObstacleHp(tooltipData.tile) }}
             </span>
             <span class="tooltip-row">Elevation: {{ tooltipData.tile.elevation }}</span>
-            <span v-if="tooltipData.moveCost != null" class="tooltip-row">
+            <span v-if="tooltipData.moveCost != null" class="tooltip-move-cost">
               Move cost: {{ tooltipData.moveCost }}
             </span>
           </div>
@@ -4998,6 +5101,7 @@ onUnmounted(() => {
             'fortification-overlay': enemyMoveOverlayIsFortification(anim),
             selected: enemyMoveOverlaySelected(anim),
             'no-token-bg': !showTokenBackgrounds,
+            pending: anim.pending,
           }"
           :style="[
             enemyMoveOverlayStyle(anim),
@@ -5011,6 +5115,7 @@ onUnmounted(() => {
             alt=""
             class="portrait-img"
           />
+          <span v-if="anim.pending" class="move-pending-signal" aria-label="Awaiting server">⌁</span>
         </div>
 
         <div
@@ -5021,6 +5126,7 @@ onUnmounted(() => {
             'teleport-overlay-animating': moveOverlayAtDestIds.has(entry.anim.id),
             selected: playerMoveOverlaySelected(entry.player.id),
             'no-token-bg': !showTokenBackgrounds,
+            pending: entry.anim.pending,
           }"
           :style="[
             playerMoveOverlayStyle(entry.anim),
@@ -5037,6 +5143,7 @@ onUnmounted(() => {
             alt=""
             class="portrait-img"
           />
+          <span v-if="entry.anim.pending" class="move-pending-signal" aria-label="Awaiting server">⌁</span>
         </div>
       </div>
       <button v-if="isTransformed" class="reset-zoom-btn" type="button" @click="fitToView(true)">
@@ -5220,6 +5327,29 @@ onUnmounted(() => {
   z-index: 2;
 }
 
+.movement-path-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+  overflow: visible;
+}
+
+.movement-path-overlay polyline {
+  fill: none;
+  stroke: var(--color-accent-bright);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px var(--color-bg-board));
+}
+
+.movement-path-overlay marker path {
+  fill: var(--color-accent-bright);
+}
+
 .swarm-footprint-path {
   fill: var(--color-board-target-attack-bg);
   stroke: var(--color-board-target-attack);
@@ -5334,6 +5464,29 @@ onUnmounted(() => {
   border-radius: 4px;
 }
 
+.teleport-overlay.pending,
+.enemy-move-overlay.pending {
+  filter: brightness(0.45) saturate(0.2);
+}
+
+.move-pending-signal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--color-accent-bright);
+  border-radius: 50%;
+  background: var(--color-surface);
+  color: var(--color-accent-bright);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .teleport-overlay.no-token-bg,
 .enemy-move-overlay.no-token-bg {
   background: transparent;
@@ -5394,6 +5547,14 @@ onUnmounted(() => {
 
 .tooltip-row {
   display: block;
+}
+
+.tooltip-move-cost {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--color-accent-bright);
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 .tooltip-unit + .tooltip-unit {

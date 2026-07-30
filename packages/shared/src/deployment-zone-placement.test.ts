@@ -43,6 +43,12 @@ describe("deployment zone placement", () => {
     expect(spawn).toEqual({ x: 4, y: 4 });
   });
 
+  it("findSpawn uses deployment zone tiles on the board edge", () => {
+    const state = makeGameState({ roundPhase: "deployment" });
+    tileAt(state.tiles, 4, state.height - 1)!.deploymentZone = true;
+    expect(findSpawn(state)).toEqual({ x: 4, y: state.height - 1 });
+  });
+
   it("findSpawn falls back when no deployment zones exist", () => {
     const state = makeGameState({ roundPhase: "deployment" });
     const spawn = findSpawn(state);
