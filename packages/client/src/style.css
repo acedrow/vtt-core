@@ -660,18 +660,11 @@ h3,
   height: 100%;
   border-radius: 4px;
   transition: width 0.2s ease;
-}
-
-.hp-bar-fill.high {
-  background: var(--color-success);
-}
-
-.hp-bar-fill.medium {
-  background: var(--color-warning);
-}
-
-.hp-bar-fill.low {
-  background: var(--color-danger);
+  background: linear-gradient(
+    90deg,
+    var(--color-danger),
+    color-mix(in oklch, var(--color-danger) 70%, white)
+  );
 }
 
 .muted {
