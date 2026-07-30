@@ -48,6 +48,7 @@ describe("useGmTools deployment zone paintbrush", () => {
     const sent: ClientMessage[] = [];
     useGameState().registerSend((message) => sent.push(message));
     const tools = useGmTools();
+    tools.paintbrushEnableDeploymentZone.value = true;
     tools.setBulkSelection({
       kind: "tiles",
       coords: [
@@ -70,5 +71,15 @@ describe("useGmTools deployment zone paintbrush", () => {
         deploymentZone: false,
       },
     ]);
+  });
+
+  it("includes deployment zones in enable and disable all", () => {
+    const tools = useGmTools();
+
+    tools.enableAllPaintbrushOptions();
+    expect(tools.paintbrushEnableDeploymentZone.value).toBe(true);
+
+    tools.disableAllPaintbrushOptions();
+    expect(tools.paintbrushEnableDeploymentZone.value).toBe(false);
   });
 });

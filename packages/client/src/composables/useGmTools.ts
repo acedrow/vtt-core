@@ -932,6 +932,7 @@ export function useGmTools() {
     paintbrushEnableElevation.value = enabled;
     paintbrushEnableTerrain.value = enabled;
     paintbrushEnableEffect.value = enabled;
+    paintbrushEnableDeploymentZone.value = enabled;
     paintbrushEnableName.value = enabled;
     paintbrushEnableColor.value = enabled;
     paintbrushEnableAppearance.value = enabled;
