@@ -2232,10 +2232,19 @@ const tooltipStyle = computed(() => {
   const cellLeft = cell.x * (cellW + BOARD_CELL_GAP);
   const cellTop = cell.y * (cellH + BOARD_CELL_GAP);
   const centerX = cellLeft + cellW / 2;
+  const leftPx = panX.value + centerX * scale.value;
+  const topPx = panY.value + cellTop * scale.value;
+  const cellBottomPx = panY.value + (cellTop + cellH) * scale.value;
+  // Prefer above the cell; flip below when the anchor is too close to the viewport top.
+  const viewportTop = viewportEl.value?.getBoundingClientRect().top ?? 0;
+  const screenAnchorY = viewportTop + topPx;
+  const flipBelow = screenAnchorY < 120;
   return {
-    left: `${panX.value + centerX * scale.value}px`,
-    top: `${panY.value + cellTop * scale.value}px`,
-    transform: "translate(-50%, calc(-100% - 6px))",
+    left: `${leftPx}px`,
+    top: `${flipBelow ? cellBottomPx : topPx}px`,
+    transform: flipBelow
+      ? "translate(-50%, 6px)"
+      : "translate(-50%, calc(-100% - 6px))",
   };
 });
 
