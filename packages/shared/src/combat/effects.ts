@@ -359,6 +359,23 @@ export function replaceTileEffects(tile: MapTile, tokens: string[]): void {
   applyTileEffectStacks(tile, tokens);
 }
 
+// Set absolute stacks for each token id without wiping other effects. Empty tokens clear all.
+// New ids append (addition order); existing ids update in place.
+export function upsertTileEffectStacks(tile: MapTile, tokens: string[]): void {
+  if (tokens.length === 0) {
+    delete tile.tileEffects;
+    return;
+  }
+  if (!tile.tileEffects) tile.tileEffects = {};
+  for (const token of tokens) {
+    const parsed = parseEffectToken(token);
+    if (!parsed) continue;
+    if (parsed.stacks <= 0) delete tile.tileEffects[parsed.id];
+    else tile.tileEffects[parsed.id] = parsed.stacks;
+  }
+  if (Object.keys(tile.tileEffects).length === 0) delete tile.tileEffects;
+}
+
 export function hasTileEffects(tile: MapTile | undefined): boolean {
   if (!tile?.tileEffects) return false;
   return Object.values(tile.tileEffects).some((stacks) => stacks > 0);

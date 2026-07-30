@@ -2466,12 +2466,15 @@ function formatHp(current: number | undefined, max: number): string {
   return max > 0 ? `${hp}/${max}` : String(hp);
 }
 
-function effectEntries(stacks?: EffectStacks) {
+function effectEntries(stacks?: EffectStacks, ordered = false) {
   if (!stacks) return [];
-  return Object.entries(stacks)
-    .filter(([, v]) => v > 0)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, count]) => ({ id, stacks: count }));
+  const entries = Object.entries(stacks).filter(([, v]) => v > 0);
+  if (!ordered) entries.sort(([a], [b]) => a.localeCompare(b));
+  return entries.map(([id, count]) => ({ id, stacks: count }));
+}
+
+function tileEffectTooltipEntries(stacks?: EffectStacks) {
+  return effectEntries(stacks, true);
 }
 
 function effectTooltipLabel(id: string, stacks: number): string {
@@ -4927,10 +4930,10 @@ onUnmounted(() => {
               {{ terrainObjectLabel(object) }}
             </span>
           </div>
-          <div v-if="effectEntries(tooltipData.tile.tileEffects).length" class="tooltip-section">
+          <div v-if="tileEffectTooltipEntries(tooltipData.tile.tileEffects).length" class="tooltip-section">
             <span class="tooltip-heading">Tile effects</span>
             <span
-              v-for="effect in effectEntries(tooltipData.tile.tileEffects)"
+              v-for="effect in tileEffectTooltipEntries(tooltipData.tile.tileEffects)"
               :key="effect.id"
               class="tooltip-row tooltip-effect"
             >

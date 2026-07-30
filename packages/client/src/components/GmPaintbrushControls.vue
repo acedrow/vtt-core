@@ -158,13 +158,16 @@ const featureTintModalOpen = ref(false);
         class="effect-select"
         @change="paintbrushEnableEffect = true"
       >
-        <option :value="GM_TILE_EFFECT_NONE">None</option>
+        <option :value="GM_TILE_EFFECT_NONE">Clear all</option>
         <option v-for="effect in TILE_EFFECTS" :key="effect.id" :value="effect.id">
           {{ effect.id }}
         </option>
       </select>
       <EffectIcon v-if="paintbrushEffectId" :effect-id="paintbrushEffectId" :size="16" />
     </div>
+    <p v-if="paintbrushEnableEffect" class="effect-hint">
+      Adds or updates that effect; other effects stay. Clear all wipes every effect.
+    </p>
     <div v-if="paintbrushEffectId" class="control-group">
       <span class="control-label">Stacks</span>
       <span class="option-enable-spacer" aria-hidden="true" />
@@ -767,10 +770,15 @@ const featureTintModalOpen = ref(false);
   color: var(--color-danger);
 }
 
-.eyedropper-hint {
+.eyedropper-hint,
+.effect-hint {
   margin: 0;
   font-size: 0.75rem;
   color: var(--color-text-muted);
+}
+
+.effect-hint {
+  padding-left: calc(4.5rem + 1.1rem);
 }
 
 .transform-value {

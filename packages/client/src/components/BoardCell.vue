@@ -10,6 +10,7 @@ import NoLosIcon from "./NoLosIcon.vue";
 import TerrainTypeIcon from "./TerrainTypeIcon.vue";
 import {
   getClientCombatBoard,
+  getTileEffectImageUrl,
   type CellOverlaySpec,
   type PieceDecorationSpec,
 } from "../client-content-pack.js";
@@ -266,10 +267,14 @@ const showEnemyHpBar = computed(
 const tileEffectEntries = computed(() => {
   const stacks = props.cell.tileEffects;
   if (!stacks) return [];
+  // Insertion order = addition order (do not sort).
   return Object.entries(stacks)
     .filter(([, v]) => v > 0)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, count]) => ({ id, stacks: count }));
+    .map(([id, count]) => ({
+      id,
+      stacks: count,
+      imageUrl: getTileEffectImageUrl(id),
+    }));
 });
 
 const primaryTerrainIcon = computed(() =>
@@ -414,6 +419,32 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
       :title="overlay.title"
       aria-hidden="true"
     />
+    <div
+      v-if="tileEffectEntries.length"
+      class="tile-effect-overlays"
+      aria-hidden="true"
+    >
+      <span
+        v-for="effect in tileEffectEntries"
+        :key="effect.id"
+        class="board-overlay tile-effect-overlay"
+        :title="tileEffectTitle(effect.id, effect.stacks)"
+      >
+        <span
+          v-if="effect.imageUrl"
+          class="tile-effect-overlay-image"
+          :style="{ backgroundImage: `url(${effect.imageUrl})` }"
+        />
+        <EffectIcon
+          v-else
+          class="tile-effect-overlay-icon"
+          :effect-id="effect.id"
+          :stacks="effect.stacks"
+          :size="22"
+          :show-stacks="tileEffectShowsStackCount(effect.id)"
+        />
+      </span>
+    </div>
     <div
       v-if="!cell.paintbrushPreview && (cell.tileAppearanceUrl || cell.tileOverlayUrl || cell.tileFeatureUrl)"
       class="tile-image-stack"
@@ -1164,6 +1195,35 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   color: var(--color-on-accent);
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
   pointer-events: none;
+}
+
+.tile-effect-overlays {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tile-effect-overlay {
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.tile-effect-overlay-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.85;
+}
+
+.tile-effect-overlay-icon {
+  opacity: 0.35;
+  color: var(--color-text);
 }
 
 .tile-glyphs {

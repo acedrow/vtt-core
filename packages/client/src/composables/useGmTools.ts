@@ -2,6 +2,7 @@ import {
   DEFAULT_OBSTACLE_HP,
   coordKey,
   getObstacleHp,
+  parseEffectToken,
   tileAt,
   TILE_IMAGE_ROTATIONS,
   type MapTile,
@@ -215,13 +216,22 @@ function tileMatchesDragPaint(tile: MapTile, fields: PaintbrushDragPaintFields):
     }
   }
   if (fields.tileEffects !== undefined) {
-    const live = Object.entries(tile.tileEffects ?? {})
-      .filter(([, stacks]) => stacks !== 0)
-      .map(([id, stacks]) => `${id}:${stacks}`)
-      .sort()
-      .join("|");
-    const expected = fields.tileEffects.slice().sort().join("|");
-    if (live !== expected) return false;
+    // Empty list clears all effects. Otherwise each painted id must match absolute stacks;
+    // extra effects on the tile are allowed (additive paint).
+    if (fields.tileEffects.length === 0) {
+      if (Object.values(tile.tileEffects ?? {}).some((stacks) => stacks > 0)) return false;
+    } else {
+      const live = tile.tileEffects ?? {};
+      for (const token of fields.tileEffects) {
+        const parsed = parseEffectToken(token);
+        if (!parsed) continue;
+        if (parsed.stacks <= 0) {
+          if ((live[parsed.id] ?? 0) > 0) return false;
+        } else if ((live[parsed.id] ?? 0) !== parsed.stacks) {
+          return false;
+        }
+      }
+    }
   }
   if (fields.baseColor !== undefined) {
     if (fields.baseColor) {

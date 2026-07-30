@@ -93,6 +93,8 @@ export type ClientCombatBoard = {
   helpers?: ClientCombatBoardHelpers;
   cellOverlays?: CellOverlayPlugin[];
   pieceDecorations?: PieceDecorationPlugin[];
+  /** Optional full-cell overlay images keyed by tile effect id (addition-order stack). */
+  tileEffectImageUrls?: Record<string, string>;
   enemyInfoExtras?: Component;
   gmActionBarExtras?: Component;
 };
@@ -416,6 +418,10 @@ export function listClientCellOverlayPlugins(): CellOverlayPlugin[] {
 
 export function listClientPieceDecorationPlugins(): PieceDecorationPlugin[] {
   return getClientCombatBoard().pieceDecorations ?? [];
+}
+
+export function getTileEffectImageUrl(effectId: string): string | undefined {
+  return getClientCombatBoard().tileEffectImageUrls?.[effectId];
 }
 
 export function listClientBoardModes(): ClientBoardModePlugin[] {

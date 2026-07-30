@@ -107,7 +107,7 @@ import {
   validateHylicRejectionField,
   validateRedirectionCircuits,
 } from "./equipment.js";
-import { applyEffectStacks, applyEnemyEffectStacks, applyTileEffectStacks, clearEffectStacks, clearEnemyEffectStacks, clearTileEffects, hasTileEffects, parseEffectToken, replaceTileEffects, tickUnitEndOfTurn } from "./effects.js";
+import { applyEffectStacks, applyEnemyEffectStacks, applyTileEffectStacks, clearEffectStacks, clearEnemyEffectStacks, clearTileEffects, hasTileEffects, parseEffectToken, upsertTileEffectStacks, tickUnitEndOfTurn } from "./effects.js";
 import { isKnownEffectId } from "../effects-data.js";
 import { createPendingAction, addPendingAction, applyAssistedOutcome } from "./pending.js";
 import { appendCombatSideEffectMessages, maybeTriggerAgnosia } from "./agnosia.js";
@@ -1714,7 +1714,7 @@ export function applyGmPaintTile(
   } else if (fields.terrain === "obstacle" && tile.obstacleHp == null) {
     tile.obstacleHp = DEFAULT_OBSTACLE_HP;
   }
-  if (fields.tileEffects !== undefined) replaceTileEffects(tile, fields.tileEffects);
+  if (fields.tileEffects !== undefined) upsertTileEffectStacks(tile, fields.tileEffects);
 
   if (fields.tileName !== undefined) {
     const normalizedName = normalizeTileName(fields.tileName);
