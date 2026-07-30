@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { getCombatBoardHelpers } from "../combat-board-helpers.js";
-import type { PhaseAction } from "@vtt-core/shared";
-import { isPlayerDowned, isSandboxMode, remainingPlayerIds, roundPhaseLabel, shouldHideTaccomMapFromPlayer, turnHolderLabel } from "@vtt-core/shared";
+import { isSandboxMode, shouldHideTaccomMapFromPlayer, roundPhaseLabel, turnHolderLabel } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
-import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useCharacterSheetSelection } from "../composables/useCharacterSheetSelection.js";
 import { activeTab } from "../composables/useGameConsole.js";
@@ -28,6 +25,7 @@ import { useTableSelection } from "../composables/useTableSelection.js";
 import { useSession } from "../composables/useSession.js";
 import { showToast } from "../composables/useToasts.js";
 import { useMapPing } from "../composables/useMapPing.js";
+import { usePhaseAction } from "../composables/usePhaseAction.js";
 import { initUiPersistence } from "../composables/uiPersist.js";
 import {
   applyPersistedGmTools,
@@ -54,7 +52,7 @@ const { selectedMapId, mapsExpanded, previewMapName } = useMapSelection();
 const { previewMapId } = useMapPreview();
 const { selectedFactionId, factionsExpanded } = useFactionSelection();
 const { selectedTableId, tablesExpanded } = useTableSelection();
-const { boardSelection, selectBoardPlayer, clearBoardSelection, selectSheetFromNav } = useBoardSelection();
+const { boardSelection, clearBoardSelection, selectSheetFromNav } = useBoardSelection();
 const {
   dataCategory,
   dataFocus,
@@ -66,7 +64,6 @@ const {
 } = useInfoDataSelection();
 const { connection } = useGameConnection();
 const { gameState, yourPlayerId, send } = useGameState();
-const { setMode } = useBoardActionMode();
 useGmTools();
 const { remotePingOnTaccom, remotePingOnOverworld } = useMapPing();
 
@@ -158,49 +155,7 @@ const yourPlayer = computed(() => {
   return s.players.find((p) => p.id === id) ?? null;
 });
 
-const phaseAction = computed((): { label: string; action: PhaseAction } | null => {
-  const s = gameState.value;
-  if (!s || !role.value || isSandboxMode(s)) return null;
-
-  if (s.roundPhase === "taccomNotStarted" && hasGmCapabilities.value) {
-    return { label: "Start TACCOM", action: "startTaccom" };
-  }
-  if (s.roundPhase === "deployment" && hasGmCapabilities.value) {
-    return { label: "End deployment", action: "endDeployment" };
-  }
-  if (s.roundPhase === "startRoundEffects" && hasGmCapabilities.value) {
-    return { label: "Do effects", action: "doEffects" };
-  }
-  if (
-    s.roundPhase === "playersChoice" &&
-    role.value === "player" &&
-    yourPlayerId.value &&
-    yourPlayer.value &&
-    !isPlayerDowned(yourPlayer.value) &&
-    !s.actedPlayerIds.includes(yourPlayerId.value)
-  ) {
-    return { label: "Take turn", action: "takeTurn" };
-  }
-  if (
-    s.roundPhase === "playerTurn" &&
-    role.value === "player" &&
-    yourPlayerId.value &&
-    s.turn?.role === "player" &&
-    s.turn.playerId === yourPlayerId.value
-  ) {
-    return { label: "End turn", action: "endPlayerTurn" };
-  }
-  if (s.roundPhase === "gmTurn" && hasGmCapabilities.value) {
-    if (remainingPlayerIds(s).length > 0) {
-      return { label: "End turn", action: "endGmTurn" };
-    }
-    return { label: "End turn", action: "countdownTags" };
-  }
-  if (s.roundPhase === "countdownTags" && hasGmCapabilities.value) {
-    return { label: "End round", action: "endRound" };
-  }
-  return null;
-});
+const { phaseAction, onPhaseAction } = usePhaseAction();
 
 const showTaccomWaiting = computed(
   () =>
@@ -218,28 +173,6 @@ const showSpawnTokenWaiting = computed(() => {
 function leave() {
   clearSession();
   router.push("/");
-}
-
-function onPhaseAction() {
-  if (!phaseAction.value) return;
-  const action = phaseAction.value.action;
-  if (action === "takeTurn" && yourPlayerId.value) {
-    const player = gameState.value?.players.find((p) => p.id === yourPlayerId.value);
-    if (player) selectBoardPlayer(player.id, player.characterSheetId);
-  }
-  if (gameState.value) {
-    const gate = getCombatBoardHelpers().beforePhaseAction?.(
-      gameState.value,
-      action,
-      yourPlayerId.value,
-    );
-    if (gate) {
-      if (gate.boardMode) setMode(gate.boardMode);
-      showToast(gate.message);
-      return;
-    }
-  }
-  send({ type: "phaseAction", action });
 }
 
 function spawnPlayerToken() {
@@ -381,7 +314,7 @@ function selectMainTab(tab: MainSectionTab) {
           Round {{ roundStatus.round }} · {{ roundStatus.phase }} · {{ roundStatus.turn }}
         </p>
         <button
-          v-if="activeMainTab === 'taccom' && phaseAction"
+          v-if="activeMainTab === 'taccom' && phaseAction && phaseAction.action !== 'endPlayerTurn'"
           class="phase-action-btn"
           type="button"
           @click="onPhaseAction"

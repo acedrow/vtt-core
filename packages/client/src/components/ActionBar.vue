@@ -8,6 +8,7 @@ import { useCombatModeActions } from "../composables/useCombatModeActions.js";
 import { useCombatModeHints } from "../composables/useCombatModeHints.js";
 import { useBoardActionMode } from "../composables/useBoardActionMode.js";
 import { useGameState } from "../composables/useGameState.js";
+import { usePhaseAction } from "../composables/usePhaseAction.js";
 import ActionBudgetChips from "./ActionBudgetChips.vue";
 import WeaponPatternDiagram from "./WeaponPatternDiagram.vue";
 
@@ -35,11 +36,15 @@ const {
   activePlayer,
   playerMovePending,
   sendPlayerAction,
+  classActiveTier,
   canUseClassActive,
   hasFreeWeaponSwap,
 } = useCombatActions();
 
 const { gameState } = useGameState();
+const { phaseAction, onPhaseAction } = usePhaseAction();
+
+const showEndTurnHere = computed(() => phaseAction.value?.action === "endPlayerTurn");
 
 const weaponName = computed(() => activePlayer.value?.weapon ?? null);
 
@@ -122,6 +127,29 @@ function weaponSwap() {
     :inert="playerMovePending || undefined"
     :aria-disabled="playerMovePending"
   >
+    <div class="top-row">
+      <div class="movement-group">
+        <span class="chip speed">Speed {{ speedLabel }}</span>
+        <button type="button" class="action-btn" :class="{ active: mode === 'move' }" @click="pickMode('move')">
+          Move
+        </button>
+        <span v-if="sprintLabel" class="chip sprint" data-testid="sprint-remaining">
+          Sprint {{ sprintLabel }}
+        </span>
+        <button
+          type="button"
+          class="action-btn"
+          :class="{ active: mode === 'sprint' || !!sprintLabel }"
+          :disabled="mode !== 'sprint' && !canStartSprint"
+          @click="pickMode('sprint')"
+        >
+          Sprint
+        </button>
+      </div>
+      <button v-if="showEndTurnHere" type="button" class="end-turn-btn" @click="onPhaseAction">
+        {{ phaseAction!.label }}
+      </button>
+    </div>
     <div class="budget-row">
       <ActionBudgetChips
         :interactive="showPlayerActionBar && !sandboxMode"
@@ -129,135 +157,158 @@ function weaponSwap() {
         :haste-stacks="hasteRemaining"
         @commit-haste="commitHaste"
       />
-      <span class="chip speed">Speed {{ speedLabel }}</span>
-      <span v-if="sprintLabel" class="chip sprint" data-testid="sprint-remaining">
-        Sprint {{ sprintLabel }}
-      </span>
     </div>
-    <div class="actions-row">
-      <button type="button" class="action-btn" :class="{ active: mode === 'move' }" @click="pickMode('move')">
-        Move
-      </button>
-      <button
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'attack' }"
-        :disabled="!canMain || !hasWeaponAttack"
-        @click="pickMode('attack')"
-      >
-        Attack
-      </button>
-      <button
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'shove' }"
-        :disabled="!canAux"
-        @click="pickMode('shove')"
-      >
-        Shove
-      </button>
-      <button
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'sprint' || !!sprintLabel }"
-        :disabled="mode !== 'sprint' && !canStartSprint"
-        @click="pickMode('sprint')"
-      >
-        Sprint
-      </button>
-      <button
-        v-if="showAegis"
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'aegis' }"
-        :disabled="mode !== 'aegis' && !canUseAegis"
-        @click="pickAegisMode"
-      >
-        Aegis {{ aegisLabel }}
-      </button>
-      <button
-        v-if="showAssistedLaunch"
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'assistedLaunch' }"
-        :disabled="mode !== 'assistedLaunch' && !canAssistedLaunch"
-        @click="pickAssistedLaunchMode"
-      >
-        Launch
-      </button>
-      <button type="button" class="action-btn" :disabled="!canAux && !hasFreeWeaponSwap" @click="weaponSwap">
-        Swap{{ hasFreeWeaponSwap ? " (free)" : "" }}
-      </button>
-    </div>
-    <div class="actions-row">
-      <button
-        type="button"
-        class="action-btn"
-        :class="{ active: classModeActive }"
-        :disabled="!canUseClassActive"
-        @click="useClassActive"
-      >
-        Class
-      </button>
-      <button
-        v-if="showHephaestusRestore"
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'hephaestusRestore' }"
-        @click="useHephaestusRestore"
-      >
-        Restore EQ
-      </button>
-      <button
-        v-if="showHarpeRecall"
-        type="button"
-        class="action-btn"
-        @click="recallHarpeTrap"
-      >
-        Recall
-      </button>
-      <button
-        type="button"
-        class="action-btn"
-        :class="{
-          active:
-            mode === 'armorTeleport' || mode === 'armorPush' || mode === 'armorPlaceTower',
-        }"
-        :disabled="!canSupport || !armorStructured"
-        @click="pickArmorMode()"
-      >
-        Armor
-      </button>
-      <button
-        v-if="canTowerTeleport"
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'towerTeleport' }"
-        @click="pickTowerTeleportMode"
-      >
-        Tower step
-      </button>
-      <button
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'omnistrike' || mode === 'warhook' }"
-        :disabled="!canUseWeaponActive"
-        @click="useWeaponActive()"
-      >
-        Weapon
-      </button>
-      <button type="button" class="action-btn" :disabled="!canUseEquipment" @click="useEquipment">
-        Equip
-      </button>
-      <button
-        type="button"
-        class="action-btn"
-        :class="{ active: mode === 'rez' }"
-        :disabled="!canMain"
-        @click="pickMode('rez')"
-      >
-        Rez
-      </button>
+    <div class="tier-columns">
+      <div class="tier-column">
+        <h3 class="tier-column-heading">Main</h3>
+        <div class="tier-column-buttons">
+          <button
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'attack' }"
+            :disabled="!canMain || !hasWeaponAttack"
+            @click="pickMode('attack')"
+          >
+            Attack
+          </button>
+          <button
+            v-if="classActiveTier === 'main'"
+            type="button"
+            class="action-btn"
+            :class="{ active: classModeActive }"
+            :disabled="!canUseClassActive"
+            @click="useClassActive"
+          >
+            Class
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'omnistrike' || mode === 'warhook' }"
+            :disabled="!canUseWeaponActive"
+            @click="useWeaponActive()"
+          >
+            Weapon
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'rez' }"
+            :disabled="!canMain"
+            @click="pickMode('rez')"
+          >
+            Rez
+          </button>
+        </div>
+      </div>
+      <div class="tier-column">
+        <h3 class="tier-column-heading">Support</h3>
+        <div class="tier-column-buttons">
+          <button
+            v-if="classActiveTier === 'support'"
+            type="button"
+            class="action-btn"
+            :class="{ active: classModeActive }"
+            :disabled="!canUseClassActive"
+            @click="useClassActive"
+          >
+            Class
+          </button>
+          <button
+            v-if="showHephaestusRestore"
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'hephaestusRestore' }"
+            @click="useHephaestusRestore"
+          >
+            Restore EQ
+          </button>
+          <button
+            v-if="showHarpeRecall"
+            type="button"
+            class="action-btn"
+            @click="recallHarpeTrap"
+          >
+            Recall
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            :class="{
+              active:
+                mode === 'armorTeleport' || mode === 'armorPush' || mode === 'armorPlaceTower',
+            }"
+            :disabled="!canSupport || !armorStructured"
+            @click="pickArmorMode()"
+          >
+            Armor
+          </button>
+          <button type="button" class="action-btn" :disabled="!canUseEquipment" @click="useEquipment">
+            Equip
+          </button>
+        </div>
+      </div>
+      <div class="tier-column">
+        <h3 class="tier-column-heading">Aux</h3>
+        <div class="tier-column-buttons">
+          <button
+            v-if="classActiveTier === 'aux'"
+            type="button"
+            class="action-btn"
+            :class="{ active: classModeActive }"
+            :disabled="!canUseClassActive"
+            @click="useClassActive"
+          >
+            Class
+          </button>
+          <button
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'shove' }"
+            :disabled="!canAux"
+            @click="pickMode('shove')"
+          >
+            Shove
+          </button>
+          <button type="button" class="action-btn" :disabled="!canAux && !hasFreeWeaponSwap" @click="weaponSwap">
+            Swap{{ hasFreeWeaponSwap ? " (free)" : "" }}
+          </button>
+        </div>
+      </div>
+      <div class="tier-column misc-column">
+        <h3 class="tier-column-heading">Other</h3>
+        <div class="tier-column-buttons">
+          <button
+            v-if="showAegis"
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'aegis' }"
+            :disabled="mode !== 'aegis' && !canUseAegis"
+            @click="pickAegisMode"
+          >
+            Aegis {{ aegisLabel }}
+          </button>
+          <button
+            v-if="showAssistedLaunch"
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'assistedLaunch' }"
+            :disabled="mode !== 'assistedLaunch' && !canAssistedLaunch"
+            @click="pickAssistedLaunchMode"
+          >
+            Launch
+          </button>
+          <button
+            v-if="canTowerTeleport"
+            type="button"
+            class="action-btn"
+            :class="{ active: mode === 'towerTeleport' }"
+            @click="pickTowerTeleportMode"
+          >
+            Tower step
+          </button>
+        </div>
+      </div>
     </div>
     <div
       v-if="mode === 'omnistrike' && omnistrikeStep === 'selectBombs' && sabaothAttackSpec"
@@ -331,7 +382,6 @@ function weaponSwap() {
 }
 
 .budget-row,
-.actions-row,
 .hint-row,
 .omnistrike-picker-row {
   display: flex;
@@ -340,13 +390,76 @@ function weaponSwap() {
   align-items: center;
 }
 
-.chip.speed {
-  margin-left: auto;
+.top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.movement-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .chip.sprint {
   color: var(--color-purple);
   border-color: var(--color-purple-outline);
+}
+
+.end-turn-btn {
+  flex-shrink: 0;
+  border: 1px solid var(--color-accent-muted);
+  border-radius: 3px;
+  background: var(--color-accent-subtle-bg);
+  color: var(--color-accent-bright);
+  padding: 0.3rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.end-turn-btn:hover {
+  background: var(--color-accent-hover-bg);
+  border-color: var(--color-accent-bright);
+}
+
+.tier-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.tier-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  background: var(--color-surface-raised);
+}
+
+.misc-column {
+  margin-left: auto;
+}
+
+.tier-column-heading {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.tier-column-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
 }
 
 .action-btn {
