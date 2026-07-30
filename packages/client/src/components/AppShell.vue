@@ -556,16 +556,22 @@ function selectMainTab(tab: MainSectionTab) {
 }
 
 .map-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   margin: 0;
-  flex-shrink: 0;
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04rem;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .round-status,
 .sandbox-badge {
   margin: 0;
-  flex: 1;
   font-size: 0.9rem;
-  text-align: center;
 }
 
 .round-status {
