@@ -241,6 +241,14 @@ function onPhaseAction() {
   send({ type: "phaseAction", action });
 }
 
+function spawnPlayerToken() {
+  if (!selectedSheetId.value) {
+    showToast("Select a character sheet first.");
+    return;
+  }
+  send({ type: "spawnPlayerToken", characterSheetId: selectedSheetId.value });
+}
+
 function openResourcesPanel() {
   clearBoardSelection();
   selectSheet(null);
@@ -385,7 +393,8 @@ function selectMainTab(tab: MainSectionTab) {
           Waiting for the GM to start TACCOM.
         </p>
         <p v-else-if="showSpawnTokenWaiting" class="taccom-waiting">
-          Spawn your token to view the map.
+          <button class="cta" type="button" @click="spawnPlayerToken">Spawn your token</button>
+          to view the map.
         </p>
         <MapPreviewBoard v-else-if="previewMapId" :map-id="previewMapId" />
         <template v-else>
@@ -604,6 +613,7 @@ function selectMainTab(tab: MainSectionTab) {
   color: var(--color-muted);
   font-size: 1.05rem;
   text-align: center;
+  gap: 0.35rem;
 }
 
 .board-overlays {
