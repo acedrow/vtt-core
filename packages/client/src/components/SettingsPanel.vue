@@ -17,6 +17,7 @@ const {
   showLineOfSightIndicator,
   showElevationContours,
   elevationContourColor,
+  legacyFont,
 } = usePlayerSettings();
 const { theme, themes } = useTheme();
 const { hasGmCapabilities, role } = useSession();
@@ -137,6 +138,23 @@ function toggleLosSetting() {
             :class="{ on: showConnectionsInConsole }"
             :aria-checked="showConnectionsInConsole"
             @click="showConnectionsInConsole = !showConnectionsInConsole"
+          >
+            <span class="toggle-thumb" />
+          </button>
+        </label>
+      </section>
+
+      <section class="settings-category">
+        <h3 class="settings-section-heading">Display</h3>
+        <label class="setting-row">
+          <span class="setting-label">Legacy font</span>
+          <button
+            type="button"
+            role="switch"
+            class="toggle"
+            :class="{ on: legacyFont }"
+            :aria-checked="legacyFont"
+            @click="legacyFont = !legacyFont"
           >
             <span class="toggle-thumb" />
           </button>

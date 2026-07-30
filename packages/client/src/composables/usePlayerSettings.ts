@@ -22,6 +22,7 @@ type PlayerSettings = {
   showLineOfSightIndicator: boolean;
   showElevationContours: boolean;
   elevationContourColor: ElevationContourColor;
+  legacyFont: boolean;
 };
 
 const DEFAULT_SETTINGS: PlayerSettings = {
@@ -31,6 +32,7 @@ const DEFAULT_SETTINGS: PlayerSettings = {
   showLineOfSightIndicator: false,
   showElevationContours: true,
   elevationContourColor: "#ffffff",
+  legacyFont: false,
 };
 
 function isElevationContourColor(value: unknown): value is ElevationContourColor {
@@ -55,6 +57,7 @@ function parseSettings(raw: string): PlayerSettings {
       elevationContourColor: isElevationContourColor(parsed.elevationContourColor)
         ? parsed.elevationContourColor
         : DEFAULT_SETTINGS.elevationContourColor,
+      legacyFont: parsed.legacyFont === true,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };
@@ -89,6 +92,17 @@ const showConnectionsInConsole = ref(readSettings(currentKey).showConnectionsInC
 const showLineOfSightIndicator = ref(readSettings(currentKey).showLineOfSightIndicator);
 const showElevationContours = ref(readSettings(currentKey).showElevationContours);
 const elevationContourColor = ref(readSettings(currentKey).elevationContourColor);
+const legacyFont = ref(readSettings(currentKey).legacyFont);
+
+function applyLegacyFont(value: boolean) {
+  if (typeof document === "undefined") return;
+  if (value) {
+    document.documentElement.setAttribute("data-legacy-font", "true");
+  } else {
+    document.documentElement.removeAttribute("data-legacy-font");
+  }
+}
+applyLegacyFont(legacyFont.value);
 
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -102,6 +116,7 @@ function schedulePersist() {
       showLineOfSightIndicator: showLineOfSightIndicator.value,
       showElevationContours: showElevationContours.value,
       elevationContourColor: elevationContourColor.value,
+      legacyFont: legacyFont.value,
     });
   }, 150);
 }
@@ -114,9 +129,12 @@ watch(
     showLineOfSightIndicator,
     showElevationContours,
     elevationContourColor,
+    legacyFont,
   ],
   schedulePersist,
 );
+
+watch(legacyFont, applyLegacyFont);
 
 watch(
   [role, playerProfile],
@@ -131,6 +149,7 @@ watch(
     showLineOfSightIndicator.value = next.showLineOfSightIndicator;
     showElevationContours.value = next.showElevationContours;
     elevationContourColor.value = next.elevationContourColor;
+    legacyFont.value = next.legacyFont;
   },
   { deep: true },
 );
@@ -143,5 +162,6 @@ export function usePlayerSettings() {
     showLineOfSightIndicator,
     showElevationContours,
     elevationContourColor,
+    legacyFont,
   };
 }
