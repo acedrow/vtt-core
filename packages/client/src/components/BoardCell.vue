@@ -1093,7 +1093,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   cursor: pointer;
   z-index: 2;
   --glow-color: var(--color-token-pulse-player);
-  animation: token-pulse 2.4s ease-in-out infinite;
+  animation: token-pulse 3.2s ease-in-out infinite;
 }
 
 .piece.player-piece.draggable {
@@ -1108,16 +1108,16 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
   background: var(--color-enemy-piece);
   z-index: 1;
   --glow-color: var(--color-token-pulse-enemy);
-  animation: token-pulse 2.4s ease-in-out infinite;
+  animation: token-pulse 3.2s ease-in-out infinite;
 }
 
 @keyframes token-pulse {
   0%,
   100% {
-    box-shadow: 0 0 6px 0 var(--glow-color, transparent);
+    box-shadow: 0 0 2px 0 color-mix(in srgb, var(--glow-color, transparent) 40%, transparent);
   }
   50% {
-    box-shadow: 0 0 14px 4px var(--glow-color, transparent);
+    box-shadow: 0 0 5px 0 color-mix(in srgb, var(--glow-color, transparent) 55%, transparent);
   }
 }
 
