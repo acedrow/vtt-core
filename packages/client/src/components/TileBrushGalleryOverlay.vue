@@ -203,7 +203,7 @@ onUnmounted(() => {
   flex-direction: column;
   min-height: 0;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
   box-shadow: var(--shadow-menu);
   overflow: hidden;
@@ -235,7 +235,7 @@ onUnmounted(() => {
   width: 1.6rem;
   height: 1.6rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
   color: var(--color-muted);
   font-size: 1rem;

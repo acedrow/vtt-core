@@ -262,7 +262,7 @@ onUnmounted(() => {
   min-width: 140px;
   max-width: 220px;
   padding: 0.45rem 0.55rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
@@ -336,7 +336,7 @@ onUnmounted(() => {
   z-index: 20;
   min-width: 9rem;
   padding: 0.25rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   box-shadow: var(--shadow-popover);
@@ -346,7 +346,7 @@ onUnmounted(() => {
   display: block;
   width: 100%;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-text);
   padding: 0.35rem 0.55rem;

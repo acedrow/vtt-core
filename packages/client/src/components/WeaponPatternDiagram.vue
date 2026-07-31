@@ -369,7 +369,7 @@ function selectBomb(index: number) {
   gap: 2px;
   padding: 0.35rem;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
 }
 

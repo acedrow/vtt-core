@@ -21,7 +21,7 @@ const inputEl = ref<HTMLInputElement | null>(null);
 
 const currentHpRef = computed(() => props.currentHp) as Ref<number>;
 const maxHpRef = computed(() => props.maxHp) as Ref<number>;
-const { hpPercent, hpBarLevel } = useHpBar(currentHpRef, maxHpRef);
+const { hpPercent } = useHpBar(currentHpRef, maxHpRef);
 
 function startEdit() {
   if (!props.editable) return;
@@ -76,7 +76,7 @@ function cancelEdit() {
       <span class="hp-max"> / {{ maxHp }}</span>
     </span>
     <div class="hp-bar-track">
-      <div class="hp-bar-fill" :class="hpBarLevel" :style="{ width: `${hpPercent}%` }" />
+      <div class="hp-bar-fill" :style="{ width: `${hpPercent}%` }" />
     </div>
   </div>
 </template>

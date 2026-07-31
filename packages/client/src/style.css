@@ -94,7 +94,7 @@ h3,
   transform: translateX(-50%);
   z-index: 20;
   padding: 0.35rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
@@ -209,7 +209,7 @@ h3,
   width: 1.75rem;
   height: 1.75rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-muted);
   font-size: 1.1rem;
@@ -304,7 +304,7 @@ h3,
 .segmented-control {
   display: flex;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -343,7 +343,7 @@ h3,
   min-width: 120px;
   max-width: 220px;
   padding: 0.35rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
@@ -358,6 +358,7 @@ h3,
   border-radius: 0;
   overflow: hidden;
   background: var(--color-surface);
+  box-shadow: var(--shadow-emboss-lo);
 }
 
 .list-card + .list-card {
@@ -402,7 +403,7 @@ h3,
   display: inline-block;
   margin-right: 0.35rem;
   padding: 0.12rem 0.45rem;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--color-accent);
   background: var(--color-accent-muted);
   color: var(--color-text);
@@ -457,9 +458,10 @@ h3,
   width: 100%;
   max-width: 24rem;
   border: 1px solid var(--color-border);
-  border-radius: 12px;
+  border-radius: 3px;
   background: var(--color-surface);
   padding: 1.25rem;
+  box-shadow: var(--shadow-emboss-lo);
 }
 
 .modal--wide {
@@ -480,7 +482,7 @@ h3,
 .btn-primary,
 .btn-secondary {
   padding: 0.4rem 0.85rem;
-  border-radius: 6px;
+  border-radius: 3px;
   font-size: 0.85rem;
   font-family: inherit;
   font-weight: 600;
@@ -507,7 +509,7 @@ h3,
 .action-btn {
   font-size: 0.78rem;
   padding: 0.3rem 0.55rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text);
@@ -554,7 +556,7 @@ h3,
 
 .cta {
   border: 1px solid var(--color-accent);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-accent);
   color: var(--color-on-accent);
   padding: 0.45rem 0.85rem;
@@ -651,27 +653,20 @@ h3,
 
 .hp-bar-track {
   height: 8px;
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--color-surface-hover);
   overflow: hidden;
 }
 
 .hp-bar-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: width 0.2s ease;
-}
-
-.hp-bar-fill.high {
-  background: var(--color-success);
-}
-
-.hp-bar-fill.medium {
-  background: var(--color-warning);
-}
-
-.hp-bar-fill.low {
-  background: var(--color-danger);
+  background: linear-gradient(
+    90deg,
+    var(--color-danger),
+    color-mix(in oklch, var(--color-danger) 70%, white)
+  );
 }
 
 .muted {

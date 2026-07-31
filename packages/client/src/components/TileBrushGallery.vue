@@ -108,7 +108,7 @@ function itemTitle(item: TileBrushGalleryEntry): string {
   justify-content: center;
   padding: 0.15rem;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 3px;
   background: transparent;
   cursor: pointer;
 }
@@ -127,7 +127,7 @@ function itemTitle(item: TileBrushGalleryEntry): string {
   transform: translateX(-50%);
   z-index: 20;
   padding: 0.35rem 0.5rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
@@ -150,7 +150,7 @@ function itemTitle(item: TileBrushGalleryEntry): string {
   width: 2.5rem;
   height: 2.5rem;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   display: block;
   flex-shrink: 0;

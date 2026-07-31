@@ -284,7 +284,7 @@ async function confirmFieldPick(value: string) {
 .locked-chip {
   flex-shrink: 0;
   padding: 0.1rem 0.35rem;
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
   color: var(--color-muted);
   font-size: 0.65rem;
@@ -348,7 +348,7 @@ async function confirmFieldPick(value: string) {
   width: 2rem;
   height: 2rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;

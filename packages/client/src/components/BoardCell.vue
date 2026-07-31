@@ -1092,6 +1092,8 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 .piece.player-piece {
   cursor: pointer;
   z-index: 2;
+  --glow-color: var(--color-token-pulse-player);
+  animation: token-pulse 3.2s ease-in-out infinite;
 }
 
 .piece.player-piece.draggable {
@@ -1105,6 +1107,25 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 .piece.enemy {
   background: var(--color-enemy-piece);
   z-index: 1;
+  --glow-color: var(--color-token-pulse-enemy);
+  animation: token-pulse 3.2s ease-in-out infinite;
+}
+
+@keyframes token-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 4px 0 color-mix(in srgb, var(--glow-color, transparent) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 9px 1px color-mix(in srgb, var(--glow-color, transparent) 75%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piece.player-piece,
+  .piece.enemy {
+    animation: none;
+  }
 }
 
 .piece.enemy.has-portrait .portrait-img {
@@ -1120,11 +1141,11 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 }
 
 .piece.enemy.fortification-piece {
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .piece.enemy.fortification-piece .portrait-img {
-  border-radius: 4px;
+  border-radius: 3px;
   clip-path: none;
 }
 
@@ -1186,7 +1207,7 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 
 .tower-piece {
   border: 2px solid var(--color-accent);
-  border-radius: 5px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
 }
 

@@ -62,6 +62,7 @@ const props = defineProps<{
   gmCapabilities?: boolean;
   playerProfile?: { id: string; name: string } | null;
   overlayEl?: HTMLElement | null;
+  bottomOverlayEl?: HTMLElement | null;
 }>();
 
 const canUseGmTools = computed(() => props.role === "gm" || props.gmCapabilities === true);
@@ -388,6 +389,29 @@ watch(
   { flush: "post" },
 );
 
+const bottomOverlayInsetPx = ref(0);
+let bottomOverlayInsetObserver: ResizeObserver | null = null;
+
+function updateBottomOverlayInset() {
+  bottomOverlayInsetPx.value = props.bottomOverlayEl?.offsetHeight ?? 0;
+}
+
+watch(
+  () => props.bottomOverlayEl,
+  (el, prev) => {
+    if (bottomOverlayInsetObserver) {
+      bottomOverlayInsetObserver.disconnect();
+      bottomOverlayInsetObserver = null;
+    }
+    if (prev && prev !== el) bottomOverlayInsetPx.value = 0;
+    if (!el) return;
+    bottomOverlayInsetObserver = new ResizeObserver(updateBottomOverlayInset);
+    bottomOverlayInsetObserver.observe(el);
+    updateBottomOverlayInset();
+  },
+  { flush: "post" },
+);
+
 const {
   scale,
   panX,
@@ -405,6 +429,7 @@ const {
   hasGameState,
   boardKey,
   overlayInsetPx,
+  bottomOverlayInsetPx,
 );
 
 function finalizeDefeatedEnemy(enemyId: string) {
@@ -4857,6 +4882,7 @@ onUnmounted(() => {
   window.removeEventListener("keyup", onKeyup);
   window.removeEventListener("blur", onWindowBlur);
   overlayInsetObserver?.disconnect();
+  bottomOverlayInsetObserver?.disconnect();
   disconnectViewport();
 });
 </script>
@@ -5310,7 +5336,7 @@ onUnmounted(() => {
   transform: translateX(-50%);
   z-index: 2;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-bg-board);
   color: var(--color-text);
   padding: 0.35rem 0.75rem;
@@ -5477,7 +5503,7 @@ onUnmounted(() => {
 }
 
 .enemy-move-overlay.fortification-overlay {
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .enemy-move-overlay .portrait-img {
@@ -5489,7 +5515,7 @@ onUnmounted(() => {
 }
 
 .enemy-move-overlay.fortification-overlay .portrait-img {
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .teleport-overlay.pending,

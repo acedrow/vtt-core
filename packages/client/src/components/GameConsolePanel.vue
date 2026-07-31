@@ -302,11 +302,11 @@ onMounted(() => {
 }
 
 .dice-btn:first-child {
-  border-radius: 6px 0 0 6px;
+  border-radius: 3px 0 0 3px;
 }
 
 .dice-btn:last-child {
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 3px 3px 0;
   border-left: none;
 }
 
@@ -340,7 +340,7 @@ onMounted(() => {
   margin-left: auto;
   padding: 0.35rem 0.85rem;
   border: 1px solid var(--color-success-dark);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-success-dark);
   color: var(--color-on-accent);
   font-size: 0.8rem;

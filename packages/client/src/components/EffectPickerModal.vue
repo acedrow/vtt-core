@@ -115,7 +115,7 @@ const canApply = computed(
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   padding: 0.35rem;
 }
 
@@ -166,7 +166,7 @@ const canApply = computed(
   width: 100%;
   margin-bottom: 0.75rem;
   padding: 0.45rem 0.85rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-danger-muted-border);
   background: var(--color-danger-subtle-bg);
   color: var(--color-danger);

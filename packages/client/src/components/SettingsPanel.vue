@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 
 import {
   ELEVATION_CONTOUR_COLORS,
+  TOKEN_PULSE_COLORS,
   usePlayerSettings,
 } from "../composables/usePlayerSettings.js";
 import { useGameState } from "../composables/useGameState.js";
@@ -17,6 +18,9 @@ const {
   showLineOfSightIndicator,
   showElevationContours,
   elevationContourColor,
+  legacyFont,
+  enemyPulseColor,
+  playerPulseColor,
 } = usePlayerSettings();
 const { theme, themes } = useTheme();
 const { hasGmCapabilities, role } = useSession();
@@ -124,6 +128,40 @@ function toggleLosSetting() {
             <span class="toggle-thumb" />
           </button>
         </label>
+        <div class="setting-subrow" role="radiogroup" aria-label="Enemy token pulse color">
+          <span class="setting-sublabel">Enemy pulse color</span>
+          <div class="contour-swatches">
+            <button
+              v-for="color in TOKEN_PULSE_COLORS"
+              :key="color"
+              type="button"
+              role="radio"
+              class="contour-swatch"
+              :class="{ active: enemyPulseColor === color }"
+              :aria-checked="enemyPulseColor === color"
+              :aria-label="`Enemy pulse color ${color}`"
+              :style="{ background: color }"
+              @click="enemyPulseColor = color"
+            />
+          </div>
+        </div>
+        <div class="setting-subrow" role="radiogroup" aria-label="Player token pulse color">
+          <span class="setting-sublabel">Player pulse color</span>
+          <div class="contour-swatches">
+            <button
+              v-for="color in TOKEN_PULSE_COLORS"
+              :key="color"
+              type="button"
+              role="radio"
+              class="contour-swatch"
+              :class="{ active: playerPulseColor === color }"
+              :aria-checked="playerPulseColor === color"
+              :aria-label="`Player pulse color ${color}`"
+              :style="{ background: color }"
+              @click="playerPulseColor = color"
+            />
+          </div>
+        </div>
       </section>
 
       <section class="settings-category">
@@ -137,6 +175,23 @@ function toggleLosSetting() {
             :class="{ on: showConnectionsInConsole }"
             :aria-checked="showConnectionsInConsole"
             @click="showConnectionsInConsole = !showConnectionsInConsole"
+          >
+            <span class="toggle-thumb" />
+          </button>
+        </label>
+      </section>
+
+      <section class="settings-category">
+        <h3 class="settings-section-heading">Display</h3>
+        <label class="setting-row">
+          <span class="setting-label">Legacy font</span>
+          <button
+            type="button"
+            role="switch"
+            class="toggle"
+            :class="{ on: legacyFont }"
+            :aria-checked="legacyFont"
+            @click="legacyFont = !legacyFont"
           >
             <span class="toggle-thumb" />
           </button>
@@ -260,7 +315,7 @@ function toggleLosSetting() {
 .contour-swatch {
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--color-border-strong);
   padding: 0;
   cursor: pointer;
@@ -327,7 +382,7 @@ function toggleLosSetting() {
   gap: 0.75rem;
   width: 100%;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0.55rem 0.65rem;
@@ -351,7 +406,7 @@ function toggleLosSetting() {
   overflow: hidden;
   width: 2.75rem;
   height: 1.25rem;
-  border-radius: 4px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
 }
 
@@ -367,7 +422,7 @@ function toggleLosSetting() {
 .manage-players-btn {
   width: 100%;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-text);
   padding: 0.55rem 0.65rem;

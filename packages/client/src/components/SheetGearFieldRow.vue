@@ -103,9 +103,10 @@ function toggleDetail() {
 <style scoped>
 .gear-field-card {
   padding: 0.35rem 0.45rem;
-  border-radius: 8px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);
+  box-shadow: var(--shadow-emboss-lo);
 }
 
 .field-row {
@@ -187,7 +188,7 @@ function toggleDetail() {
   width: 1.35rem;
   height: 1.35rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;
@@ -211,7 +212,7 @@ function toggleDetail() {
   width: 1.4rem;
   height: 1.4rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   background: transparent;
   color: var(--color-muted);
   cursor: pointer;

@@ -156,7 +156,7 @@ const bulkLabel = computed(() => {
 .segmented {
   display: flex;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -205,7 +205,7 @@ const bulkLabel = computed(() => {
   flex: 1;
   min-width: 0;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-text);
   font-size: 0.8rem;

@@ -195,7 +195,7 @@ function modifierApplies(modifierId: string): boolean {
   min-width: 140px;
   max-width: 220px;
   padding: 0.45rem 0.55rem;
-  border-radius: 6px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);
@@ -274,7 +274,7 @@ function modifierApplies(modifierId: string): boolean {
   margin-left: auto;
   padding: 0.3rem 0.55rem;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-surface-raised);
   color: var(--color-muted);
   font-size: 0.75rem;
@@ -304,11 +304,11 @@ function modifierApplies(modifierId: string): boolean {
 }
 
 .dir-btn:first-child {
-  border-radius: 6px 0 0 6px;
+  border-radius: 3px 0 0 3px;
 }
 
 .dir-btn:last-child {
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 3px 3px 0;
 }
 
 .dir-btn + .dir-btn {
@@ -336,7 +336,7 @@ function modifierApplies(modifierId: string): boolean {
   font-weight: 600;
   color: var(--color-muted-subtle);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 3px;
   padding: 0.15rem 0.35rem;
   font-family: inherit;
 }
@@ -398,7 +398,7 @@ function modifierApplies(modifierId: string): boolean {
   letter-spacing: 0.04em;
   color: var(--color-muted);
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: 3px;
   padding: 0.1rem 0.35rem;
 }
 

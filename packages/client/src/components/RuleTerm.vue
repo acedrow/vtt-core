@@ -140,7 +140,7 @@ function onActivate(event: MouseEvent | KeyboardEvent) {
   z-index: 1000;
   min-width: 9rem;
   padding: 0.55rem 0.65rem;
-  border-radius: 8px;
+  border-radius: 3px;
   border: 1px solid var(--color-border);
   background: var(--color-bg);
   color: var(--color-text);

@@ -92,7 +92,7 @@ function onClear() {
 .clear-btn {
   align-self: flex-start;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: 3px;
   background: var(--color-surface);
   color: var(--color-muted);
   font-size: 0.78rem;
