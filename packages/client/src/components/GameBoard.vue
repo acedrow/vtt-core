@@ -1763,7 +1763,9 @@ watch(
   () => yourPlayer.value?.actionBudget?.sprintRemaining ?? 0,
   (remaining, prev) => {
     if (boardActionMode.value === "sprint" && prev > 0 && remaining <= 0) {
-      clearBoardActionMode();
+      // Once sprint movement is exhausted, fall back to the player's regular
+      // move budget instead of clearing the mode and erroring on the next click.
+      boardActionMode.value = "move";
     }
   },
 );

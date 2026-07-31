@@ -50,6 +50,7 @@ import {
   applySprintBegin,
   applySprintCancel,
   applySprintMove,
+  clearSprintBudget,
   formlessLandingTiles,
   normalizeMovementPath,
   validateMovementPath,
@@ -203,6 +204,9 @@ function actionTierBlocked(player: Player, tier: ActionTier, state: GameState): 
 
 function maybeSpendActionTier(state: GameState, player: Player, tier: ActionTier): void {
   if (areActionLimitsEnforced(state)) spendActionTierOrHaste(player, tier);
+  // Sprint grants a one-time bonus move tied to the action that spent it; any
+  // other action taken afterward ends that bonus movement.
+  clearSprintBudget(player.actionBudget);
 }
 
 export function validateMovePath(

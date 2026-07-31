@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { coordKey, tileAt } from "../map.js";
 import { addTestEnemy, addTestPlayer, makeGameState } from "../test/fixtures.js";
-import { validateGmEnemyAction } from "./messages.js";
+import { applyPlayerAction, validateGmEnemyAction } from "./messages.js";
 import {
   enemyMovementReachability,
   findEnemyMovementPathWithCost,
@@ -83,6 +83,19 @@ describe("movement reachability", () => {
         swarm: true,
       }),
     ).toMatchObject({ cost: 1 });
+  });
+
+  it("clears leftover sprint movement once another action is taken", () => {
+    const state = makeGameState();
+    const player = addTestPlayer(state, "p1", { x: 1, y: 1 });
+    const target = addTestPlayer(state, "p2", { x: 2, y: 1 });
+    player.actionBudget!.sprintRemaining = 3;
+    player.actionBudget!.sprintMax = 3;
+
+    applyPlayerAction(state, player.id, { action: "shove", targetPlayerId: target.id });
+
+    expect(player.actionBudget!.sprintRemaining).toBe(0);
+    expect(player.actionBudget!.sprintMax).toBe(0);
   });
 
   it("validates GM enemy paths from each preceding step", () => {
