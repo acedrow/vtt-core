@@ -202,6 +202,18 @@ function actionTierBlocked(player: Player, tier: ActionTier, state: GameState): 
   return actionTierBlockedReason(player, tier);
 }
 
+function formatObstaclesHitMessage(obstaclesHit: { x: number; y: number; dealt: number; destroyed: boolean }[]): string | null {
+  if (!obstaclesHit.length) return null;
+  const totalDealt = obstaclesHit.reduce((sum, o) => sum + o.dealt, 0);
+  const destroyed = obstaclesHit.filter((o) => o.destroyed);
+  let msg = `dealt ${totalDealt} to ${obstaclesHit.length} obstacle${obstaclesHit.length === 1 ? "" : "s"}`;
+  if (destroyed.length) {
+    const coords = destroyed.map((o) => `(${o.x}, ${o.y})`).join(", ");
+    msg += `; destroyed obstacle${destroyed.length === 1 ? "" : "s"} at ${coords}`;
+  }
+  return msg;
+}
+
 function maybeSpendActionTier(state: GameState, player: Player, tier: ActionTier): void {
   if (areActionLimitsEnforced(state)) spendActionTierOrHaste(player, tier);
   // Sprint grants a one-time bonus move tied to the action that spent it; any
@@ -663,6 +675,8 @@ export function applyPlayerAction(
       }
       if (defeated) msg += `; defeated ${defeated}`;
       if (defeatMsgs.length) msg += `; ${defeatMsgs.join("; ")}`;
+      const obstaclesMsg = formatObstaclesHitMessage(result.obstaclesHit);
+      if (obstaclesMsg) msg += `; ${obstaclesMsg}`;
       resetHeavenBurningLevelAfterAttack(player, weapon);
       return appendCombatSideEffectMessages(state, msg);
     }

@@ -736,18 +736,25 @@ export function applyDamageToObstacle(
   return dealt;
 }
 
+export type ObstacleHitResult = { x: number; y: number; dealt: number; destroyed: boolean };
+
 export function applyDamageToObstaclesInTiles(
   state: GameState,
   tiles: { x: number; y: number }[],
   amount: number,
-): { x: number; y: number }[] {
-  const hit: { x: number; y: number }[] = [];
+): ObstacleHitResult[] {
+  const hit: ObstacleHitResult[] = [];
   const seen = new Set<string>();
   for (const t of tiles) {
     const key = coordKey(t.x, t.y);
     if (seen.has(key)) continue;
     seen.add(key);
-    if (applyDamageToObstacle(state, t.x, t.y, amount) > 0) hit.push({ x: t.x, y: t.y });
+    const wasObstacle = isObstacleTile(tileAt(state.tiles, t.x, t.y));
+    const dealt = applyDamageToObstacle(state, t.x, t.y, amount);
+    if (dealt > 0) {
+      const destroyed = wasObstacle && !isObstacleTile(tileAt(state.tiles, t.x, t.y));
+      hit.push({ x: t.x, y: t.y, dealt, destroyed });
+    }
   }
   return hit;
 }
@@ -765,7 +772,7 @@ export function applyAttackToEnemies(
     suppressEffects?: boolean;
     attacker?: Player | Enemy;
   },
-): { damage: number; detail: string; targets: AttackTarget[]; effects: string[] } {
+): { damage: number; detail: string; targets: AttackTarget[]; effects: string[]; obstaclesHit: ObstacleHitResult[] } {
   const tiles = collectAttackTiles(
     state,
     origin,
@@ -781,8 +788,8 @@ export function applyAttackToEnemies(
 
   if (useBreaker && swarmMembersHitByTiles(state, tiles).length) {
     const { targets } = applyBreakerAttackToSwarm(state, tiles, total, effects);
-    applyDamageToObstaclesInTiles(state, tiles, total);
-    return { damage: total, detail, targets, effects };
+    const obstaclesHit = applyDamageToObstaclesInTiles(state, tiles, total);
+    return { damage: total, detail, targets, effects, obstaclesHit };
   }
 
   if (
@@ -791,8 +798,8 @@ export function applyAttackToEnemies(
     swarmMembersHitByTiles(state, tiles).length
   ) {
     const result = applySethianWholeSwarmAttack(state, spec, tiles, damageRoll, opts?.suppressEffects);
-    applyDamageToObstaclesInTiles(state, tiles, result.damage);
-    return result;
+    const obstaclesHit = applyDamageToObstaclesInTiles(state, tiles, result.damage);
+    return { ...result, obstaclesHit };
   }
 
   const targets = enemiesInTiles(state, tiles);
@@ -803,11 +810,11 @@ export function applyAttackToEnemies(
     applyDamageToEnemy(enemy, total, state, { ...damageOpts, hitTile: { x: target.x, y: target.y } });
     applyUnitEffectStacks(state,enemy, effects);
   }
-  applyDamageToObstaclesInTiles(state, tiles, total);
+  const obstaclesHit = applyDamageToObstaclesInTiles(state, tiles, total);
   if (isSabaothWeaponName(opts?.weaponName)) {
     sabaoth().applySabaothSquareEffects(state, tiles, effects);
   }
-  return { damage: total, detail, targets, effects };
+  return { damage: total, detail, targets, effects, obstaclesHit };
 }
 
 export function isSethianWeaponName(name: string | undefined | null): boolean {
@@ -835,7 +842,7 @@ export function applyRangeAttackToEnemies(
     obstacleCoords?: { x: number; y: number }[];
     suppressEffects?: boolean;
   },
-): { damage: number; detail: string; targets: AttackTarget[]; effects: string[] } {
+): { damage: number; detail: string; targets: AttackTarget[]; effects: string[]; obstaclesHit: ObstacleHitResult[] } {
   const tiles = targetIds
     .map((id) => state.enemies.find((e) => e.id === id))
     .filter(Boolean)
@@ -865,8 +872,8 @@ export function applyRangeAttackToEnemies(
         targets.push({ enemyId: enemy.id, x: enemy.x, y: enemy.y });
       }
     }
-    applyDamageToObstaclesInTiles(state, obstacleCoords, total);
-    return { damage: total, detail, targets, effects };
+    const obstaclesHit = applyDamageToObstaclesInTiles(state, obstacleCoords, total);
+    return { damage: total, detail, targets, effects, obstaclesHit };
   }
 
   if (
@@ -875,8 +882,8 @@ export function applyRangeAttackToEnemies(
     swarmMembersHitByTiles(state, tiles).length
   ) {
     const result = applySethianWholeSwarmAttack(state, spec, tiles, damageRoll, opts?.suppressEffects);
-    applyDamageToObstaclesInTiles(state, obstacleCoords, result.damage);
-    return result;
+    const obstaclesHit = applyDamageToObstaclesInTiles(state, obstacleCoords, result.damage);
+    return { ...result, obstaclesHit };
   }
 
   const { total, detail } = resolveAttackDamage(spec, damageRoll);
@@ -889,8 +896,8 @@ export function applyRangeAttackToEnemies(
     applyUnitEffectStacks(state,enemy, effects);
     targets.push({ enemyId: enemy.id, x: enemy.x, y: enemy.y });
   }
-  applyDamageToObstaclesInTiles(state, obstacleCoords, total);
-  return { damage: total, detail, targets, effects };
+  const obstaclesHit = applyDamageToObstaclesInTiles(state, obstacleCoords, total);
+  return { damage: total, detail, targets, effects, obstaclesHit };
 }
 
 export type SwarmEnemyAttackPreview = {
