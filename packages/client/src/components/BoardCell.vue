@@ -1114,10 +1114,10 @@ const tileEffectBadgeEntries = computed(() => tileEffectEntries.value);
 @keyframes token-pulse {
   0%,
   100% {
-    box-shadow: 0 0 2px 0 color-mix(in srgb, var(--glow-color, transparent) 40%, transparent);
+    box-shadow: 0 0 4px 0 color-mix(in srgb, var(--glow-color, transparent) 55%, transparent);
   }
   50% {
-    box-shadow: 0 0 5px 0 color-mix(in srgb, var(--glow-color, transparent) 55%, transparent);
+    box-shadow: 0 0 9px 1px color-mix(in srgb, var(--glow-color, transparent) 75%, transparent);
   }
 }
 
