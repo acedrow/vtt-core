@@ -2123,6 +2123,7 @@ const cellStateByKey = computed(() => {
             previouslySeen,
             rangeFromViewer: range,
             linkedVisibleToken,
+            isSwarmMember: !!group,
           }) === "unknown"
         );
       })(),

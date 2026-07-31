@@ -63,4 +63,25 @@ describe("fogTokenDisplay", () => {
       }),
     ).toBe("unknown");
   });
+
+  it("always shows swarm members as ? on previously seen tiles regardless of range", () => {
+    expect(
+      fogTokenDisplay({
+        enforceSightlines: true,
+        currentlyVisible: false,
+        previouslySeen: true,
+        rangeFromViewer: 20,
+        isSwarmMember: true,
+      }),
+    ).toBe("unknown");
+    expect(
+      fogTokenDisplay({
+        enforceSightlines: true,
+        currentlyVisible: false,
+        previouslySeen: false,
+        rangeFromViewer: 20,
+        isSwarmMember: true,
+      }),
+    ).toBe("hidden");
+  });
 });
