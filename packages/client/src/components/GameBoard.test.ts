@@ -193,4 +193,16 @@ describe("GameBoard", () => {
       },
     });
   });
+
+  it("cancels attack selection on Escape", async () => {
+    const wrapper = mount(GameBoard, { props: { role: "gm" } });
+    await flushPromises();
+    useBoardActionMode().setMode("attack");
+    expect(useBoardActionMode().mode.value).toBe("attack");
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+
+    expect(useBoardActionMode().mode.value).toBeNull();
+    wrapper.unmount();
+  });
 });

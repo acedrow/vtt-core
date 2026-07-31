@@ -4802,6 +4802,12 @@ function onKeydown(e: KeyboardEvent) {
     return;
   }
 
+  if (e.key === "Escape" && boardActionMode.value === "attack") {
+    e.preventDefault();
+    clearBoardActionMode();
+    return;
+  }
+
   if (canUseGmTools.value) {
     if (e.key === "Escape") {
       if (combatBoardHostBridge.onPlacementEscape()) return;
