@@ -771,6 +771,14 @@ export function useGmTools() {
     paintbrushEnableFlip.value = false;
     paintbrushAutoRotate.value = false;
     paintbrushEnableDeploymentZone.value = false;
+    paintbrushEnableElevation.value = true;
+    paintbrushEnableTerrain.value = true;
+    paintbrushEnableEffect.value = true;
+    paintbrushEnableName.value = true;
+    paintbrushEnableColor.value = true;
+    paintbrushEnableAppearance.value = true;
+    paintbrushEnableOverlay.value = true;
+    paintbrushEnableFeature.value = true;
     paintbrushPresetLoadId.value = "";
     paintbrushPresetError.value = "";
   }

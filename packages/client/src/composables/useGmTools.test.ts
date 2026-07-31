@@ -82,4 +82,21 @@ describe("useGmTools deployment zone paintbrush", () => {
     tools.disableAllPaintbrushOptions();
     expect(tools.paintbrushEnableDeploymentZone.value).toBe(false);
   });
+
+  it("re-enables the default paintbrush layers when reset after disable all", () => {
+    const tools = useGmTools();
+
+    tools.disableAllPaintbrushOptions();
+    tools.resetPaintbrushSettings();
+
+    expect(tools.paintbrushEnableElevation.value).toBe(true);
+    expect(tools.paintbrushEnableTerrain.value).toBe(true);
+    expect(tools.paintbrushEnableEffect.value).toBe(true);
+    expect(tools.paintbrushEnableName.value).toBe(true);
+    expect(tools.paintbrushEnableColor.value).toBe(true);
+    expect(tools.paintbrushEnableAppearance.value).toBe(true);
+    expect(tools.paintbrushEnableOverlay.value).toBe(true);
+    expect(tools.paintbrushEnableFeature.value).toBe(true);
+    expect(tools.paintbrushEnableDeploymentZone.value).toBe(false);
+  });
 });
