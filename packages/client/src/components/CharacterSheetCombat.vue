@@ -2,10 +2,15 @@
 import { computed } from "vue";
 
 import {
+  abilityTextToPlain,
   getClassActiveTier,
+  getClassByName,
   getEffectSummary,
   getArmorByName,
+  getEquipmentByName,
+  getGearByName,
   getWeaponAttackSpec,
+  getWeaponByName,
   hasSabaothBombSelected,
   isHeavenBurningWeaponName,
   isSabaothWeaponName,
@@ -105,10 +110,20 @@ const canUseWeaponAttack = computed(() => {
 
 const replacesWeaponActive = computed(() => isHeavenBurningWeaponName(activePlayer.value?.weapon));
 
+function tooltipFor(text: string | undefined, itemName: string | undefined): string | undefined {
+  if (!text || !itemName) return undefined;
+  return `${itemName} — ${text}`;
+}
+
 const tierMenuItems = computed(() => {
   const p = activePlayer.value;
   if (!p || !showPlayerActionBar.value) return undefined;
   const classTier = classActiveTier.value ?? getClassActiveTier(p.class);
+  const weapon = p.weapon ? getWeaponByName(p.weapon) : undefined;
+  const playerClass = p.class ? getClassByName(p.class) : undefined;
+  const armor = p.armor ? getArmorByName(p.armor) : undefined;
+  const equipment = p.equipment ? getEquipmentByName(p.equipment) : undefined;
+  const gear = p.gear ? getGearByName(p.gear) : undefined;
   return sheetTierMenuItems([
     {
       id: "attack",
@@ -116,6 +131,7 @@ const tierMenuItems = computed(() => {
       tier: "main",
       include: !!getWeaponAttackSpec(p.weapon),
       disabled: !canMain.value || !canUseWeaponAttack.value,
+      tooltip: tooltipFor(abilityTextToPlain(weapon?.passiveAbility), weapon?.name),
     },
     { id: "rez", label: "Rez", tier: "main", include: true, disabled: !canMain.value },
     {
@@ -124,6 +140,7 @@ const tierMenuItems = computed(() => {
       tier: "main",
       include: !!p.weapon && !replacesWeaponActive.value,
       disabled: !canUseWeaponActive.value,
+      tooltip: tooltipFor(abilityTextToPlain(weapon?.activeAbility), weapon?.name),
     },
     {
       id: "classActive",
@@ -131,6 +148,7 @@ const tierMenuItems = computed(() => {
       tier: classTier,
       include: !!p.class,
       disabled: !canUseClassActive.value,
+      tooltip: tooltipFor(abilityTextToPlain(playerClass?.activeAbility), playerClass?.name),
     },
     {
       id: "armor",
@@ -138,6 +156,7 @@ const tierMenuItems = computed(() => {
       tier: "support",
       include: !!armorStructured.value,
       disabled: !canSupport.value || !armorStructured.value,
+      tooltip: tooltipFor(abilityTextToPlain(armor?.armorAction) || armor?.special, armor?.name),
     },
     {
       id: "equipment",
@@ -145,6 +164,7 @@ const tierMenuItems = computed(() => {
       tier: "support",
       include: !!p.equipment,
       disabled: !canUseEquipment.value,
+      tooltip: tooltipFor(equipment?.effect, equipment?.name),
     },
     {
       id: "gear",
@@ -152,6 +172,7 @@ const tierMenuItems = computed(() => {
       tier: "support",
       include: !!p.gear && p.gear !== ASSISTED_ASCENSION_GEAR,
       disabled: !canSupport.value,
+      tooltip: tooltipFor(gear?.effect, gear?.name),
     },
     {
       id: "harpeRecall",
@@ -159,6 +180,7 @@ const tierMenuItems = computed(() => {
       tier: "support",
       include: showHarpeRecall.value,
       disabled: !canSupport.value,
+      tooltip: tooltipFor(gear?.effect, gear?.name),
     },
     { id: "shove", label: "Shove", tier: "aux", include: true, disabled: !canAux.value },
     {
@@ -180,6 +202,7 @@ const tierMenuItems = computed(() => {
       label: "Unfold",
       tier: "aux",
       include: replacesWeaponActive.value,
+      tooltip: tooltipFor(abilityTextToPlain(weapon?.activeAbility), weapon?.name),
       disabled: !canUseHeavenBurningUnfold.value,
     },
   ]);

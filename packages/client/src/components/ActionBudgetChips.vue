@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { actionTierLabel, actionTierTooltip, type ActionTier } from "@vtt-core/shared";
-import { onMounted, onUnmounted, ref } from "vue";
+import { nextTick, onMounted, onUnmounted, ref } from "vue";
 
 import type { SheetTierMenuItem } from "../lib/sheetTierActions.js";
 import ModalDialog from "./ModalDialog.vue";
@@ -75,21 +75,25 @@ function onChipClick(tier: ActionTier, spent: boolean, granted: boolean, canComm
   if (props.gmRestore) {
     if (!spent) return;
     openMenuTier.value = null;
+    hoveredMenuItemTooltip.value = null;
     pendingRestoreTier.value = tier;
     return;
   }
   if (canOpenMenu(tier, spent, granted)) {
     openMenuTier.value = openMenuTier.value === tier ? null : tier;
+    hoveredMenuItemTooltip.value = null;
     return;
   }
   if (!props.interactive || !spent || !canCommit) return;
   openMenuTier.value = null;
+  hoveredMenuItemTooltip.value = null;
   pendingHasteTier.value = tier;
 }
 
 function selectMenuItem(id: string, disabled?: boolean) {
   if (disabled) return;
   openMenuTier.value = null;
+  hoveredMenuItemTooltip.value = null;
   emit("selectMenuItem", id);
 }
 
@@ -113,6 +117,37 @@ function cancelRestore() {
   pendingRestoreTier.value = null;
 }
 
+const hoveredMenuItemTooltip = ref<string | null>(null);
+const menuItemTooltipStyle = ref<{ top: string; left: string; maxWidth: string }>();
+
+function positionMenuItemTooltip(target: HTMLElement) {
+  const rect = target.getBoundingClientRect();
+  const maxWidth = Math.min(260, window.innerWidth - 16);
+  let left = rect.right + 6;
+  if (left + maxWidth > window.innerWidth - 8) {
+    left = Math.max(8, rect.left - maxWidth - 6);
+  }
+  menuItemTooltipStyle.value = {
+    top: `${rect.top}px`,
+    left: `${left}px`,
+    maxWidth: `${maxWidth}px`,
+  };
+}
+
+async function onMenuItemHover(event: MouseEvent | FocusEvent, tooltip: string | undefined) {
+  if (!tooltip) {
+    hoveredMenuItemTooltip.value = null;
+    return;
+  }
+  hoveredMenuItemTooltip.value = tooltip;
+  await nextTick();
+  positionMenuItemTooltip(event.currentTarget as HTMLElement);
+}
+
+function onMenuItemLeave() {
+  hoveredMenuItemTooltip.value = null;
+}
+
 function onDocumentPointerDown(event: PointerEvent) {
   if (openMenuTier.value == null) return;
   const target = event.target;
@@ -120,6 +155,7 @@ function onDocumentPointerDown(event: PointerEvent) {
   const root = document.querySelector(`[data-chip-menu-tier="${openMenuTier.value}"]`);
   if (root?.contains(target)) return;
   openMenuTier.value = null;
+  hoveredMenuItemTooltip.value = null;
 }
 
 onMounted(() => {
@@ -153,7 +189,7 @@ onUnmounted(() => {
           actionTierTooltip(tier)
         }}</span>
       </button>
-      <div v-if="openMenuTier === tier" class="chip-menu" role="menu">
+      <div v-if="openMenuTier === tier" class="chip-menu" :class="`chip-menu--${tier}`" role="menu">
         <button
           v-for="item in menuFor(tier)"
           :key="item.id"
@@ -162,6 +198,10 @@ onUnmounted(() => {
           role="menuitem"
           :disabled="item.disabled"
           @click="selectMenuItem(item.id, item.disabled)"
+          @mouseenter="onMenuItemHover($event, item.tooltip)"
+          @mouseleave="onMenuItemLeave"
+          @focusin="onMenuItemHover($event, item.tooltip)"
+          @focusout="onMenuItemLeave"
         >
           {{ item.label }}
         </button>
@@ -169,6 +209,16 @@ onUnmounted(() => {
     </div>
     <span v-if="(hasteStacks ?? 0) > 0" class="chip haste">Haste {{ hasteStacks }}</span>
   </div>
+
+  <Teleport to="body">
+    <div
+      v-if="hoveredMenuItemTooltip"
+      class="chip-menu-item-tooltip"
+      :style="menuItemTooltipStyle"
+    >
+      {{ hoveredMenuItemTooltip }}
+    </div>
+  </Teleport>
 
   <ModalDialog
     :open="pendingHasteTier != null"
@@ -342,6 +392,19 @@ onUnmounted(() => {
   box-shadow: var(--shadow-popover);
 }
 
+/* The leftmost (main) and rightmost (aux) chips sit near the sheet's edges,
+   so centering their menus under the button clips them — grow inward instead. */
+.chip-menu--main {
+  left: 0;
+  transform: none;
+}
+
+.chip-menu--aux {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
 .chip-menu-item {
   display: block;
   width: 100%;
@@ -369,5 +432,22 @@ onUnmounted(() => {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
+}
+</style>
+
+<style>
+.chip-menu-item-tooltip {
+  position: fixed;
+  z-index: 1000;
+  padding: 0.5rem 0.6rem;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.45;
+  box-shadow: var(--shadow-popover);
+  pointer-events: none;
 }
 </style>

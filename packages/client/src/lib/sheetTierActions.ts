@@ -4,6 +4,7 @@ export type SheetTierMenuItem = {
   id: string;
   label: string;
   disabled?: boolean;
+  tooltip?: string;
 };
 
 export type SheetTierActionCandidate = {
@@ -12,6 +13,7 @@ export type SheetTierActionCandidate = {
   tier: ActionTier;
   include: boolean;
   disabled?: boolean;
+  tooltip?: string;
 };
 
 export function sheetTierMenuItems(
@@ -24,6 +26,7 @@ export function sheetTierMenuItems(
       id: action.id,
       label: action.label,
       ...(action.disabled ? { disabled: true } : {}),
+      ...(action.tooltip ? { tooltip: action.tooltip } : {}),
     });
   }
   return out;

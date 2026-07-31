@@ -17,4 +17,16 @@ describe("sheetTierMenuItems", () => {
       aux: [{ id: "shove", label: "Shove" }],
     });
   });
+
+  it("carries a tooltip through when provided", () => {
+    expect(
+      sheetTierMenuItems([
+        { id: "attack", label: "Attack", tier: "main", include: true, tooltip: "Weapon rules text" },
+      ]),
+    ).toEqual({
+      main: [{ id: "attack", label: "Attack", tooltip: "Weapon rules text" }],
+      support: [],
+      aux: [],
+    });
+  });
 });
