@@ -26,6 +26,12 @@ export type CombatLifecycleHooks = {
   tryPlayerInteract?: (state: GameState, player: Player) => string | null | undefined;
   onUnitDamaged?: (state: GameState, unit: Player | Enemy, dealt: number) => string[];
   pushBlockReason?: (state: GameState, unit: Player | Enemy) => string | null | undefined;
+  /** Fired after a player's weapon attack lands, once per attack, with the tiles of everything hit. */
+  onPlayerAttackHit?: (
+    state: GameState,
+    player: Player,
+    hitTiles: { x: number; y: number }[],
+  ) => string[];
 };
 
 let hooks: CombatLifecycleHooks = {};
@@ -130,4 +136,13 @@ export function runUnitDamaged(
   if (!msgs.length || !state.combat) return;
   if (!state.combat.sideEffectMessages) state.combat.sideEffectMessages = [];
   state.combat.sideEffectMessages.push(...msgs);
+}
+
+export function runPlayerAttackHit(
+  state: GameState,
+  player: Player,
+  hitTiles: { x: number; y: number }[],
+): string[] {
+  if (!hitTiles.length) return [];
+  return hooks.onPlayerAttackHit?.(state, player, hitTiles) ?? [];
 }

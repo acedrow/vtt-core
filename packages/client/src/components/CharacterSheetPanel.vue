@@ -505,6 +505,20 @@ function parseTagsDraft(text: string): string[] {
 function onPackSheetSectionSaved(next: CharacterSheet) {
   sheet.value = next;
   notifySheetsChanged();
+  if (boardPlayer.value) {
+    send({
+      type: "syncPlayerSheet",
+      characterSheetId: next.id,
+      class: next.class,
+      armor: next.armor,
+      weapon: next.weapon,
+      equipment: next.equipment,
+      gear: next.gear,
+      gearArmor: next.gearArmor,
+      weapon2: next.weapon2,
+      data: next.data,
+    });
+  }
 }
 
 function startFieldEdit(field: EditableField) {

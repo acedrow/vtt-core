@@ -181,7 +181,7 @@ import {
   validateClassPassive,
   validateResolveClassReaction,
 } from "./class-abilities.js";
-import { runEnemyDefeated, runAfterGmPaintTile } from "./combat-lifecycle.js";
+import { runEnemyDefeated, runAfterGmPaintTile, runPlayerAttackHit } from "./combat-lifecycle.js";
 import { recordSeenTilesForAllPlayers, recordSeenTilesForPlayer } from "./los.js";
 import { findWeaponActiveHandler, type WeaponActiveAction } from "./weapon-active.js";
 import { normalizePlayerAction } from "./normalize-player-action.js";
@@ -677,6 +677,9 @@ export function applyPlayerAction(
       if (defeatMsgs.length) msg += `; ${defeatMsgs.join("; ")}`;
       const obstaclesMsg = formatObstaclesHitMessage(result.obstaclesHit);
       if (obstaclesMsg) msg += `; ${obstaclesMsg}`;
+      const hitTiles = hitEnemies.map((e) => ({ x: e!.x, y: e!.y }));
+      const attackHitMsgs = runPlayerAttackHit(state, player, hitTiles);
+      if (attackHitMsgs.length) msg += `; ${attackHitMsgs.join("; ")}`;
       resetHeavenBurningLevelAfterAttack(player, weapon);
       return appendCombatSideEffectMessages(state, msg);
     }
