@@ -1,4 +1,4 @@
-import type { ClientMessage, ServerMessage } from "@vtt-core/shared";
+import type { ClientMessage, ConsoleLogEntry, ServerMessage } from "@vtt-core/shared";
 import type { Ref } from "vue";
 
 import { appendConsoleEntry, setConsoleEntries } from "./useGameConsole.js";
@@ -24,6 +24,7 @@ export function useGameSocket(opts: {
   selectedSheetId: Ref<string | null>;
   onError: (message: string) => void;
   onSelectionInvalidated?: (state: ServerMessage & { type: "state" }) => void;
+  onConsoleEntry?: (entry: ConsoleLogEntry) => void;
 }) {
   const { connection, reportServerError } = useGameConnection();
   const { setGameState, registerSend, clearGameState } = useGameState();
@@ -123,6 +124,7 @@ export function useGameSocket(opts: {
         setConsoleEntries(msg.entries);
       } else if (msg.type === "console") {
         appendConsoleEntry(msg.entry);
+        opts.onConsoleEntry?.(msg.entry);
       } else if (msg.type === "mapPing") {
         applyRemoteMapPing(msg);
       } else if (msg.type === "error") {

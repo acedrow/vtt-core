@@ -91,6 +91,11 @@ const { connect, disconnect: disconnectSocket } = useGameSocket({
   playerProfile: playerProfileRef,
   selectedSheetId,
   onError: (message) => showToast(message),
+  onConsoleEntry: (entry) => {
+    if (entry.actor.role === "gm" && entry.message === "Starting state saved") {
+      showToast(entry.message, "success");
+    }
+  },
 });
 
 onMounted(() => {
