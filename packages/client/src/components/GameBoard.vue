@@ -17,6 +17,7 @@ import { useDamageIndicators } from "../composables/useDamageIndicators.js";
 import { useEnemyDeathAnimations } from "../composables/useEnemyDeathAnimations.js";
 import { usePendingTokenMoves, useTokenMoveAnimations } from "../composables/useTokenMoveAnimations.js";
 import type { TokenMoveAnimation } from "../composables/useTokenMoveAnimations.js";
+import { usePendingEnemySpawns } from "../composables/usePendingEnemySpawns.js";
 import { useCharacterSheets } from "../composables/useCharacterSheets.js";
 import { useEnemySpawnSelection } from "../composables/useEnemySpawnSelection.js";
 import { clearActiveTool, useGmTools } from "../composables/useGmTools.js";
@@ -451,6 +452,7 @@ const {
   clearAll: clearTokenMoves,
 } = useTokenMoveAnimations(gameState, boardKey, showToast);
 const { optimisticEnemyIds, optimisticPlayerIds } = usePendingTokenMoves();
+const { pendingEnemySpawns, startPendingSpawn } = usePendingEnemySpawns(gameState, showToast);
 const moveOverlayAtDestIds = ref(new Set<string>());
 const moveOverlayFinishTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const breakerPromptOpen = ref(false);
@@ -2459,6 +2461,8 @@ const visibleDamageIndicators = computed(() => {
   return damageIndicators.value.filter((ind) => !fogKeys.has(coordKey(ind.x, ind.y)));
 });
 
+const pendingEnemySpawnList = computed(() => [...pendingEnemySpawns.value.values()]);
+
 const visiblePlayerMoveOverlays = computed(() => {
   const fogKeys = playerFogActive.value ? outOfLineOfSightKeys.value : null;
   const s = gameState.value;
@@ -4217,6 +4221,7 @@ function trySpawnEnemyAt(x: number, y: number): boolean {
     return false;
   }
   send({ type: "addEnemy", x, y, name: spawnName });
+  startPendingSpawn(x, y, spawnName);
   combatBoardHostBridge.onAfterAddEnemy(spawnName, x, y);
   if (placementActive.value) {
     clearSpawnEnemySelection();
@@ -5155,6 +5160,14 @@ onUnmounted(() => {
         </div>
 
         <div
+          v-for="spawn in pendingEnemySpawnList"
+          :key="spawn.id"
+          class="pending-spawn-marker"
+          :style="cellCenterStyle(spawn.x, spawn.y)"
+          :title="`Spawning ${spawn.name}…`"
+        />
+
+        <div
           v-for="anim in visibleEnemyMoveOverlays"
           :key="`enemy-move-${anim.id}`"
           class="enemy-move-overlay"
@@ -5588,6 +5601,26 @@ onUnmounted(() => {
   100% {
     opacity: 0;
     transform: translateY(0);
+  }
+}
+
+.pending-spawn-marker {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: 50%;
+  border: 2px dashed var(--color-accent, #fff);
+  background: color-mix(in srgb, var(--color-accent, #fff) 20%, transparent);
+  animation: pending-spawn-pulse 1s ease-in-out infinite;
+}
+
+@keyframes pending-spawn-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
   }
 }
 
