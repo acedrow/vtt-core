@@ -445,6 +445,7 @@ export type ServerMessage =
   | { type: "console"; entry: import("./console.js").ConsoleLogEntry }
   | { type: "consoleSync"; entries: import("./console.js").ConsoleLogEntry[] }
   | { type: "error"; message: string }
+  | { type: "pong" }
   | {
       type: "mapPing";
       fromId: string;
@@ -466,6 +467,7 @@ export type ClientMessage =
       characterSheetId?: string;
       token?: string;
     }
+  | { type: "ping" }
   | { type: "move"; x: number; y: number }
   | { type: "movePath"; path: { x: number; y: number }[]; flying?: boolean | boolean[] }
   | { type: "resetMovement" }

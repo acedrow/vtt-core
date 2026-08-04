@@ -328,6 +328,11 @@ export class GameRoom {
       return;
     }
 
+    if (parsed.type === "ping") {
+      this.sendPong(ws);
+      return;
+    }
+
     if (parsed.type === "mapPing") {
       if (!att?.role) {
         this.sendError(ws, "Not joined");
@@ -927,8 +932,17 @@ export class GameRoom {
     } satisfies Attachment);
   }
 
+  async webSocketError(_ws: WebSocket, error: unknown): Promise<void> {
+    console.error("GameRoom websocket error", error);
+  }
+
   private sendError(ws: WebSocket, message: string): void {
     const msg: ServerMessage = { type: "error", message };
+    ws.send(JSON.stringify(msg));
+  }
+
+  private sendPong(ws: WebSocket): void {
+    const msg: ServerMessage = { type: "pong" };
     ws.send(JSON.stringify(msg));
   }
 

@@ -16,6 +16,13 @@ export const gameWsUrl = import.meta.env.VITE_CF_DEV
 
 const RECONNECT_BASE_MS = 500;
 const RECONNECT_MAX_MS = 15_000;
+// A dead socket's readyState stays OPEN indefinitely if the browser never
+// observes the underlying transport close (backgrounded-tab throttling, an
+// idle proxy/NAT dropping the connection, etc). This heartbeat sends an
+// application-level ping so a lapse forces a reconnect instead of a silent
+// hang.
+const HEARTBEAT_INTERVAL_MS = 10_000;
+const HEARTBEAT_TIMEOUT_MS = 25_000;
 
 export function useGameSocket(opts: {
   wsUrl: string;
@@ -34,6 +41,8 @@ export function useGameSocket(opts: {
   let intentionalClose = false;
   let reconnectAttempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  let lastMessageAt = 0;
   // Tracks the highest "state" seq applied for the current socket generation, so an
   // out-of-order/stale broadcast (e.g. from message reordering) is ignored instead
   // of overwriting newer state already on screen. Reset per generation because the
@@ -53,6 +62,43 @@ export function useGameSocket(opts: {
     if (reconnectTimer != null) {
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
+    }
+  }
+
+  function stopHeartbeat() {
+    if (heartbeatTimer != null) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+  }
+
+  function startHeartbeat(ws: WebSocket, gen: number) {
+    stopHeartbeat();
+    lastMessageAt = Date.now();
+    heartbeatTimer = setInterval(() => {
+      if (gen !== socketGen || socket !== ws) {
+        stopHeartbeat();
+        return;
+      }
+      const idleFor = Date.now() - lastMessageAt;
+      if (idleFor > HEARTBEAT_TIMEOUT_MS) {
+        // No response (not even a pong) within the timeout — the socket is
+        // dead even though readyState still reports OPEN. Force it closed so
+        // the existing close/reconnect path runs.
+        stopHeartbeat();
+        ws.close();
+        return;
+      }
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "ping" } satisfies ClientMessage));
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+
+  function checkStaleConnection() {
+    if (socket?.readyState !== WebSocket.OPEN) return;
+    if (Date.now() - lastMessageAt > HEARTBEAT_TIMEOUT_MS) {
+      socket.close();
     }
   }
 
@@ -81,6 +127,7 @@ export function useGameSocket(opts: {
       if (gen !== socketGen) return;
       reconnectAttempt = 0;
       connection.value = "connected";
+      startHeartbeat(ws, gen);
       send({
         type: "join",
         role: opts.role.value,
@@ -94,6 +141,7 @@ export function useGameSocket(opts: {
 
     ws.addEventListener("close", () => {
       if (gen !== socketGen) return;
+      stopHeartbeat();
       socket = null;
       if (intentionalClose) {
         connection.value = "disconnected";
@@ -102,8 +150,14 @@ export function useGameSocket(opts: {
       scheduleReconnect();
     });
 
+    ws.addEventListener("error", () => {
+      if (gen !== socketGen) return;
+      opts.onError("Connection error");
+    });
+
     ws.addEventListener("message", (ev) => {
       if (gen !== socketGen) return;
+      lastMessageAt = Date.now();
       let msg: ServerMessage;
       try {
         msg = JSON.parse(String(ev.data)) as ServerMessage;
@@ -111,7 +165,9 @@ export function useGameSocket(opts: {
         opts.onError("Invalid message from server");
         return;
       }
-      if (msg.type === "state") {
+      if (msg.type === "pong") {
+        return;
+      } else if (msg.type === "state") {
         if (gen !== lastStateGen) {
           lastStateGen = gen;
           lastStateSeq = -1;
@@ -140,6 +196,20 @@ export function useGameSocket(opts: {
     });
   }
 
+  function handleVisibilityChange() {
+    // A backgrounded tab can miss the heartbeat's own dead-socket detection
+    // (throttled timers) or come back from a suspend/resume where the OS
+    // silently dropped the connection. Re-check as soon as the tab is
+    // foregrounded rather than waiting for the next heartbeat tick.
+    if (document.visibilityState === "visible") {
+      checkStaleConnection();
+    }
+  }
+
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+  }
+
   function connect() {
     intentionalClose = false;
     clearReconnect();
@@ -151,12 +221,16 @@ export function useGameSocket(opts: {
   function disconnect() {
     intentionalClose = true;
     clearReconnect();
+    stopHeartbeat();
     socketGen += 1;
     socket?.close();
     socket = null;
     clearAllMapPings();
     clearGameState();
     connection.value = "disconnected";
+    if (typeof document !== "undefined") {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }
   }
 
   return { send, connect, disconnect };

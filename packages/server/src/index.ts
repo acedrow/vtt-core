@@ -693,6 +693,12 @@ wss.on("connection", (ws: WebSocket) => {
       return;
     }
 
+    if (parsed.type === "ping") {
+      const msg: ServerMessage = { type: "pong" };
+      ws.send(JSON.stringify(msg));
+      return;
+    }
+
     const role = socketRole.get(ws);
     if (parsed.type === "mapPing") {
       if (!role) {
