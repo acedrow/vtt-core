@@ -628,9 +628,14 @@ export class GameRoom {
         this.sendError(ws, "Only the game master can do that");
         return;
       }
-      await this.queueMapPersist((map) => {
-        applySaveStartingState(this.gameState, map);
-      });
+      try {
+        await this.queueMapPersist((map) => {
+          applySaveStartingState(this.gameState, map);
+        });
+      } catch (err) {
+        this.sendError(ws, err instanceof Error ? err.message : "Failed to save starting state");
+        return;
+      }
       const actor = await this.actorForSocket(ws);
       await this.broadcastConsole(actor, "Starting state saved");
       await this.broadcastState();
