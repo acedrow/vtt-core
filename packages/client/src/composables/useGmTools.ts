@@ -603,7 +603,6 @@ export function useGmTools() {
     const tile = tileAt(s.tiles, x, y);
     if (!tile) return;
     applyPresetToBrush(tileToPaintPreset(tile));
-    paintbrushEnableDeploymentZone.value = true;
   }
 
   function setActiveTool(tool: GmTool) {
