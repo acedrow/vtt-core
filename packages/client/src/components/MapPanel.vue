@@ -6,7 +6,6 @@ import { useApi } from "../composables/useApi.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useGameState } from "../composables/useGameState.js";
 import { useMapSelection } from "../composables/useMapSelection.js";
-import { showToast } from "../composables/useToasts.js";
 import PanelShell from "./PanelShell.vue";
 
 const props = defineProps<{ mapId: string }>();
@@ -107,7 +106,6 @@ function saveStartingState() {
   actionError.value = null;
   send({ type: "saveStartingState" });
   savingStartingState.value = false;
-  showToast("Starting state saved", "success");
   void loadMap(props.mapId);
 }
 

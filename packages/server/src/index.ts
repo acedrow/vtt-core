@@ -990,7 +990,14 @@ wss.on("connection", (ws: WebSocket) => {
         sendError(ws, "Map not found");
         return;
       }
-      broadcastConsole(actorForSocket(ws), applySaveStartingState(gameState, map));
+      let message: string;
+      try {
+        message = applySaveStartingState(gameState, map);
+      } catch (err) {
+        sendError(ws, err instanceof Error ? err.message : "Failed to save starting state");
+        return;
+      }
+      broadcastConsole(actorForSocket(ws), message);
       broadcastState();
       return;
     }

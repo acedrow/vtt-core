@@ -406,13 +406,18 @@ export function parseGameMap(raw: unknown): GameMap {
   };
 }
 
-/** Rejects footprint overlaps unless every occupant on the tile has ShareSpace. */
+/**
+ * Rejects footprint overlaps between two non-ShareSpace enemies. Mirrors the
+ * asymmetric rule in validateEnemyFootprint: a ShareSpace enemy (e.g. Living
+ * Tide) may underlap any number of other enemies, but two non-ShareSpace
+ * enemies may never occupy the same tile.
+ */
 export function assertLegalMapEnemyFootprints(
   enemies: Pick<Enemy, "id" | "x" | "y" | "scale" | "name" | "burrowed">[],
   width: number,
   height: number,
 ): void {
-  const occupants = new Map<string, boolean>();
+  const solidOccupant = new Map<string, string>();
   for (const enemy of enemies) {
     const scale = getEnemyScale(enemy);
     const shareSpace = enemyHasShareSpace(enemy);
@@ -420,15 +425,12 @@ export function assertLegalMapEnemyFootprints(
       if (!isInBounds(tile.x, tile.y, width, height)) {
         throw new Error(`Enemy ${enemy.id} footprint at (${enemy.x}, ${enemy.y}) is out of bounds`);
       }
+      if (shareSpace) continue;
       const posKey = coordKey(tile.x, tile.y);
-      const existingShareSpace = occupants.get(posKey);
-      if (existingShareSpace !== undefined) {
-        if (!existingShareSpace || !shareSpace) {
-          throw new Error(`Enemy footprints overlap at (${tile.x}, ${tile.y})`);
-        }
-        continue;
+      if (solidOccupant.has(posKey)) {
+        throw new Error(`Enemy footprints overlap at (${tile.x}, ${tile.y})`);
       }
-      occupants.set(posKey, shareSpace);
+      solidOccupant.set(posKey, enemy.id);
     }
   }
 }

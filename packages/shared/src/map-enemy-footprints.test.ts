@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyResetToStartingState,
+  applySaveStartingState,
   assertLegalMapEnemyFootprints,
   createBlankGameMap,
   parseGameMap,
@@ -41,12 +43,26 @@ describe("map enemy footprints", () => {
     ).toThrow(/Enemy footprints overlap at \(1, 1\)/);
   });
 
-  it("rejects ShareSpace stacked on a non-ShareSpace enemy", () => {
+  it("allows a ShareSpace enemy to underlap a non-ShareSpace enemy", () => {
     expect(() =>
       assertLegalMapEnemyFootprints(
         [
           { id: "a", x: 2, y: 2, name: "Test Grunt", scale: 1 },
           { id: "b", x: 2, y: 2, name: "Test Swarmling", scale: 1 },
+        ],
+        4,
+        4,
+      ),
+    ).not.toThrow();
+  });
+
+  it("still rejects two non-ShareSpace enemies stacked via a ShareSpace underlap", () => {
+    expect(() =>
+      assertLegalMapEnemyFootprints(
+        [
+          { id: "a", x: 2, y: 2, name: "Test Grunt", scale: 1 },
+          { id: "b", x: 2, y: 2, name: "Test Swarmling", scale: 1 },
+          { id: "c", x: 2, y: 2, name: "Test Grunt", scale: 1 },
         ],
         4,
         4,
@@ -81,5 +97,27 @@ describe("map enemy footprints", () => {
     const map = createBlankGameMap("bad", "Bad", 4, 4);
     expect(() => persistMapEnemiesFromState(state, map)).toThrow(/Enemy footprints overlap/);
     expect(map.enemies).toBeUndefined();
+  });
+
+  // VTT-86: placing a ShareSpace enemy (e.g. Living Tide) on a tile already
+  // occupied by a solid enemy is legal in play, so saving/resetting starting
+  // state must not drop it.
+  it("save and reset starting state keeps a ShareSpace enemy stacked on a solid enemy", () => {
+    const map = createBlankGameMap("stack", "Stack", 4, 4);
+    const state = makeGameState({
+      width: 4,
+      height: 4,
+      enemies: [
+        { id: "grunt", x: 1, y: 1, name: "Test Grunt", scale: 1, hp: 10 },
+        { id: "swarm", x: 1, y: 1, name: "Test Swarmling", scale: 1, hp: 5 },
+      ],
+    });
+
+    expect(applySaveStartingState(state, map)).toBe("Starting state saved");
+    expect(map.startingState?.enemies).toHaveLength(2);
+
+    state.enemies = state.enemies.filter((e) => e.id !== "swarm");
+    expect(applyResetToStartingState(state, map)).toBe("Board reset to starting state");
+    expect(state.enemies.map((e) => e.id).sort()).toEqual(["grunt", "swarm"]);
   });
 });
