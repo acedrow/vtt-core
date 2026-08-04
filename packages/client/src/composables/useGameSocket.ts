@@ -35,7 +35,11 @@ export function useGameSocket(opts: {
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   function send(msg: ClientMessage) {
-    if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(msg));
+      return;
+    }
+    opts.onError("Not connected — action wasn't sent. Reconnecting…");
   }
 
   function clearReconnect() {
