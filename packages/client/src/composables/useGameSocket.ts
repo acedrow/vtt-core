@@ -33,9 +33,19 @@ export function useGameSocket(opts: {
   let intentionalClose = false;
   let reconnectAttempt = 0;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  // Tracks the highest "state" seq applied for the current socket generation, so an
+  // out-of-order/stale broadcast (e.g. from message reordering) is ignored instead
+  // of overwriting newer state already on screen. Reset per generation because the
+  // server's own counter restarts whenever its process/Durable Object restarts.
+  let lastStateGen = -1;
+  let lastStateSeq = -1;
 
   function send(msg: ClientMessage) {
-    if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(msg));
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(msg));
+      return;
+    }
+    opts.onError("Not connected — action wasn't sent. Reconnecting…");
   }
 
   function clearReconnect() {
@@ -101,6 +111,12 @@ export function useGameSocket(opts: {
         return;
       }
       if (msg.type === "state") {
+        if (gen !== lastStateGen) {
+          lastStateGen = gen;
+          lastStateSeq = -1;
+        }
+        if (msg.seq < lastStateSeq) return;
+        lastStateSeq = msg.seq;
         setGameState(msg.state, msg.yourPlayerId);
         opts.onSelectionInvalidated?.(msg);
       } else if (msg.type === "consoleSync") {

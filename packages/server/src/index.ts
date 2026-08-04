@@ -409,6 +409,7 @@ const httpServer = createServer(app);
 const wss = new WebSocketServer({ noServer: true });
 
 let gameState: GameState;
+let stateSeq = 0;
 
 app.delete("/api/maps/:mapId", (req, res) => {
   const auth = parseAuth(req, res);
@@ -511,11 +512,14 @@ function sendStateTo(ws: WebSocket): void {
     type: "state",
     state: cloneState(),
     yourPlayerId: playerIdForSocket(ws),
+    seq: stateSeq,
   };
   ws.send(JSON.stringify(msg));
 }
 
 function broadcastState(): void {
+  stateSeq += 1;
+  const seq = stateSeq;
   const snapshot = cloneState();
   for (const ws of wss.clients) {
     if (ws.readyState !== ws.OPEN) continue;
@@ -524,6 +528,7 @@ function broadcastState(): void {
       type: "state",
       state: snapshot,
       yourPlayerId: yourId,
+      seq,
     };
     ws.send(JSON.stringify(msg));
   }

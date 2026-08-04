@@ -131,6 +131,16 @@ export class GameRoom {
   // other's writes. Chain them so each waits for the previous put to land before
   // reading the map again.
   private mapPersistChain: Promise<void> = Promise.resolve();
+  // broadcastState() snapshots + persists this.gameState on every mutation; without
+  // serializing the durable-storage put, overlapping calls can resolve out of order
+  // and let an older snapshot get persisted last, silently reverting recent changes
+  // on the next Durable Object restart/eviction. Chain the puts so they always land
+  // in call order (each snapshot is a superset of the ones queued before it).
+  private gameStatePersistChain: Promise<void> = Promise.resolve();
+  // Monotonic counter stamped on every "state" broadcast so clients can detect and
+  // discard an out-of-order/stale snapshot (e.g. from message reordering or a
+  // Durable Object restart mid-broadcast) instead of rendering it as current.
+  private stateSeq = 0;
   private readonly mapPingActiveSockets = new Set<WebSocket>();
 
   constructor(
@@ -923,6 +933,7 @@ export class GameRoom {
       type: "state",
       state: structuredClone(this.gameState),
       yourPlayerId: this.playerIdForAtt(att),
+      seq: this.stateSeq,
     };
     ws.send(JSON.stringify(msg));
   }
@@ -1030,11 +1041,21 @@ export class GameRoom {
     this.sendConsoleEntry(entry);
   }
 
+  private async queueGameStatePersist(stored: GameState): Promise<void> {
+    const task = this.gameStatePersistChain.then(async () => {
+      await this.ctx.storage.put(GAME_STATE_KEY, stored);
+    });
+    this.gameStatePersistChain = task.catch(() => {});
+    await task;
+  }
+
   private async broadcastState(): Promise<void> {
     const stored = structuredClone(this.gameState);
     delete stored.damageEvents;
     delete stored.silentHpEnemyIds;
-    await this.ctx.storage.put(GAME_STATE_KEY, stored);
+    await this.queueGameStatePersist(stored);
+    this.stateSeq += 1;
+    const seq = this.stateSeq;
     const snapshot = structuredClone(this.gameState);
     for (const socket of this.ctx.getWebSockets()) {
       const att = socket.deserializeAttachment() as Attachment | null;
@@ -1043,6 +1064,7 @@ export class GameRoom {
         type: "state",
         state: snapshot,
         yourPlayerId: yourId,
+        seq,
       };
       socket.send(JSON.stringify(msg));
     }
