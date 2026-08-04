@@ -1,7 +1,30 @@
-import { describe, expect, it, vi } from "vitest";
+import type { GameState } from "@vtt-core/shared";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 
 import { useGameSocket } from "./useGameSocket.js";
+import { useGameState } from "./useGameState.js";
+
+function makeTestGameState(round: number): GameState {
+  return {
+    mapId: "test",
+    mapName: "Test",
+    width: 1,
+    height: 1,
+    tiles: [{ x: 0, y: 0, terrain: ["standard"], elevation: 0 }],
+    players: [],
+    enemies: [],
+    round,
+    roundPhase: "taccomNotStarted",
+    turn: { role: "gm" },
+    actedPlayerIds: [],
+    turnLog: [],
+    campaign: {
+      partyResources: { scrap: 0 },
+      unlockedUpgrades: [],
+    },
+  };
+}
 
 class FakeWebSocket {
   static instances: FakeWebSocket[] = [];
@@ -86,6 +109,46 @@ describe("useGameSocket send()", () => {
 
       expect(onError).not.toHaveBeenCalled();
       expect(socket.sent).toHaveLength(1);
+    } finally {
+      globalThis.WebSocket = originalWebSocket;
+    }
+  });
+});
+
+describe("useGameSocket stale state rejection", () => {
+  afterEach(() => {
+    useGameState().clearGameState();
+  });
+
+  it("ignores an out-of-order state broadcast with an older seq", () => {
+    const originalWebSocket = globalThis.WebSocket;
+    // @ts-expect-error test stub
+    globalThis.WebSocket = FakeWebSocket;
+    FakeWebSocket.instances = [];
+
+    try {
+      const { connect } = useGameSocket({
+        wsUrl: "ws://test",
+        role: ref("gm"),
+        playerProfile: ref(null),
+        selectedSheetId: ref(null),
+        onError: vi.fn(),
+      });
+
+      connect();
+      const socket = FakeWebSocket.instances[FakeWebSocket.instances.length - 1];
+      const emit = (data: unknown) =>
+        socket.listeners.message?.forEach((cb) => cb({ data: JSON.stringify(data) }));
+
+      emit({ type: "state", state: makeTestGameState(5), yourPlayerId: null, seq: 5 });
+      expect(useGameState().gameState.value?.round).toBe(5);
+
+      // A stale/reordered broadcast with a lower seq must not overwrite newer state.
+      emit({ type: "state", state: makeTestGameState(3), yourPlayerId: null, seq: 3 });
+      expect(useGameState().gameState.value?.round).toBe(5);
+
+      emit({ type: "state", state: makeTestGameState(6), yourPlayerId: null, seq: 6 });
+      expect(useGameState().gameState.value?.round).toBe(6);
     } finally {
       globalThis.WebSocket = originalWebSocket;
     }

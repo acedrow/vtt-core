@@ -137,6 +137,10 @@ export class GameRoom {
   // on the next Durable Object restart/eviction. Chain the puts so they always land
   // in call order (each snapshot is a superset of the ones queued before it).
   private gameStatePersistChain: Promise<void> = Promise.resolve();
+  // Monotonic counter stamped on every "state" broadcast so clients can detect and
+  // discard an out-of-order/stale snapshot (e.g. from message reordering or a
+  // Durable Object restart mid-broadcast) instead of rendering it as current.
+  private stateSeq = 0;
   private readonly mapPingActiveSockets = new Set<WebSocket>();
 
   constructor(
@@ -929,6 +933,7 @@ export class GameRoom {
       type: "state",
       state: structuredClone(this.gameState),
       yourPlayerId: this.playerIdForAtt(att),
+      seq: this.stateSeq,
     };
     ws.send(JSON.stringify(msg));
   }
@@ -1049,6 +1054,8 @@ export class GameRoom {
     delete stored.damageEvents;
     delete stored.silentHpEnemyIds;
     await this.queueGameStatePersist(stored);
+    this.stateSeq += 1;
+    const seq = this.stateSeq;
     const snapshot = structuredClone(this.gameState);
     for (const socket of this.ctx.getWebSockets()) {
       const att = socket.deserializeAttachment() as Attachment | null;
@@ -1057,6 +1064,7 @@ export class GameRoom {
         type: "state",
         state: snapshot,
         yourPlayerId: yourId,
+        seq,
       };
       socket.send(JSON.stringify(msg));
     }

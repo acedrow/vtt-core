@@ -441,7 +441,7 @@ export type MapPingSurface = "taccom" | "overworld";
 
 /** Server → client */
 export type ServerMessage =
-  | { type: "state"; state: GameState; yourPlayerId: string | null }
+  | { type: "state"; state: GameState; yourPlayerId: string | null; seq: number }
   | { type: "console"; entry: import("./console.js").ConsoleLogEntry }
   | { type: "consoleSync"; entries: import("./console.js").ConsoleLogEntry[] }
   | { type: "error"; message: string }
