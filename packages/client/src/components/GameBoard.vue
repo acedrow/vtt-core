@@ -2816,6 +2816,14 @@ function onEnemyCellClick(x: number, y: number, enemyId: string) {
     handleCombatCellClick(x, y);
     return;
   }
+  if (props.role === "player" && isPlayerMoveDestination(x, y)) {
+    const clickedEnemy = gameState.value?.enemies.find((e) => e.id === enemyId);
+    if (clickedEnemy && getCombatBoardHelpers().isLivingTide?.(clickedEnemy)) {
+      clearBoardSelection();
+      tryMove(x, y);
+      return;
+    }
+  }
   // Occupied destinations: piece click stops cell propagation, so complete
   // pending spawn/move here instead of only toggling selection.
   if (canUseGmTools.value) {
@@ -2872,7 +2880,7 @@ function applySameTypeBulkSelection(enemyId: string) {
   setGmBulkSelection({ kind: "enemies", ids });
 }
 
-function selectOccupantAt(x: number, y: number): boolean {
+function selectOccupantAt(x: number, y: number, opts?: { preferMoveOverLivingTide?: boolean }): boolean {
   const occ = occupancy.value;
   if (!occ) return false;
   const key = coordKey(x, y);
@@ -2885,6 +2893,9 @@ function selectOccupantAt(x: number, y: number): boolean {
   const helpers = getCombatBoardHelpers();
   const tide = atTile.find((e) => helpers.isLivingTide?.(e));
   if (tide) {
+    if (opts?.preferMoveOverLivingTide && isPlayerMoveDestination(x, y)) {
+      return false;
+    }
     const group = helpers.swarmGroupForEnemy(gameState.value!, tide.id);
     const selectId = group
       ? helpers.swarmCanonicalDisplayId(gameState.value!, group.memberIds)
@@ -2908,6 +2919,15 @@ function arrowTarget(key: string, origin: { x: number; y: number }): { x: number
     ArrowRight: { x: origin.x + 1, y: origin.y },
   };
   return map[key] ?? null;
+}
+
+function isPlayerMoveDestination(x: number, y: number): boolean {
+  if (props.role !== "player" || !yourPlayerId.value || !gameState.value) return false;
+  if (!canPlayerMove(gameState.value, yourPlayerId.value)) return false;
+  const cell = cellStateByKey.value.get(boardCellKey(x, y));
+  if (gameState.value.roundPhase === "deployment") return !!cell?.deployable;
+  if (!activePlayerSelected.value) return false;
+  return !!(cell?.movable || cell?.moveSecondary || cell?.moveAegis);
 }
 
 function tryMove(x: number, y: number) {
@@ -3721,7 +3741,7 @@ function onPlayerCellClick(x: number, y: number) {
   if (routesTokenClickToCellTargeting(boardActionMode.value, boardTargetingContext())) {
     return;
   }
-  if (selectOccupantAt(x, y)) return;
+  if (selectOccupantAt(x, y, { preferMoveOverLivingTide: true })) return;
   clearBoardSelection();
   tryMove(x, y);
 }
