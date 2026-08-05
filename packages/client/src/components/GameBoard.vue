@@ -1309,10 +1309,9 @@ const gmEnemyAttackTargetKeys = computed(() => {
   if (!attackSpec) return keys;
   if (isPatternEnemyAttack(attackSpec)) return keys;
   const stainTeleport =
-    pending.stainTeleport || attackSpec.specialId === "stain-teleport";
+    pending.stainTeleport || !!getCombatBoardHelpers().isStainTeleportAttack?.(attackSpec.specialId);
   const plantFlowerbud =
     pending.plantFlowerbud ||
-    attackSpec.specialId === "flowerbud-plant" ||
     !!getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(attackSpec.specialId);
 
   if (plantFlowerbud && enemy) {
@@ -3216,7 +3215,6 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
 
   const plantFlowerbud =
     pending.plantFlowerbud ||
-    attackSpec.specialId === "flowerbud-plant" ||
     !!getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(attackSpec.specialId);
   if (plantFlowerbud) {
     sendGmEnemyAction({
@@ -3231,7 +3229,7 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
   }
 
   const stainTeleport =
-    pending.stainTeleport || attackSpec.specialId === "stain-teleport";
+    pending.stainTeleport || !!getCombatBoardHelpers().isStainTeleportAttack?.(attackSpec.specialId);
 
   if (stainTeleport && (pending.targetPlayerId || pending.targetEnemyId)) {
     sendGmEnemyAction({
