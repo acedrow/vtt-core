@@ -4479,8 +4479,14 @@ function buildContextMenuItems(x: number, y: number): BoardContextMenuItem[] {
   if (canUseGmTools.value && hasEffectStacks(player ?? enemy)) {
     items.push({ id: "clear-effects", label: "Clear effects", danger: true });
   }
-  if (canUseGmTools.value && enemy) {
-    items.push({ id: "remove-enemy", label: "Remove enemy", danger: true });
+  if (canUseGmTools.value && enemiesAt.length > 0) {
+    if (enemiesAt.length === 1) {
+      items.push({ id: `remove-enemy:${enemiesAt[0]!.id}`, label: "Remove enemy", danger: true });
+    } else {
+      for (const e of enemiesAt) {
+        items.push({ id: `remove-enemy:${e.id}`, label: `Remove ${enemyLabel(e)}`, danger: true });
+      }
+    }
   }
   if (player && (canUseGmTools.value || player.id === yourPlayerId.value)) {
     items.push({ id: "remove-player", label: "Remove token", danger: true });
@@ -4666,14 +4672,17 @@ function onContextMenuSelect(id: string) {
     closeContextMenu();
     return;
   }
-  if (id === "remove-enemy") {
+  if (id === "remove-enemy" || id.startsWith("remove-enemy:")) {
     if (useBulk && bulk.kind === "enemies") {
       for (const enemyId of bulk.ids) removeEnemyById(enemyId);
       closeContextMenu();
       return;
     }
-    if (contextMenu.value.enemyId) {
-      removeEnemyById(contextMenu.value.enemyId);
+    const targetEnemyId = id.startsWith("remove-enemy:")
+      ? id.slice("remove-enemy:".length)
+      : contextMenu.value.enemyId;
+    if (targetEnemyId) {
+      removeEnemyById(targetEnemyId);
     }
     closeContextMenu();
     return;
