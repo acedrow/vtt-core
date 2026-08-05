@@ -61,6 +61,14 @@ After changing `@vtt-core/shared`, rebuild (or run `dev`, which watches shared).
 
 Do **not** commit, push, or open PRs unless the user explicitly asks.
 
+## Branching
+
+All work pushes to **`dev`**, not `main`. `main` is the release branch; periodic PRs merge `dev` → `main` (usually user-initiated, not per-ticket).
+
+- Regular ticket work: commit on `dev` (make sure your local `dev` is up to date with `origin/dev` first); push to `origin/dev` when asked.
+- MTWI: shared feature branch cut from `dev`; **one PR into `dev`** for the whole MTWI (not `main`).
+- Only open a `dev` → `main` PR when the user explicitly asks for a release.
+
 ## Secrets
 
 Entering the game requires a password (GM or shared player password). Configure these in each runtime; never commit them.
@@ -103,14 +111,14 @@ flowchart LR
 
 - Ticket ids: **`VTT-<cardNumber>`** (from the board or `npm run kan -- card …`).
 - **Commits:** every commit message must start with `VTT-<n>:` (e.g. `VTT-42: Fix token animation snap`).
-- **Multi-ticket work items (MTWI):** one shared branch name (documented on every related ticket) and **one PR to `main`** for the whole MTWI; individual tickets still get their own `VTT-n` commits on that branch.
+- **Multi-ticket work items (MTWI):** one shared branch name (documented on every related ticket) and **one PR to `dev`** for the whole MTWI; individual tickets still get their own `VTT-n` commits on that branch.
 - **Finishing a ticket** (when asked to do / work / finish a ticket):
   1. Read the card (`npm run kan -- card VTT-n`); update the description if scope, clarifications, or testing notes change.
   2. Move **backlog → in-progress** when starting implementation.
   3. Implement + run verification (`build`, `test`, `lint`, `test:e2e`).
   4. Add a **Resolution** section to the card description before marking done — what the issue was (symptom / root cause) and what was fixed (concrete changes). Use `npm run kan -- set-description VTT-n --file …` when editing a long description.
   5. Move **in-progress → done** after verification passes and the Resolution section is written.
-  6. Commit (with `VTT-n:` prefix) and push / open a PR when the user asked (do **not** commit/push/PR unless asked).
+  6. Commit (with `VTT-n:` prefix) and push to `dev` / open a PR into `dev` when the user asked (do **not** commit/push/PR unless asked; see [Branching](#branching)).
 
 ### Ticket authoring rules
 
@@ -171,7 +179,7 @@ These rules exist because these mistakes have been made before:
 - **`@typescript-eslint/no-unused-vars`** — dead imports/vars (warning). Prefix intentionally-unused with `_`.
 - **Server ↔ cf-worker parity** is not lint-enforceable, so it is guarded by a test: `packages/shared/src/ws-parity.test.ts` reads both backends' WS dispatch source and fails if their inline message-type handlers diverge or if any `ClientMessage` type is left unhandled. When you add/rename a client message, update `types.ts`, the shared handler or both backends, and this test will confirm coverage. Shared game logic still belongs in `@vtt-core/shared` so a fix reaches both backends; keep `PatchBody`/validators complete on both sides.
 
-**CI:** `.github/workflows/verify.yml` runs `ci-install.sh` (secret `CONTENT_GIT_TOKEN`) → `build → lint` (eslint + client `vue-tsc`) `→ test → e2e` on every PR and push to `main`. Primary Cloudflare deploy is Workers Builds (same install script + secret); optional manual deploy via `deploy-cloudflare.yml`. See `docs/content-package-private-cutover.md` and `docs/content-package-build-contract.md`.
+**CI:** `.github/workflows/verify.yml` runs `ci-install.sh` (secret `CONTENT_GIT_TOKEN`) → `build → lint` (eslint + client `vue-tsc`) `→ test → e2e` on every PR and push to `main` or `dev`. Primary Cloudflare deploy is Workers Builds (same install script + secret); optional manual deploy via `deploy-cloudflare.yml`. See `docs/content-package-private-cutover.md` and `docs/content-package-build-contract.md`.
 
 ## Architecture
 
