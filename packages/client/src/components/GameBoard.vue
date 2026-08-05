@@ -466,7 +466,7 @@ const provokePromptOpen = ref(false);
 const provokeTriggers = ref<ProvokeTrigger[]>([]);
 const pendingProvokeMove = ref<(() => void) | null>(null);
 const swarmChipOpen = ref(false);
-const swarmChipEnemyId = ref<string | null>(null);
+const swarmChipEnemyName = ref("Swarm");
 const swarmChipTargets = ref<CombatBoardSwarmChipTarget[]>([]);
 const swarmAttackModalOpen = ref(false);
 const swarmAttackPending = ref<{
@@ -550,28 +550,8 @@ function closeTargetPicker() {
   targetPickerTileIds.value = [];
 }
 
-function maybePromptSwarmChip(enemyId: string) {
-  if (props.role !== "gm") return;
-  const s = gameState.value;
-  if (!s || !canGmMoveEnemies(s)) return;
-  const enemy = s.enemies.find((e) => e.id === enemyId);
-  if (!enemy || enemy.exhausted || getCombatBoardHelpers().isTowerEnemy(enemy)) return;
-  if (!getCombatBoardHelpers().swarmChipPromptRequired(s, enemyId)) return;
-  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyId)!;
-  swarmChipEnemyId.value = group.canonicalId;
-  swarmChipTargets.value = getCombatBoardHelpers().swarmChipEligibleTargets(s, enemyId);
-  swarmChipOpen.value = true;
-}
-
-function ensureSwarmChipResolved(enemyId: string): boolean {
-  const s = gameState.value;
-  if (!s || !getCombatBoardHelpers().swarmChipPromptRequired(s, enemyId)) return true;
-  maybePromptSwarmChip(enemyId);
-  return false;
-}
-
 watch(selectedEnemyId, (id) => {
-  if (id) maybePromptSwarmChip(id);
+  if (id) combatBoardHostBridge.maybePromptSwarmChip(id);
 });
 
 const breakerSethianHint = computed(() => {
@@ -608,24 +588,6 @@ function onProvokeCancel() {
   provokeTriggers.value = [];
 }
 
-function onSwarmChipConfirm(targetPlayerIds: string[]) {
-  const enemyId = swarmChipEnemyId.value;
-  if (!enemyId) return;
-  sendGmEnemyAction({ action: "pack", kind: "swarmChip", enemyId, detail: { targetPlayerIds } });
-  swarmChipOpen.value = false;
-}
-
-function onSwarmChipClose() {
-  swarmChipOpen.value = false;
-}
-
-const swarmChipEnemyName = computed(() => {
-  const s = gameState.value;
-  const id = swarmChipEnemyId.value;
-  if (!s || !id) return "Swarm";
-  return s.enemies.find((e) => e.id === id)?.name ?? "Swarm";
-});
-
 const swarmAttackModalProps = computed(() => {
   const pending = swarmAttackPending.value;
   const s = gameState.value;
@@ -655,8 +617,12 @@ const combatBoardHostBridge = {
   swarmChipOpen,
   swarmChipEnemyName,
   swarmChipTargets,
-  onSwarmChipConfirm,
-  onSwarmChipClose,
+  onSwarmChipConfirm: (_targetPlayerIds: string[]) => {},
+  onSwarmChipClose: () => {
+    swarmChipOpen.value = false;
+  },
+  maybePromptSwarmChip: (_enemyId: string) => {},
+  ensureSwarmChipResolved: (_enemyId: string) => true,
   swarmAttackModalOpen,
   swarmAttackModalProps,
   onSwarmAttackConfirm,
@@ -2421,7 +2387,7 @@ function tryMoveSelectedEnemyToDest(
   if (!s || !selected) return false;
   if (optimisticEnemyIds.value.has(selected)) return false;
   if (swarmChipOpen.value) return false;
-  if (!ensureSwarmChipResolved(selected)) return false;
+  if (!combatBoardHostBridge.ensureSwarmChipResolved(selected)) return false;
   const enemy = s.enemies.find((e) => e.id === selected);
   if (!enemy) {
     clearBoardSelection();

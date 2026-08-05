@@ -21,6 +21,10 @@ export type CombatBoardHostBridge = {
   swarmChipTargets: R<CombatBoardSwarmChipTarget[]>;
   onSwarmChipConfirm: (targetPlayerIds: string[]) => void;
   onSwarmChipClose: () => void;
+  /** Content host wires these; GameBoard only reads/calls. */
+  maybePromptSwarmChip: (enemyId: string) => void;
+  /** Returns true if no prompt is needed (already resolved / not required). */
+  ensureSwarmChipResolved: (enemyId: string) => boolean;
   swarmAttackModalOpen: R<boolean>;
   swarmAttackModalProps: R<{
     enemyId: string;
