@@ -1,9 +1,9 @@
 import { isHeavenBurningWeaponName } from "@vtt-core/shared";
 import type { StructuredArmorAction } from "@vtt-core/shared";
-import { isRangeTargetAttack, isSabaothWeaponName, isWarhookWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
+import { isRangeTargetAttack, isSabaothWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
 import { computed, ref, type Ref } from "vue";
 
-import { boardModeForClass } from "../client-content-pack.js";
+import { boardModeForClass, boardModeForWeapon } from "../client-content-pack.js";
 import { useBoardActionMode, type BoardActionMode } from "./useBoardActionMode.js";
 import { useCombatActions } from "./useCombatActions.js";
 
@@ -150,12 +150,13 @@ export function useCombatModeActions(opts?: {
 
   function useWeaponActive(weaponName?: string | null) {
     const name = weaponName ?? activePlayer.value?.weapon;
-    if (isSabaothWeaponName(name)) {
-      toggleMode("omnistrike");
+    const packMode = boardModeForWeapon(name ?? undefined);
+    if (packMode) {
+      toggleMode(packMode);
       return;
     }
-    if (isWarhookWeaponName(name)) {
-      toggleMode("warhook");
+    if (isSabaothWeaponName(name)) {
+      toggleMode("omnistrike");
       return;
     }
     if (isHeavenBurningWeaponName(name)) {

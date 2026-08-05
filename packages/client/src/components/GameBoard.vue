@@ -2,7 +2,7 @@
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, GmEnemyAction, MapTile, MovementPathResult, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, toRaw, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
@@ -227,9 +227,6 @@ const {
   omnistrikeStep,
   omnistrikeBombs,
   omnistrikeAnchors,
-  warhookStep,
-  warhookTarget,
-  warhookLandingOptions,
   towerTeleportStep,
   towerTeleportLanding,
   kataptyTargetIds,
@@ -288,6 +285,15 @@ function buildPackModeHost(): BoardModeHost {
     },
     runWeaponAttackClick(x, y, targetEnemyId) {
       return handleAttackCellClick(x, y, targetEnemyId);
+    },
+    gateProvoke(x, y, action) {
+      const s = gameState.value;
+      const me = yourPlayer.value;
+      if (!s || !me) {
+        action();
+        return;
+      }
+      gateProvoke(previewSprintProvokes(s, me.id, x, y), action);
     },
   };
 }
@@ -873,28 +879,6 @@ const omnistrikeInvalidKeys = computed(() => {
     return coordsToKeySet(preview.patternTiles);
   }
   return preview.tooCloseKeys;
-});
-
-const warhookPrimaryKeys = computed(() => {
-  if (boardActionMode.value !== "warhook") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  if (warhookStep.value === "selectLanding" && warhookTarget.value) {
-    return new Set([coordKey(warhookTarget.value.x, warhookTarget.value.y)]);
-  }
-  return warhookValidTargetKeys(s, me);
-});
-
-const warhookSecondaryKeys = computed(() => {
-  if (boardActionMode.value !== "warhook") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  if (warhookStep.value === "selectLanding") {
-    return coordsToKeySet(warhookLandingOptions.value);
-  }
-  return warhookRangeKeys(s, me);
 });
 
 const armorPlaceTowerKeys = computed(() => {
@@ -1937,7 +1921,6 @@ const cellStateByKey = computed(() => {
       combatAttackPrimaryKeys.value.has(ck) ||
       omnistrikePrimaryKeys.value.has(ck) ||
       packLayers.primary.has(ck) ||
-      warhookPrimaryKeys.value.has(ck) ||
       armorPushTargetKeys.value.has(ck) ||
       armorTeleportTargetKeys.value.has(ck) ||
       towerTeleportPrimaryKeys.value.has(ck) ||
@@ -1955,7 +1938,6 @@ const cellStateByKey = computed(() => {
       combatAttackSecondaryKeys.value.has(ck) ||
       omnistrikeSecondaryKeys.value.has(ck) ||
       packLayers.secondary.has(ck) ||
-      warhookSecondaryKeys.value.has(ck) ||
       armorPlaceTowerKeys.value.has(ck) ||
       armorTeleportLandingKeys.value.has(ck) ||
       towerTeleportSecondaryKeys.value.has(ck) ||
@@ -3373,69 +3355,6 @@ function handleAttackCellClick(x: number, y: number, targetEnemyId?: string): bo
   return true;
 }
 
-function commitWarhook(landing: { x: number; y: number }) {
-  const me = yourPlayer.value;
-  const target = warhookTarget.value;
-  const s = gameState.value;
-  if (!me || !target || !s) return;
-  const triggers = previewSprintProvokes(s, me.id, landing.x, landing.y);
-  gateProvoke(triggers, () => {
-    sendPlayerAction({
-      action: "pack",
-      kind: "weaponActive",
-      detail: {
-        warhook: {
-          targetEnemyId: target.enemyId,
-          targetX: target.x,
-          targetY: target.y,
-          landingX: landing.x,
-          landingY: landing.y,
-        },
-      },
-    });
-    clearBoardActionMode();
-  });
-}
-
-function handleWarhookCellClick(x: number, y: number): boolean {
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return false;
-
-  if (warhookStep.value === "selectLanding") {
-    const key = coordKey(x, y);
-    if (!warhookSecondaryKeys.value.has(key)) return false;
-    const landing = warhookLandingOptions.value.find((t) => t.x === x && t.y === y);
-    if (!landing) return false;
-    commitWarhook(landing);
-    return true;
-  }
-
-  const key = coordKey(x, y);
-  if (!warhookPrimaryKeys.value.has(key)) return false;
-
-  const target = isWarhookTargetAt(s, me, x, y);
-  if (!target) return false;
-
-  const landings = warhookAdjacentLandingTiles(s, me.id, target);
-  if (!landings.length) {
-    showToast("No space adjacent to target");
-    return true;
-  }
-
-  const nearest = warhookNearestLandings(me, landings);
-  if (nearest.length === 1) {
-    warhookTarget.value = target;
-    commitWarhook(nearest[0]!);
-    return true;
-  }
-
-  warhookTarget.value = target;
-  warhookLandingOptions.value = nearest;
-  warhookStep.value = "selectLanding";
-  return true;
-}
-
 function handleOmnistrikeCellClick(x: number, y: number): boolean {
   const ctx = omnistrikeContext.value;
   const s = gameState.value;
@@ -3578,9 +3497,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
   }
   if (m === "omnistrike") {
     return handleOmnistrikeCellClick(x, y);
-  }
-  if (m === "warhook") {
-    return handleWarhookCellClick(x, y);
   }
   if (m === "shove") {
     if (enemy && Math.abs(x - me.x) + Math.abs(y - me.y) === 1) {

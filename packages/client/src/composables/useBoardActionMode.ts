@@ -10,7 +10,6 @@ export type BoardActionMode =
   | "move"
   | "attack"
   | "omnistrike"
-  | "warhook"
   | "shove"
   | "sprint"
   | "aegis"
@@ -26,7 +25,6 @@ export type BoardActionMode =
   | null;
 
 export type OmnistrikeStep = "selectBombs" | "placeFirst" | "placeSecond" | "confirm";
-export type WarhookStep = "selectTarget" | "selectLanding";
 export type TowerTeleportStep = "selectLanding" | "selectKeraunoTarget";
 export type AssistedLaunchStep = "selectAnchor" | "confirm";
 
@@ -49,9 +47,6 @@ const omnistrikeAnchors = ref<[{ x: number; y: number } | null, { x: number; y: 
   null,
 ]);
 const omnistrikeAimed = ref(false);
-const warhookStep = ref<WarhookStep>("selectTarget");
-const warhookTarget = ref<{ enemyId?: string; x: number; y: number } | null>(null);
-const warhookLandingOptions = ref<{ x: number; y: number }[]>([]);
 const towerTeleportStep = ref<TowerTeleportStep>("selectLanding");
 const towerTeleportLanding = ref<{ x: number; y: number } | null>(null);
 const kataptyTargetIds = ref<string[]>([]);
@@ -73,12 +68,6 @@ const rangeAttackConfirmHandler = ref<(() => void) | null>(null);
 function resetAssistedLaunchState() {
   assistedLaunchStep.value = "selectAnchor";
   assistedLaunchAnchor.value = null;
-}
-
-function resetWarhookState() {
-  warhookStep.value = "selectTarget";
-  warhookTarget.value = null;
-  warhookLandingOptions.value = [];
 }
 
 function resetOmnistrikeState() {
@@ -113,7 +102,6 @@ export function useBoardActionMode() {
     gmEnemyAttack.value = null;
     resetAssistedLaunchState();
     resetOmnistrikeState();
-    resetWarhookState();
     resetTowerTeleportState();
   }
 
@@ -187,9 +175,6 @@ export function useBoardActionMode() {
     omnistrikeBombs,
     omnistrikeAnchors,
     omnistrikeAimed,
-    warhookStep,
-    warhookTarget,
-    warhookLandingOptions,
     towerTeleportStep,
     towerTeleportLanding,
     kataptyTargetIds,

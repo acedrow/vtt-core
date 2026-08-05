@@ -29,7 +29,6 @@ export function useCombatModeHints(opts: {
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     omnistrikeStep,
-    warhookStep,
     towerTeleportStep,
     kataptyTargetIds,
     assistedLaunchStep,
@@ -102,12 +101,6 @@ export function useCombatModeHints(opts: {
       default:
         return null;
     }
-  });
-
-  const warhookHint = computed(() => {
-    if (mode.value !== "warhook") return null;
-    if (warhookStep.value === "selectLanding") return "Choose destination tile";
-    return "Click an enemy, obstacle, or wall within range";
   });
 
   const armorHint = computed(() => {
@@ -212,7 +205,6 @@ export function useCombatModeHints(opts: {
       rows.push({ key: "elevationBonus", text: elevationBonusHint.value });
     }
     if (omnistrikeHint.value) rows.push({ key: "omnistrike", text: omnistrikeHint.value });
-    if (warhookHint.value) rows.push({ key: "warhook", text: warhookHint.value });
     if (armorHint.value) rows.push({ key: "armor", text: armorHint.value });
     if (towerTeleportHint.value) rows.push({ key: "towerTeleport", text: towerTeleportHint.value });
     if (kataptyHint.value) rows.push({ key: "katapty", text: kataptyHint.value });
@@ -226,6 +218,7 @@ export function useCombatModeHints(opts: {
     return rows;
   });
 
+  const warhookHint = computed(() => (mode.value === "warhook" ? packModeHint.value : null));
   const equipmentCorridorHint = computed(() =>
     mode.value === "equipmentCorridor" ? packModeHint.value : null,
   );

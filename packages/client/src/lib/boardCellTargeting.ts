@@ -10,7 +10,6 @@ export const BOARD_CELL_TARGETING_MODES = [
   "move",
   "attack",
   "omnistrike",
-  "warhook",
   "shove",
   "sprint",
   "aegis",
