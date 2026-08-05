@@ -2,7 +2,7 @@
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, GmEnemyAction, MapTile, MovementPathResult, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, toRaw, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
@@ -227,9 +227,6 @@ const {
   omnistrikeStep,
   omnistrikeBombs,
   omnistrikeAnchors,
-  towerTeleportStep,
-  towerTeleportLanding,
-  kataptyTargetIds,
   packUi,
   gmEnemyAttack,
   clearMode: clearBoardActionMode,
@@ -888,17 +885,6 @@ const omnistrikeInvalidKeys = computed(() => {
   return preview.tooCloseKeys;
 });
 
-const armorPlaceTowerKeys = computed(() => {
-  if (boardActionMode.value !== "armorPlaceTower") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  const armor = getArmorByName(me.armor ?? "");
-  const structured = armor?.armorActionStructured;
-  if (!structured || structured.kind !== "place_tower") return new Set<string>();
-  return getCombatBoardHelpers().yadathanPlacementKeys(s, me, structured.range);
-});
-
 const armorPushTargetKeys = computed(() => {
   if (boardActionMode.value !== "armorPush") return new Set<string>();
   const me = yourPlayer.value;
@@ -992,51 +978,6 @@ const seenTileKeys = computed(() => {
   const s = gameState.value;
   if (!id || !s?.seenTilesByPlayerId?.[id]) return new Set<string>();
   return new Set(s.seenTilesByPlayerId[id]);
-});
-
-const towerTeleportPrimaryKeys = computed(() => {
-  if (boardActionMode.value !== "towerTeleport") return new Set<string>();
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  if (!id || !s) return new Set<string>();
-  if (towerTeleportStep.value === "selectKeraunoTarget" && towerTeleportLanding.value) {
-    const adjacent = getCombatBoardHelpers().keraunoAdjacentEnemyIds(s, towerTeleportLanding.value.x, towerTeleportLanding.value.y);
-    const keys = new Set<string>();
-    for (const enemyId of adjacent) {
-      const enemy = s.enemies.find((e) => e.id === enemyId);
-      if (enemy) keys.add(coordKey(enemy.x, enemy.y));
-    }
-    return keys;
-  }
-  return new Set<string>();
-});
-
-const towerTeleportSecondaryKeys = computed(() => {
-  if (boardActionMode.value !== "towerTeleport") return new Set<string>();
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  if (!id || !s || towerTeleportStep.value === "selectKeraunoTarget") return new Set<string>();
-  return getCombatBoardHelpers().towerTeleportLandingKeys(s, id);
-});
-
-const kataptyPickKeys = computed(() => {
-  if (boardActionMode.value !== "kataptyPick") return new Set<string>();
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  if (!id || !s) return new Set<string>();
-  return getCombatBoardHelpers().kataptyTargetKeys(s, id);
-});
-
-const kataptySelectedCoordKeys = computed(() => {
-  const keys = new Set<string>();
-  if (boardActionMode.value !== "kataptyPick") return keys;
-  const s = gameState.value;
-  if (!s) return keys;
-  for (const id of kataptyTargetIds.value) {
-    const enemy = s.enemies.find((e) => e.id === id);
-    if (enemy) keys.add(coordKey(enemy.x, enemy.y));
-  }
-  return keys;
 });
 
 const reversalLineKeys = computed(() => {
@@ -1870,23 +1811,18 @@ const cellStateByKey = computed(() => {
       packLayers.primary.has(ck) ||
       armorPushTargetKeys.value.has(ck) ||
       armorTeleportTargetKeys.value.has(ck) ||
-      towerTeleportPrimaryKeys.value.has(ck) ||
       combatAttackSelectedKeys.value.has(ck) ||
       (elevBonusTile.value != null && coordKey(elevBonusTile.value.x, elevBonusTile.value.y) === ck) ||
       (remoteSelected?.has(ck) ?? false) ||
       reversalLineKeys.value.damage.has(ck) ||
       gmEnemyAttackTargetKeys.value.has(ck) ||
       gmEnemyPatternPrimaryKeys.value.has(ck) ||
-      (remotePrimary?.has(ck) ?? false) ||
-      (boardActionMode.value === "kataptyPick" && kataptySelectedCoordKeys.value.has(ck));
+      (remotePrimary?.has(ck) ?? false);
     const combatSecondary =
       combatAttackSecondaryKeys.value.has(ck) ||
       omnistrikeSecondaryKeys.value.has(ck) ||
       packLayers.secondary.has(ck) ||
-      armorPlaceTowerKeys.value.has(ck) ||
       armorTeleportLandingKeys.value.has(ck) ||
-      towerTeleportSecondaryKeys.value.has(ck) ||
-      kataptyPickKeys.value.has(ck) ||
       rezTargetKeys.value.has(ck) ||
       gmEnemyPatternSecondaryKeys.value.has(ck) ||
       (elevationBonusCandidateKeys.value.has(ck) &&
@@ -2695,33 +2631,6 @@ function tryMoveSelectedEnemyToDest(
   return true;
 }
 
-function handleKataptyPick(enemyId: string): boolean {
-  const s = gameState.value;
-  if (!s || boardActionMode.value !== "kataptyPick") return false;
-  const enemy = s.enemies.find((e) => e.id === enemyId);
-  if (!enemy || getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
-  if (!kataptyPickKeys.value.has(coordKey(enemy.x, enemy.y))) return true;
-  const ids = kataptyTargetIds.value;
-  const idx = ids.indexOf(enemy.id);
-  if (idx >= 0) {
-    kataptyTargetIds.value = ids.filter((id) => id !== enemy.id);
-  } else if (ids.length < 3) {
-    kataptyTargetIds.value = [...ids, enemy.id];
-  }
-  if (kataptyTargetIds.value.length === 3) {
-    sendPlayerAction({
-      action: "pack",
-      kind: "armorAction",
-      detail: {
-        kind: "katapty_end_turn",
-        targetEnemyIds: [...kataptyTargetIds.value],
-      },
-    });
-    clearBoardActionMode();
-  }
-  return true;
-}
-
 let enemyClickTimer: ReturnType<typeof setTimeout> | null = null;
 
 function boardTargetingContext() {
@@ -3497,43 +3406,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
       return true;
     }
     return true;
-  }
-  if (m === "armorPlaceTower") {
-    const key = coordKey(x, y);
-    if (!armorPlaceTowerKeys.value.has(key)) return true;
-    sendPlayerAction({ action: "pack", kind: "armorAction", detail: { x, y } });
-    clearBoardActionMode();
-    return true;
-  }
-  if (m === "towerTeleport") {
-    const s = gameState.value;
-    if (!s) return true;
-    const key = coordKey(x, y);
-    if (towerTeleportStep.value === "selectKeraunoTarget" && enemy) {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { kind: "tower_teleport",
-        x: towerTeleportLanding.value!.x,
-        y: towerTeleportLanding.value!.y,
-        keraunoTargetEnemyId: enemy.id } });
-      clearBoardActionMode();
-      return true;
-    }
-    if (!towerTeleportSecondaryKeys.value.has(key)) return true;
-    const tower = getCombatBoardHelpers().getPlayerTower(s, me.id);
-    towerTeleportLanding.value = { x, y };
-    if (tower?.name === "Kerauno") {
-      const adjacent = getCombatBoardHelpers().keraunoAdjacentEnemyIds(s, x, y);
-      if (adjacent.length > 0) {
-        towerTeleportStep.value = "selectKeraunoTarget";
-        return true;
-      }
-    }
-    sendPlayerAction({ action: "pack", kind: "armorAction", detail: { kind: "tower_teleport", x, y } });
-    clearBoardActionMode();
-    return true;
-  }
-  if (m === "kataptyPick") {
-    if (!enemy || getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
-    return handleKataptyPick(enemy.id);
   }
   if (m === "rez") {
     if (player && player.id !== me.id && (player.hp ?? 0) <= 0) {

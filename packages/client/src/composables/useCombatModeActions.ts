@@ -31,7 +31,6 @@ export function useCombatModeActions(opts?: {
     omnistrikeStep,
     omnistrikeBombs,
     omnistrikeAnchors,
-    kataptyTargetIds,
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     packUi,
@@ -176,13 +175,14 @@ export function useCombatModeActions(opts?: {
   }
 
   function confirmKatapty() {
-    if (kataptyTargetIds.value.length !== 3) return;
+    const ids = packUi.value.kataptyTargetIds ?? [];
+    if (ids.length !== 3) return;
     sendPlayerAction({
       action: "pack",
       kind: "armorAction",
       detail: {
         kind: "katapty_end_turn",
-        targetEnemyIds: [...kataptyTargetIds.value],
+        targetEnemyIds: [...ids],
       },
     });
     clearMode();
@@ -218,6 +218,8 @@ export function useCombatModeActions(opts?: {
       omnistrikeStep.value = "placeFirst";
     }
   }
+
+  const kataptyTargetIds = computed(() => packUi.value.kataptyTargetIds ?? []);
 
   return {
     mode,

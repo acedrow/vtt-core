@@ -15,9 +15,6 @@ export const BOARD_CELL_TARGETING_MODES = [
   "aegis",
   "armorTeleport",
   "armorPush",
-  "armorPlaceTower",
-  "towerTeleport",
-  "kataptyPick",
   "rez",
 ] as const;
 

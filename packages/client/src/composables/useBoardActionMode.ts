@@ -15,16 +15,12 @@ export type BoardActionMode =
   | "aegis"
   | "armorTeleport"
   | "armorPush"
-  | "armorPlaceTower"
-  | "towerTeleport"
-  | "kataptyPick"
   | "rez"
   | "gmEnemyAttack"
   | (string & {})
   | null;
 
 export type OmnistrikeStep = "selectBombs" | "placeFirst" | "placeSecond" | "confirm";
-export type TowerTeleportStep = "selectLanding" | "selectKeraunoTarget";
 
 const mode = ref<BoardActionMode>(null);
 const attackDirection = ref<PatternDirection>("n");
@@ -45,9 +41,6 @@ const omnistrikeAnchors = ref<[{ x: number; y: number } | null, { x: number; y: 
   null,
 ]);
 const omnistrikeAimed = ref(false);
-const towerTeleportStep = ref<TowerTeleportStep>("selectLanding");
-const towerTeleportLanding = ref<{ x: number; y: number } | null>(null);
-const kataptyTargetIds = ref<string[]>([]);
 const packUi = ref<PackBoardUi>({});
 const gmEnemyAttack = ref<{
   enemyId: string;
@@ -68,11 +61,6 @@ function resetOmnistrikeState() {
   omnistrikeAimed.value = false;
 }
 
-function resetTowerTeleportState() {
-  towerTeleportStep.value = "selectLanding";
-  towerTeleportLanding.value = null;
-}
-
 export function useBoardActionMode() {
   const isActive = computed(() => mode.value !== null);
 
@@ -88,11 +76,9 @@ export function useBoardActionMode() {
     pendingTargetEnemyId.value = null;
     pendingTargetPlayerId.value = null;
     armorLanding.value = null;
-    kataptyTargetIds.value = [];
     packUi.value = {};
     gmEnemyAttack.value = null;
     resetOmnistrikeState();
-    resetTowerTeleportState();
   }
 
   function clearMode() {
@@ -165,9 +151,6 @@ export function useBoardActionMode() {
     omnistrikeBombs,
     omnistrikeAnchors,
     omnistrikeAimed,
-    towerTeleportStep,
-    towerTeleportLanding,
-    kataptyTargetIds,
     packUi,
     gmEnemyAttack,
     isActive,

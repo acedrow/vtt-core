@@ -29,8 +29,6 @@ export function useCombatModeHints(opts: {
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     omnistrikeStep,
-    towerTeleportStep,
-    kataptyTargetIds,
     packUi,
     attackDirection,
     attackAimed,
@@ -103,21 +101,9 @@ export function useCombatModeHints(opts: {
   });
 
   const armorHint = computed(() => {
-    if (mode.value === "armorPlaceTower") return "Click a tile within Range:2 to place your tower";
     if (mode.value === "armorPush") return "Choose Push:1–3, then click an adjacent creature";
     if (mode.value === "armorTeleport") return "Click an adjacent enemy, then choose a landing space";
     return null;
-  });
-
-  const towerTeleportHint = computed(() => {
-    if (mode.value !== "towerTeleport") return null;
-    if (towerTeleportStep.value === "selectKeraunoTarget") return "Select adjacent enemy for Kerauno";
-    return "Spend all remaining Speed — click a tile adjacent to your tower";
-  });
-
-  const kataptyHint = computed(() => {
-    if (mode.value !== "kataptyPick") return null;
-    return `Select exactly 3 Katapty targets (${kataptyTargetIds.value.length}/3), then confirm`;
   });
 
   const packModeHint = computed(() => {
@@ -197,8 +183,6 @@ export function useCombatModeHints(opts: {
     }
     if (omnistrikeHint.value) rows.push({ key: "omnistrike", text: omnistrikeHint.value });
     if (armorHint.value) rows.push({ key: "armor", text: armorHint.value });
-    if (towerTeleportHint.value) rows.push({ key: "towerTeleport", text: towerTeleportHint.value });
-    if (kataptyHint.value) rows.push({ key: "katapty", text: kataptyHint.value });
     if (packModeHint.value && mode.value) {
       const already = rows.some((r) => r.key === mode.value);
       if (!already && !(isPackEquipmentAttack.value && packModeHint.value === attackHint.value)) {
@@ -229,8 +213,6 @@ export function useCombatModeHints(opts: {
     omnistrikeHint,
     warhookHint,
     armorHint,
-    towerTeleportHint,
-    kataptyHint,
     equipmentCorridorHint,
     equipmentCoverHint,
     equipmentForceProjectionHint,
