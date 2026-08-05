@@ -19,7 +19,6 @@ export const BOARD_CELL_TARGETING_MODES = [
   "towerTeleport",
   "kataptyPick",
   "rez",
-  "assistedLaunch",
 ] as const;
 
 const targetingModes = new Set<string>(BOARD_CELL_TARGETING_MODES);

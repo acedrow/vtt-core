@@ -166,6 +166,8 @@ export type BoardModeHost = {
   runWeaponAttackClick: (x: number, y: number, targetEnemyId?: string) => boolean;
   /** Run `action` immediately, or after a provoke-confirmation prompt if moving to (x, y) provokes. */
   gateProvoke: (x: number, y: number, action: () => void) => void;
+  /** Same as gateProvoke, but checks every step of a multi-tile move path. */
+  gateProvokePath: (path: { x: number; y: number }[], action: () => void) => void;
 };
 
 export type BoardModeClickContext = BoardModeContext & {

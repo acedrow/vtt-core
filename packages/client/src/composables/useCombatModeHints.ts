@@ -31,7 +31,6 @@ export function useCombatModeHints(opts: {
     omnistrikeStep,
     towerTeleportStep,
     kataptyTargetIds,
-    assistedLaunchStep,
     packUi,
     attackDirection,
     attackAimed,
@@ -121,14 +120,6 @@ export function useCombatModeHints(opts: {
     return `Select exactly 3 Katapty targets (${kataptyTargetIds.value.length}/3), then confirm`;
   });
 
-  const assistedLaunchHint = computed(() => {
-    if (mode.value !== "assistedLaunch") return null;
-    if (assistedLaunchStep.value === "selectAnchor") {
-      return "Select impassable terrain, an obstacle, or an ally to launch from";
-    }
-    return "Click the highlighted landing tile to launch";
-  });
-
   const packModeHint = computed(() => {
     const id = mode.value;
     const s = gameState.value;
@@ -208,7 +199,6 @@ export function useCombatModeHints(opts: {
     if (armorHint.value) rows.push({ key: "armor", text: armorHint.value });
     if (towerTeleportHint.value) rows.push({ key: "towerTeleport", text: towerTeleportHint.value });
     if (kataptyHint.value) rows.push({ key: "katapty", text: kataptyHint.value });
-    if (assistedLaunchHint.value) rows.push({ key: "assistedLaunch", text: assistedLaunchHint.value });
     if (packModeHint.value && mode.value) {
       const already = rows.some((r) => r.key === mode.value);
       if (!already && !(isPackEquipmentAttack.value && packModeHint.value === attackHint.value)) {
@@ -241,7 +231,6 @@ export function useCombatModeHints(opts: {
     armorHint,
     towerTeleportHint,
     kataptyHint,
-    assistedLaunchHint,
     equipmentCorridorHint,
     equipmentCoverHint,
     equipmentForceProjectionHint,

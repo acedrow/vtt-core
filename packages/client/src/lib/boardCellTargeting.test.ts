@@ -27,10 +27,6 @@ describe("routesTokenClickToCellTargeting", () => {
     expect(routesTokenClickToCellTargeting("omnistrike", { omnistrikeStep: "confirm" })).toBe(true);
   });
 
-  it("routes assisted launch so ally tokens match tile clicks", () => {
-    expect(routesTokenClickToCellTargeting("assistedLaunch")).toBe(true);
-  });
-
   it("routes pack-registered board modes", () => {
     expect(routesTokenClickToCellTargeting("kopisMark")).toBe(true);
     expect(routesTokenClickToCellTargeting("chrysaorBrand")).toBe(true);

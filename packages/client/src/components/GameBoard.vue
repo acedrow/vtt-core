@@ -2,7 +2,7 @@
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, GmEnemyAction, MapTile, MovementPathResult, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, toRaw, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
@@ -230,8 +230,6 @@ const {
   towerTeleportStep,
   towerTeleportLanding,
   kataptyTargetIds,
-  assistedLaunchStep,
-  assistedLaunchAnchor,
   packUi,
   gmEnemyAttack,
   clearMode: clearBoardActionMode,
@@ -294,6 +292,15 @@ function buildPackModeHost(): BoardModeHost {
         return;
       }
       gateProvoke(previewSprintProvokes(s, me.id, x, y), action);
+    },
+    gateProvokePath(path, action) {
+      const s = gameState.value;
+      const me = yourPlayer.value;
+      if (!s || !me) {
+        action();
+        return;
+      }
+      gateProvoke(previewPathProvokes(s, me.id, path), action);
     },
   };
 }
@@ -1010,66 +1017,6 @@ const towerTeleportSecondaryKeys = computed(() => {
   const s = gameState.value;
   if (!id || !s || towerTeleportStep.value === "selectKeraunoTarget") return new Set<string>();
   return getCombatBoardHelpers().towerTeleportLandingKeys(s, id);
-});
-
-const assistedLaunchPreview = computed(() => {
-  if (boardActionMode.value !== "assistedLaunch") return null;
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  const anchor = assistedLaunchAnchor.value;
-  if (!id || !s || !anchor) return null;
-  return computeAssistedLaunch(s, id, anchor.x, anchor.y);
-});
-
-const assistedLaunchAnchorKeys = computed(() => {
-  if (boardActionMode.value !== "assistedLaunch" || assistedLaunchStep.value !== "selectAnchor") {
-    return new Set<string>();
-  }
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  const me = yourPlayer.value;
-  if (!id || !s) return new Set<string>();
-  const anchors = assistedLaunchAnchors(s, id);
-  const coords: { x: number; y: number }[] = [];
-  for (const anchor of anchors) {
-    if (isInBounds(anchor.x, anchor.y, s.width, s.height)) {
-      coords.push({ x: anchor.x, y: anchor.y });
-    }
-  }
-  const edgeAnchors = anchors.filter((a) => a.kind === "edge");
-  if (edgeAnchors.length === 1 && me) {
-    coords.push({ x: me.turnStartX ?? me.x, y: me.turnStartY ?? me.y });
-  }
-  return coordsToKeySet(coords);
-});
-
-const assistedLaunchPathKeys = computed(() => {
-  const preview = assistedLaunchPreview.value;
-  if (!preview || assistedLaunchStep.value !== "confirm") return new Set<string>();
-  const keys = new Set<string>();
-  for (const step of preview.path.slice(0, -1)) {
-    keys.add(coordKey(step.x, step.y));
-  }
-  return keys;
-});
-
-const assistedLaunchLandingKeys = computed(() => {
-  const preview = assistedLaunchPreview.value;
-  if (!preview || assistedLaunchStep.value !== "confirm") return new Set<string>();
-  return new Set([coordKey(preview.landing.x, preview.landing.y)]);
-});
-
-const assistedLaunchLineKeys = computed(() => {
-  const preview = assistedLaunchPreview.value;
-  const me = yourPlayer.value;
-  if (!preview || !me || assistedLaunchStep.value !== "confirm") return new Set<string>();
-  const startX = me.turnStartX ?? me.x;
-  const startY = me.turnStartY ?? me.y;
-  const keys = new Set<string>();
-  for (const tile of tilesOnCardinalLine(startX, startY, preview.landing.x, preview.landing.y)) {
-    keys.add(coordKey(tile.x, tile.y));
-  }
-  return keys;
 });
 
 const kataptyPickKeys = computed(() => {
@@ -1924,8 +1871,6 @@ const cellStateByKey = computed(() => {
       armorPushTargetKeys.value.has(ck) ||
       armorTeleportTargetKeys.value.has(ck) ||
       towerTeleportPrimaryKeys.value.has(ck) ||
-      assistedLaunchAnchorKeys.value.has(ck) ||
-      assistedLaunchLandingKeys.value.has(ck) ||
       combatAttackSelectedKeys.value.has(ck) ||
       (elevBonusTile.value != null && coordKey(elevBonusTile.value.x, elevBonusTile.value.y) === ck) ||
       (remoteSelected?.has(ck) ?? false) ||
@@ -1941,8 +1886,6 @@ const cellStateByKey = computed(() => {
       armorPlaceTowerKeys.value.has(ck) ||
       armorTeleportLandingKeys.value.has(ck) ||
       towerTeleportSecondaryKeys.value.has(ck) ||
-      assistedLaunchPathKeys.value.has(ck) ||
-      assistedLaunchLineKeys.value.has(ck) ||
       kataptyPickKeys.value.has(ck) ||
       rezTargetKeys.value.has(ck) ||
       gmEnemyPatternSecondaryKeys.value.has(ck) ||
@@ -3586,39 +3529,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
     }
     sendPlayerAction({ action: "pack", kind: "armorAction", detail: { kind: "tower_teleport", x, y } });
     clearBoardActionMode();
-    return true;
-  }
-  if (m === "assistedLaunch") {
-    const s = gameState.value;
-    const id = yourPlayerId.value;
-    if (!s || !id || !me) return true;
-    const key = coordKey(x, y);
-    if (assistedLaunchStep.value === "selectAnchor") {
-      if (!assistedLaunchAnchorKeys.value.has(key)) return true;
-      const anchors = assistedLaunchAnchors(s, id);
-      let picked = anchors.find((a) => a.x === x && a.y === y);
-      if (!picked) {
-        const startX = me.turnStartX ?? me.x;
-        const startY = me.turnStartY ?? me.y;
-        if (x === startX && y === startY) {
-          const edgeAnchors = anchors.filter((a) => a.kind === "edge");
-          if (edgeAnchors.length === 1) picked = edgeAnchors[0];
-        }
-      }
-      if (!picked) return true;
-      assistedLaunchAnchor.value = { x: picked.x, y: picked.y };
-      assistedLaunchStep.value = "confirm";
-      return true;
-    }
-    if (!assistedLaunchLandingKeys.value.has(key)) return true;
-    const anchor = assistedLaunchAnchor.value;
-    if (!anchor) return true;
-    const preview = computeAssistedLaunch(s, id, anchor.x, anchor.y);
-    if (!preview) return true;
-    gateProvoke(previewPathProvokes(s, id, preview.path), () => {
-      sendPlayerAction({ action: "pack", kind: "assistedLaunch", detail: { anchorX: anchor.x, anchorY: anchor.y } });
-      clearBoardActionMode();
-    });
     return true;
   }
   if (m === "kataptyPick") {

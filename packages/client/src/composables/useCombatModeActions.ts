@@ -31,14 +31,13 @@ export function useCombatModeActions(opts?: {
     omnistrikeStep,
     omnistrikeBombs,
     omnistrikeAnchors,
-    assistedLaunchStep,
-    assistedLaunchAnchor,
     kataptyTargetIds,
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     packUi,
     setMode,
     clearMode,
+    patchPackUi,
     confirmRangeAttack,
   } = useBoardActionMode();
 
@@ -94,8 +93,10 @@ export function useCombatModeActions(opts?: {
     setMode("assistedLaunch");
     const anchors = assistedLaunchAnchorOptions.value;
     if (anchors.length === 1) {
-      assistedLaunchAnchor.value = { x: anchors[0]!.x, y: anchors[0]!.y };
-      assistedLaunchStep.value = "confirm";
+      patchPackUi({
+        assistedLaunchAnchor: { x: anchors[0]!.x, y: anchors[0]!.y },
+        step: "confirm",
+      });
     }
   }
 

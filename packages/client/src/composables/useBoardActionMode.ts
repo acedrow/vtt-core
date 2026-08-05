@@ -19,14 +19,12 @@ export type BoardActionMode =
   | "towerTeleport"
   | "kataptyPick"
   | "rez"
-  | "assistedLaunch"
   | "gmEnemyAttack"
   | (string & {})
   | null;
 
 export type OmnistrikeStep = "selectBombs" | "placeFirst" | "placeSecond" | "confirm";
 export type TowerTeleportStep = "selectLanding" | "selectKeraunoTarget";
-export type AssistedLaunchStep = "selectAnchor" | "confirm";
 
 const mode = ref<BoardActionMode>(null);
 const attackDirection = ref<PatternDirection>("n");
@@ -50,8 +48,6 @@ const omnistrikeAimed = ref(false);
 const towerTeleportStep = ref<TowerTeleportStep>("selectLanding");
 const towerTeleportLanding = ref<{ x: number; y: number } | null>(null);
 const kataptyTargetIds = ref<string[]>([]);
-const assistedLaunchStep = ref<AssistedLaunchStep>("selectAnchor");
-const assistedLaunchAnchor = ref<{ x: number; y: number } | null>(null);
 const packUi = ref<PackBoardUi>({});
 const gmEnemyAttack = ref<{
   enemyId: string;
@@ -64,11 +60,6 @@ const gmEnemyAttack = ref<{
   targetEnemyId?: string;
 } | null>(null);
 const rangeAttackConfirmHandler = ref<(() => void) | null>(null);
-
-function resetAssistedLaunchState() {
-  assistedLaunchStep.value = "selectAnchor";
-  assistedLaunchAnchor.value = null;
-}
 
 function resetOmnistrikeState() {
   omnistrikeStep.value = "selectBombs";
@@ -100,7 +91,6 @@ export function useBoardActionMode() {
     kataptyTargetIds.value = [];
     packUi.value = {};
     gmEnemyAttack.value = null;
-    resetAssistedLaunchState();
     resetOmnistrikeState();
     resetTowerTeleportState();
   }
@@ -178,8 +168,6 @@ export function useBoardActionMode() {
     towerTeleportStep,
     towerTeleportLanding,
     kataptyTargetIds,
-    assistedLaunchStep,
-    assistedLaunchAnchor,
     packUi,
     gmEnemyAttack,
     isActive,
