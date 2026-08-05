@@ -3,7 +3,12 @@ import { isOrthogonallyAdjacent } from "../patterns.js";
 import type { Enemy, GameState, MapTile, Player } from "../types.js";
 import { combatMod } from "../combat-modules.js";
 import { enemyLabel, playerLabel } from "../console.js";
-import { enemyFootprintTiles, getEnemyMaxHpByName, getEnemyScale } from "../enemy-data.js";
+import {
+  enemyFootprintTiles,
+  enemyHasShareSpace,
+  getEnemyMaxHpByName,
+  getEnemyScale,
+} from "../enemy-data.js";
 import { tileAt } from "../map.js";
 import { rollDice } from "./damage.js";
 import { applyDamageToEnemy, applyDamageToPlayer, manhattanDistance } from "./attack.js";
@@ -212,6 +217,8 @@ function collectPlayerStepProvokes(
   for (const enemy of state.enemies) {
     if (isTowerEnemy(enemy) || !isEnemyAlive(enemy)) continue;
     if (enemyHasFlyingTag(enemy)) continue;
+    // ShareSpace enemies (e.g. Living Tide) don't threaten tiles they share with players.
+    if (enemyHasShareSpace(enemy)) continue;
     // Stain Flowers cannot take actions; linked flowers still count as swarm tiles for adjacency.
     if (provokeRules().skipEnemyAsProvokeSource(enemy)) continue;
     if (murielPassed?.has(enemy.id)) continue;
