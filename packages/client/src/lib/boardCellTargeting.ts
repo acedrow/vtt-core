@@ -13,8 +13,6 @@ export const BOARD_CELL_TARGETING_MODES = [
   "shove",
   "sprint",
   "aegis",
-  "armorTeleport",
-  "armorPush",
   "rez",
 ] as const;
 

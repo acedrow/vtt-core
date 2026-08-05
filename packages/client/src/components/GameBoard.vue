@@ -2,7 +2,7 @@
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, GmEnemyAction, MapTile, MovementPathResult, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, toRaw, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
@@ -222,8 +222,6 @@ const {
   elevBonusTile,
   rangeAttackTargetIds,
   rangeAttackObstacleCoords,
-  pendingTargetEnemyId,
-  armorPush,
   omnistrikeStep,
   omnistrikeBombs,
   omnistrikeAnchors,
@@ -884,37 +882,6 @@ const omnistrikeInvalidKeys = computed(() => {
   }
   return preview.tooCloseKeys;
 });
-
-const armorPushTargetKeys = computed(() => {
-  if (boardActionMode.value !== "armorPush") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  const keys = formlessTargetTileKeys(s, me.x, me.y);
-  for (const p of s.players) {
-    if (p.id !== me.id && Math.abs(p.x - me.x) + Math.abs(p.y - me.y) === 1) {
-      keys.add(coordKey(p.x, p.y));
-    }
-  }
-  return keys;
-});
-
-const armorTeleportTargetKeys = computed(() => {
-  if (boardActionMode.value !== "armorTeleport" || pendingTargetEnemyId.value) return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  return formlessTargetTileKeys(s, me.x, me.y);
-});
-
-const armorTeleportLandingKeys = computed(() => {
-  if (boardActionMode.value !== "armorTeleport" || !pendingTargetEnemyId.value) return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  return coordsToKeySet(formlessLandingTiles(s, me.id, pendingTargetEnemyId.value));
-});
-
 
 const lineOfSightObserver = computed((): { x: number; y: number } | null => {
   const s = gameState.value;
@@ -1809,8 +1776,6 @@ const cellStateByKey = computed(() => {
       combatAttackPrimaryKeys.value.has(ck) ||
       omnistrikePrimaryKeys.value.has(ck) ||
       packLayers.primary.has(ck) ||
-      armorPushTargetKeys.value.has(ck) ||
-      armorTeleportTargetKeys.value.has(ck) ||
       combatAttackSelectedKeys.value.has(ck) ||
       (elevBonusTile.value != null && coordKey(elevBonusTile.value.x, elevBonusTile.value.y) === ck) ||
       (remoteSelected?.has(ck) ?? false) ||
@@ -1822,7 +1787,6 @@ const cellStateByKey = computed(() => {
       combatAttackSecondaryKeys.value.has(ck) ||
       omnistrikeSecondaryKeys.value.has(ck) ||
       packLayers.secondary.has(ck) ||
-      armorTeleportLandingKeys.value.has(ck) ||
       rezTargetKeys.value.has(ck) ||
       gmEnemyPatternSecondaryKeys.value.has(ck) ||
       (elevationBonusCandidateKeys.value.has(ck) &&
@@ -3373,38 +3337,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
     gateProvoke(previewPathProvokes(s, id, path), () => {
       sendSprintPath(path);
     });
-    return true;
-  }
-  if (m === "armorTeleport") {
-    const key = coordKey(x, y);
-    if (!pendingTargetEnemyId.value) {
-      if (!armorTeleportTargetKeys.value.has(key) || !enemy) return true;
-      pendingTargetEnemyId.value = enemy.id;
-      return true;
-    }
-    if (!armorTeleportLandingKeys.value.has(key)) return true;
-    const s = gameState.value;
-    const id = yourPlayerId.value;
-    if (!s || !id) return true;
-    gateProvoke(previewSprintProvokes(s, id, x, y), () => {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: pendingTargetEnemyId.value!,
-        landingX: x,
-        landingY: y } });
-      clearBoardActionMode();
-    });
-    return true;
-  }
-  if (m === "armorPush") {
-    if (enemy && armorPushTargetKeys.value.has(coordKey(x, y))) {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: enemy.id, push: armorPush.value } });
-      clearBoardActionMode();
-      return true;
-    }
-    if (player && player.id !== me.id && Math.abs(x - me.x) + Math.abs(y - me.y) === 1) {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetPlayerId: player.id, push: armorPush.value } });
-      clearBoardActionMode();
-      return true;
-    }
     return true;
   }
   if (m === "rez") {

@@ -100,12 +100,6 @@ export function useCombatModeHints(opts: {
     }
   });
 
-  const armorHint = computed(() => {
-    if (mode.value === "armorPush") return "Choose Push:1–3, then click an adjacent creature";
-    if (mode.value === "armorTeleport") return "Click an adjacent enemy, then choose a landing space";
-    return null;
-  });
-
   const packModeHint = computed(() => {
     const id = mode.value;
     const s = gameState.value;
@@ -182,7 +176,6 @@ export function useCombatModeHints(opts: {
       rows.push({ key: "elevationBonus", text: elevationBonusHint.value });
     }
     if (omnistrikeHint.value) rows.push({ key: "omnistrike", text: omnistrikeHint.value });
-    if (armorHint.value) rows.push({ key: "armor", text: armorHint.value });
     if (packModeHint.value && mode.value) {
       const already = rows.some((r) => r.key === mode.value);
       if (!already && !(isPackEquipmentAttack.value && packModeHint.value === attackHint.value)) {
@@ -212,7 +205,6 @@ export function useCombatModeHints(opts: {
     rangedPatternAttackHint,
     omnistrikeHint,
     warhookHint,
-    armorHint,
     equipmentCorridorHint,
     equipmentCoverHint,
     equipmentForceProjectionHint,

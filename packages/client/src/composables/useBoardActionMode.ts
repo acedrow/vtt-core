@@ -13,8 +13,6 @@ export type BoardActionMode =
   | "shove"
   | "sprint"
   | "aegis"
-  | "armorTeleport"
-  | "armorPush"
   | "rez"
   | "gmEnemyAttack"
   | (string & {})
@@ -30,10 +28,7 @@ const elevBonusTile = ref<{ x: number; y: number } | null>(null);
 const rangeAttackTargetIds = ref<string[]>([]);
 const rangeAttackObstacleCoords = ref<{ x: number; y: number }[]>([]);
 const movePath = ref<{ x: number; y: number }[]>([]);
-const pendingTargetEnemyId = ref<string | null>(null);
-const pendingTargetPlayerId = ref<string | null>(null);
 const armorLanding = ref<{ x: number; y: number } | null>(null);
-const armorPush = ref<1 | 2 | 3>(1);
 const omnistrikeStep = ref<OmnistrikeStep>("selectBombs");
 const omnistrikeBombs = ref<[number | null, number | null]>([null, null]);
 const omnistrikeAnchors = ref<[{ x: number; y: number } | null, { x: number; y: number } | null]>([
@@ -73,8 +68,6 @@ export function useBoardActionMode() {
     rangeAttackTargetIds.value = [];
     rangeAttackObstacleCoords.value = [];
     movePath.value = [];
-    pendingTargetEnemyId.value = null;
-    pendingTargetPlayerId.value = null;
     armorLanding.value = null;
     packUi.value = {};
     gmEnemyAttack.value = null;
@@ -143,10 +136,7 @@ export function useBoardActionMode() {
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     movePath,
-    pendingTargetEnemyId,
-    pendingTargetPlayerId,
     armorLanding,
-    armorPush,
     omnistrikeStep,
     omnistrikeBombs,
     omnistrikeAnchors,

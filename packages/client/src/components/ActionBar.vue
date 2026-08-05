@@ -78,7 +78,8 @@ const {
   clearMode,
 } = useCombatModeActions();
 
-const { armorPush } = useBoardActionMode();
+const { packUi, patchPackUi } = useBoardActionMode();
+const armorPush = computed(() => packUi.value.armorPush ?? 1);
 
 const { boardHintRows } = useCombatModeHints({
   player: activePlayer,
@@ -336,7 +337,7 @@ function weaponSwap() {
         type="button"
         class="action-btn"
         :class="{ active: armorPush === n }"
-        @click="armorPush = n as 1 | 2 | 3"
+        @click="patchPackUi({ armorPush: n as 1 | 2 | 3 })"
       >
         {{ n }}
       </button>
