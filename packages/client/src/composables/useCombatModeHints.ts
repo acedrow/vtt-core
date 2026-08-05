@@ -28,7 +28,6 @@ export function useCombatModeHints(opts: {
     mode,
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
-    omnistrikeStep,
     packUi,
     attackDirection,
     attackAimed,
@@ -82,22 +81,6 @@ export function useCombatModeHints(opts: {
       return "Click a tile in range to aim, then click a highlighted tile to attack";
     }
     return null;
-  });
-
-  const omnistrikeHint = computed(() => {
-    if (mode.value !== "omnistrike") return null;
-    switch (omnistrikeStep.value) {
-      case "selectBombs":
-        return "Select two bomb types to combine (tap to toggle).";
-      case "placeFirst":
-        return "Place the first pattern — hover to preview, press R to rotate, click to confirm placement.";
-      case "placeSecond":
-        return "Place the second pattern adjacent to or overlapping the first. Press R to rotate.";
-      case "confirm":
-        return "Click the combined pattern to launch Omnistrike. Press R to rotate.";
-      default:
-        return null;
-    }
   });
 
   const packModeHint = computed(() => {
@@ -186,6 +169,7 @@ export function useCombatModeHints(opts: {
   });
 
   const warhookHint = computed(() => (mode.value === "warhook" ? packModeHint.value : null));
+  const omnistrikeHint = computed(() => (mode.value === "omnistrike" ? packModeHint.value : null));
   const equipmentCorridorHint = computed(() =>
     mode.value === "equipmentCorridor" ? packModeHint.value : null,
   );

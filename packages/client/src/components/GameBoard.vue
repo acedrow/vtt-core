@@ -2,14 +2,14 @@
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, GmEnemyAction, MapTile, MovementPathResult, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, toRaw, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
 import { fogTokenDisplay } from "../lib/fogTokenDisplay.js";
 import { BOARD_CELL_GAP, boardContentHeightPx, boardContentWidthPx } from "../lib/boardLayout.js";
 import { boardCellMetrics, buildElevationContourPaths, buildOccupiedRegionContourPaths } from "../lib/elevationContours.js";
-import { useBoardActionMode } from "../composables/useBoardActionMode.js";
+import { useBoardActionMode, type OmnistrikeStep } from "../composables/useBoardActionMode.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useBoardViewport } from "../composables/useBoardViewport.js";
@@ -222,9 +222,6 @@ const {
   elevBonusTile,
   rangeAttackTargetIds,
   rangeAttackObstacleCoords,
-  omnistrikeStep,
-  omnistrikeBombs,
-  omnistrikeAnchors,
   packUi,
   gmEnemyAttack,
   clearMode: clearBoardActionMode,
@@ -796,93 +793,6 @@ const anchoredPlacementPreview = computed(() => {
   );
 });
 
-const omnistrikePlacementPreview = computed(() => {
-  const step = omnistrikeStep.value;
-  if (boardActionMode.value !== "omnistrike" || step === "selectBombs" || step === "confirm") {
-    return null;
-  }
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  if (!ctx || !s) return null;
-  const anchor = previewHoverCell.value;
-  if (!anchor) return null;
-
-  if (step === "placeFirst") {
-    return evaluateOmnistrikePlacement(ctx.me, anchor, ctx.bombA, attackDirection.value, s);
-  }
-
-  const firstAnchor = omnistrikeAnchors.value[0];
-  if (!firstAnchor) return null;
-  const firstTiles = collectBombPatternTiles(s, firstAnchor, ctx.bombA, attackDirection.value);
-  return evaluateOmnistrikePlacement(
-    ctx.me,
-    anchor,
-    ctx.bombB,
-    attackDirection.value,
-    s,
-    firstTiles,
-  );
-});
-
-const omnistrikeLockedFirstKeys = computed(() => {
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  const anchor = omnistrikeAnchors.value[0];
-  if (
-    boardActionMode.value !== "omnistrike" ||
-    !ctx ||
-    !s ||
-    !anchor ||
-    omnistrikeStep.value === "selectBombs" ||
-    omnistrikeStep.value === "placeFirst"
-  ) {
-    return new Set<string>();
-  }
-  return coordsToKeySet(collectBombPatternTiles(s, anchor, ctx.bombA, attackDirection.value));
-});
-
-const omnistrikePrimaryKeys = computed(() => {
-  if (boardActionMode.value !== "omnistrike" || omnistrikeStep.value !== "confirm") {
-    return new Set<string>();
-  }
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  const anchorA = omnistrikeAnchors.value[0];
-  const anchorB = omnistrikeAnchors.value[1];
-  if (!ctx || !s || !anchorA || !anchorB) return new Set<string>();
-  const tilesA = collectBombPatternTiles(s, anchorA, ctx.bombA, attackDirection.value);
-  const tilesB = collectBombPatternTiles(s, anchorB, ctx.bombB, attackDirection.value);
-  return coordsToKeySet(unionPatternTiles(tilesA, tilesB));
-});
-
-const omnistrikeSecondaryKeys = computed(() => {
-  if (boardActionMode.value !== "omnistrike") return new Set<string>();
-  const step = omnistrikeStep.value;
-  if (step === "confirm") return new Set<string>();
-  if (step === "selectBombs") return new Set<string>();
-
-  const preview = omnistrikePlacementPreview.value;
-  if (preview && (step === "placeFirst" || step === "placeSecond")) {
-    const keys = coordsToKeySet(preview.patternTiles);
-    for (const key of omnistrikeLockedFirstKeys.value) keys.add(key);
-    return keys;
-  }
-  return omnistrikeLockedFirstKeys.value;
-});
-
-const omnistrikeInvalidKeys = computed(() => {
-  if (boardActionMode.value !== "omnistrike") return new Set<string>();
-  const step = omnistrikeStep.value;
-  if (step !== "placeFirst" && step !== "placeSecond") return new Set<string>();
-  const preview = omnistrikePlacementPreview.value;
-  if (!preview) return new Set<string>();
-  if (preview.tooFar) return coordsToKeySet(preview.patternTiles);
-  if (!preview.adjacentToOther && step === "placeSecond") {
-    return coordsToKeySet(preview.patternTiles);
-  }
-  return preview.tooCloseKeys;
-});
-
 const lineOfSightObserver = computed((): { x: number; y: number } | null => {
   const s = gameState.value;
   if (!s) return null;
@@ -1021,19 +931,6 @@ const attackContext = computed(() => {
 
 
 
-
-const omnistrikeContext = computed(() => {
-  const me = yourPlayer.value;
-  if (boardActionMode.value !== "omnistrike" || !me?.weapon) return null;
-  const [indexA, indexB] = omnistrikeBombs.value;
-  if (indexA == null || indexB == null) return null;
-  const bombA = resolveBombAttackSpec(me.weapon, indexA);
-  const bombB = resolveBombAttackSpec(me.weapon, indexB);
-  if (!bombA || !bombB) return null;
-  const combinedSpan = computeOmnistrikeRangeSpan(bombA, bombB);
-  if (!combinedSpan) return null;
-  return { me, weapon: me.weapon, bombA, bombB, combinedSpan, indexA, indexB };
-});
 
 const attackPreviewByDirection = computed(() => {
   const ctx = attackContext.value;
@@ -1182,28 +1079,6 @@ function buildLocalAttackPreview(): AttackPreviewState | null {
     };
   }
 
-  if (m === "omnistrike") {
-    const step = omnistrikeStep.value;
-    if (step === "selectBombs") return null;
-    const [indexA, indexB] = omnistrikeBombs.value;
-    if (indexA == null || indexB == null) return null;
-    return {
-      playerId,
-      mode: "omnistrike",
-      direction: attackDirection.value,
-      pack: getCombatBoardHelpers().buildOmnistrikeAttackPreviewPack({
-        omnistrikeStep: step,
-        omnistrikeBombIndices: [indexA, indexB],
-        omnistrikeAnchors: [
-          omnistrikeAnchors.value[0] ? { ...omnistrikeAnchors.value[0] } : null,
-          omnistrikeAnchors.value[1] ? { ...omnistrikeAnchors.value[1] } : null,
-        ],
-      }),
-      hoverX: previewHoverCell.value?.x,
-      hoverY: previewHoverCell.value?.y,
-    };
-  }
-
   return null;
 }
 
@@ -1232,9 +1107,6 @@ watch(
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     packUi,
-    omnistrikeStep,
-    omnistrikeBombs,
-    omnistrikeAnchors,
     gmEnemyAttack,
   ],
   syncAttackPreviewNow,
@@ -1774,7 +1646,6 @@ const cellStateByKey = computed(() => {
     const packLayers = packModeLayers.value;
     const combatPrimary =
       combatAttackPrimaryKeys.value.has(ck) ||
-      omnistrikePrimaryKeys.value.has(ck) ||
       packLayers.primary.has(ck) ||
       combatAttackSelectedKeys.value.has(ck) ||
       (elevBonusTile.value != null && coordKey(elevBonusTile.value.x, elevBonusTile.value.y) === ck) ||
@@ -1785,7 +1656,6 @@ const cellStateByKey = computed(() => {
       (remotePrimary?.has(ck) ?? false);
     const combatSecondary =
       combatAttackSecondaryKeys.value.has(ck) ||
-      omnistrikeSecondaryKeys.value.has(ck) ||
       packLayers.secondary.has(ck) ||
       rezTargetKeys.value.has(ck) ||
       gmEnemyPatternSecondaryKeys.value.has(ck) ||
@@ -1835,7 +1705,6 @@ const cellStateByKey = computed(() => {
         (remoteHeal && ((remotePrimary?.has(ck) ?? false) || (remoteSecondary?.has(ck) ?? false))),
       combatTargetInvalid:
         combatAttackInvalidKeys.value.has(coordKey(c.x, c.y)) ||
-        omnistrikeInvalidKeys.value.has(coordKey(c.x, c.y)) ||
         packLayers.invalid.has(ck) ||
         (remoteInvalid?.has(ck) ?? false),
       patternRecoil: patternRecoilKeys.value.has(coordKey(c.x, c.y)),
@@ -2598,7 +2467,7 @@ function tryMoveSelectedEnemyToDest(
 let enemyClickTimer: ReturnType<typeof setTimeout> | null = null;
 
 function boardTargetingContext() {
-  return { omnistrikeStep: omnistrikeStep.value };
+  return { omnistrikeStep: packUi.value.step as OmnistrikeStep | undefined };
 }
 
 function onEnemyCellClick(x: number, y: number, enemyId: string) {
@@ -3171,87 +3040,6 @@ function handleAttackCellClick(x: number, y: number, targetEnemyId?: string): bo
   return true;
 }
 
-function handleOmnistrikeCellClick(x: number, y: number): boolean {
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  if (!ctx || !s) return false;
-
-  const step = omnistrikeStep.value;
-  const key = coordKey(x, y);
-
-  if (step === "confirm") {
-    if (omnistrikePrimaryKeys.value.has(key)) {
-      const anchorA = omnistrikeAnchors.value[0];
-      const anchorB = omnistrikeAnchors.value[1];
-      if (!anchorA || !anchorB) return false;
-      sendPlayerAction({
-        action: "pack",
-        kind: "weaponActive",
-        detail: {
-          omnistrike: {
-            bombIndices: [ctx.indexA, ctx.indexB],
-            anchors: [anchorA, anchorB],
-            direction: attackDirection.value,
-          },
-        },
-      });
-      clearBoardActionMode();
-      return true;
-    }
-    omnistrikeAnchors.value = [omnistrikeAnchors.value[0], null];
-    omnistrikeStep.value = "placeSecond";
-    return true;
-  }
-
-  if (step === "placeFirst") {
-    const placement = evaluateOmnistrikePlacement(ctx.me, { x, y }, ctx.bombA, attackDirection.value, s);
-    if (placement.tooFar) {
-      showToast("outside maximum range");
-      return true;
-    }
-    if (placement.tooCloseKeys.size > 0) {
-      showToast("inside minimum range");
-      return true;
-    }
-    if (!placement.valid) return false;
-    omnistrikeAnchors.value = [{ x, y }, null];
-    omnistrikeStep.value = "placeSecond";
-    return true;
-  }
-
-  if (step === "placeSecond") {
-    const firstAnchor = omnistrikeAnchors.value[0];
-    if (!firstAnchor) return false;
-    const firstTiles = collectBombPatternTiles(s, firstAnchor, ctx.bombA, attackDirection.value);
-    const placement = evaluateOmnistrikePlacement(
-      ctx.me,
-      { x, y },
-      ctx.bombB,
-      attackDirection.value,
-      s,
-      firstTiles,
-    );
-    if (placement.tooFar) {
-      showToast("outside maximum range");
-      return true;
-    }
-    if (placement.tooCloseKeys.size > 0) {
-      showToast("inside minimum range");
-      return true;
-    }
-    if (!placement.adjacentToOther) {
-      showToast("Patterns must be adjacent or overlap");
-      return true;
-    }
-    if (!placement.valid) return false;
-    omnistrikeAnchors.value = [firstAnchor, { x, y }];
-    omnistrikeStep.value = "confirm";
-    return true;
-  }
-
-  return false;
-}
-
 function handleCombatCellClick(x: number, y: number): boolean {
   const m = boardActionMode.value;
   if (!m || !yourPlayer.value || !gameState.value) return false;
@@ -3310,9 +3098,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
         });
       }
     }
-  }
-  if (m === "omnistrike") {
-    return handleOmnistrikeCellClick(x, y);
   }
   if (m === "shove") {
     if (enemy && Math.abs(x - me.x) + Math.abs(y - me.y) === 1) {
@@ -4450,8 +4235,7 @@ function onKeydown(e: KeyboardEvent) {
       }
       return;
     }
-    if (mode === "attack" || mode === "omnistrike" || mode === "gmEnemyAttack") {
-      if (mode === "omnistrike" && omnistrikeStep.value === "selectBombs") return;
+    if (mode === "attack" || mode === "gmEnemyAttack") {
       e.preventDefault();
       rotateAttackDirection();
       if (mode === "attack") {

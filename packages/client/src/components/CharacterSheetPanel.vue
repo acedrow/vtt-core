@@ -134,8 +134,6 @@ const {
   mode,
   attackAimed,
   attackAnchor,
-  omnistrikeStep,
-  omnistrikeBombs,
   setMode,
 } = useBoardActionMode();
 
@@ -153,6 +151,8 @@ const {
   onDualBombComplete,
   clearMode,
   classModeActive,
+  omnistrikeStep,
+  omnistrikeBombs,
 } = useCombatModeActions({ playerClass, playerId: () => boardPlayerId.value });
 
 const equipmentActionActive = computed(() => {

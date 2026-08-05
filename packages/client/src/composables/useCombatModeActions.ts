@@ -1,6 +1,6 @@
 import { isHeavenBurningWeaponName } from "@vtt-core/shared";
 import type { StructuredArmorAction } from "@vtt-core/shared";
-import { isRangeTargetAttack, isSabaothWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
+import { isRangeTargetAttack, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
 import { computed, ref, type Ref } from "vue";
 
 import { boardModeForClass, boardModeForWeapon } from "../client-content-pack.js";
@@ -28,9 +28,6 @@ export function useCombatModeActions(opts?: {
 
   const {
     mode,
-    omnistrikeStep,
-    omnistrikeBombs,
-    omnistrikeAnchors,
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     packUi,
@@ -155,10 +152,6 @@ export function useCombatModeActions(opts?: {
       toggleMode(packMode);
       return;
     }
-    if (isSabaothWeaponName(name)) {
-      toggleMode("omnistrike");
-      return;
-    }
     if (isHeavenBurningWeaponName(name)) {
       sendPlayerAction({
         action: "pack",
@@ -206,20 +199,25 @@ export function useCombatModeActions(opts?: {
   }
 
   function onDualBombIndices(indices: [number | null, number | null]) {
-    omnistrikeBombs.value = indices;
     if (indices[0] == null || indices[1] == null) {
-      omnistrikeStep.value = "selectBombs";
-      omnistrikeAnchors.value = [null, null];
+      patchPackUi({ omnistrikeBombs: indices, step: "selectBombs", omnistrikeAnchors: [null, null] });
+      return;
     }
+    patchPackUi({ omnistrikeBombs: indices });
   }
 
   function onDualBombComplete() {
-    if (omnistrikeBombs.value[0] != null && omnistrikeBombs.value[1] != null) {
-      omnistrikeStep.value = "placeFirst";
+    const bombs = packUi.value.omnistrikeBombs;
+    if (bombs?.[0] != null && bombs[1] != null) {
+      patchPackUi({ step: "placeFirst" });
     }
   }
 
   const kataptyTargetIds = computed(() => packUi.value.kataptyTargetIds ?? []);
+  const omnistrikeStep = computed(() => packUi.value.step ?? "selectBombs");
+  const omnistrikeBombs = computed<[number | null, number | null]>(
+    () => packUi.value.omnistrikeBombs ?? [null, null],
+  );
 
   return {
     mode,

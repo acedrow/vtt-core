@@ -9,7 +9,6 @@ export type BoardTargetingContext = {
 export const BOARD_CELL_TARGETING_MODES = [
   "move",
   "attack",
-  "omnistrike",
   "shove",
   "sprint",
   "aegis",

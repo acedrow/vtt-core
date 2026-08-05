@@ -9,7 +9,6 @@ import { clearActiveTool } from "./useGmTools.js";
 export type BoardActionMode =
   | "move"
   | "attack"
-  | "omnistrike"
   | "shove"
   | "sprint"
   | "aegis"
@@ -29,13 +28,6 @@ const rangeAttackTargetIds = ref<string[]>([]);
 const rangeAttackObstacleCoords = ref<{ x: number; y: number }[]>([]);
 const movePath = ref<{ x: number; y: number }[]>([]);
 const armorLanding = ref<{ x: number; y: number } | null>(null);
-const omnistrikeStep = ref<OmnistrikeStep>("selectBombs");
-const omnistrikeBombs = ref<[number | null, number | null]>([null, null]);
-const omnistrikeAnchors = ref<[{ x: number; y: number } | null, { x: number; y: number } | null]>([
-  null,
-  null,
-]);
-const omnistrikeAimed = ref(false);
 const packUi = ref<PackBoardUi>({});
 const gmEnemyAttack = ref<{
   enemyId: string;
@@ -48,13 +40,6 @@ const gmEnemyAttack = ref<{
   targetEnemyId?: string;
 } | null>(null);
 const rangeAttackConfirmHandler = ref<(() => void) | null>(null);
-
-function resetOmnistrikeState() {
-  omnistrikeStep.value = "selectBombs";
-  omnistrikeBombs.value = [null, null];
-  omnistrikeAnchors.value = [null, null];
-  omnistrikeAimed.value = false;
-}
 
 export function useBoardActionMode() {
   const isActive = computed(() => mode.value !== null);
@@ -71,7 +56,6 @@ export function useBoardActionMode() {
     armorLanding.value = null;
     packUi.value = {};
     gmEnemyAttack.value = null;
-    resetOmnistrikeState();
   }
 
   function clearMode() {
@@ -137,10 +121,6 @@ export function useBoardActionMode() {
     rangeAttackObstacleCoords,
     movePath,
     armorLanding,
-    omnistrikeStep,
-    omnistrikeBombs,
-    omnistrikeAnchors,
-    omnistrikeAimed,
     packUi,
     gmEnemyAttack,
     isActive,

@@ -123,16 +123,14 @@ export type PackBoardUi = {
   /** Omnistrike: two bomb indices and their placed anchors. */
   omnistrikeBombs?: [number | null, number | null];
   omnistrikeAnchors?: [{ x: number; y: number } | null, { x: number; y: number } | null];
-  omnistrikeAimed?: boolean;
   /** Tower armor modes: chosen landing / pending target enemy. */
   towerLanding?: { x: number; y: number };
   keraunoTargetEnemyId?: string;
   kataptyTargetIds?: string[];
   /** Assisted launch: chosen anchor tile. */
   assistedLaunchAnchor?: { x: number; y: number };
-  /** Generic structured-armor pending target (teleport/push). */
+  /** Generic structured-armor pending target (teleport). */
   armorTargetEnemyId?: string;
-  armorTargetPlayerId?: string;
   armorPush?: 1 | 2 | 3;
 };
 
