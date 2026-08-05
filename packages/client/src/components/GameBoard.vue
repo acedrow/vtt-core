@@ -4460,6 +4460,12 @@ function buildContextMenuItems(x: number, y: number): BoardContextMenuItem[] {
     !!attractor &&
     (canUseGmTools.value ||
       (props.role === "player" && yourPlayerId.value === attractor.ownerId));
+  const tokensAt: { id: string; label: string }[] = [];
+  if (player) tokensAt.push({ id: `player:${player.id}`, label: playerLabel(player) });
+  for (const e of enemiesAt) tokensAt.push({ id: `enemy:${e.id}`, label: enemyLabel(e) });
+  for (const token of tokensAt) {
+    items.push({ id: `select-token:${token.id}`, label: `Select ${token.label}` });
+  }
   if (player || enemy) {
     items.push({ id: "add-effect", label: "Add effect" });
   }
@@ -4550,6 +4556,20 @@ function onContextMenuSelect(id: string) {
     !!occ &&
     isCellInBulkSelection(cellX, cellY, occ);
 
+  if (id.startsWith("select-token:")) {
+    const rest = id.slice("select-token:".length);
+    const sepIdx = rest.indexOf(":");
+    const kind = rest.slice(0, sepIdx);
+    const targetId = rest.slice(sepIdx + 1);
+    if (kind === "player") {
+      const p = gameState.value?.players.find((pl) => pl.id === targetId);
+      selectBoardPlayer(targetId, p?.characterSheetId);
+    } else if (kind === "enemy") {
+      selectBoardEnemyMember(targetId);
+    }
+    closeContextMenu();
+    return;
+  }
   if (id === "add-effect") {
     if (useBulk && (bulk.kind === "players" || bulk.kind === "enemies")) {
       effectModalBulkTargets.value = bulk.ids.map((targetId) => ({
