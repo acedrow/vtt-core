@@ -9,7 +9,7 @@ import {
 import { getEnemyScale, enemyFootprintTiles } from "../enemy-data.js";
 import { buildBoardOccupancy } from "../game.js";
 import { coordKey, ensureObstacleHp, isInBounds, isObstacleTile, setTileTerrain, tileAt } from "../map.js";
-import type { Enemy, GameState, MapTile, Player } from "../types.js";
+import type { Enemy, GameState, Player } from "../types.js";
 import { getWeaponByName } from "../player-data.js";
 import { combatMod } from "../combat-modules.js";
 import type { AttackRangeSpan, EnemyAttackSpec, WeaponAttackSpec } from "./types.js";
@@ -59,22 +59,6 @@ export type OmnistrikePayload = {
   bombIndices: [number, number];
   anchors: [{ x: number; y: number }, { x: number; y: number }];
   direction: PatternDirection;
-};
-
-export type WarhookPayload = {
-  targetEnemyId?: string;
-  targetX: number;
-  targetY: number;
-  landingX: number;
-  landingY: number;
-  damageRoll?: number;
-  useBreaker?: boolean;
-};
-
-export type WarhookTarget = {
-  enemyId?: string;
-  x: number;
-  y: number;
 };
 
 export function resolveRangeAttackTargetIds(action: {
@@ -197,11 +181,7 @@ function sabaoth(): SabaothModule {
 type SethianModule = {
   SETHIAN_WEAPON_NAME: string;
   SETHIAN_DAMAGE_CAP: number;
-  WARHOOK_RANGE: number;
   isSethianWeaponName: (name: string | undefined | null) => boolean;
-  isWarhookWeaponName: (name: string | undefined | null) => boolean;
-  isWarhookTerrainTarget: (tile: MapTile | undefined) => boolean;
-  warhookRangeKeys: (state: GameState, origin: { x: number; y: number }) => Set<string>;
   applySethianWholeSwarmAttack: (
     state: GameState,
     spec: WeaponAttackSpec,
@@ -209,32 +189,6 @@ type SethianModule = {
     damageRoll?: number,
     suppressEffects?: boolean,
   ) => { damage: number; detail: string; targets: AttackTarget[]; effects: string[] };
-  isWarhookTargetAt: (
-    state: GameState,
-    player: Player,
-    x: number,
-    y: number,
-  ) => WarhookTarget | null;
-  warhookValidTargetKeys: (state: GameState, player: Player) => Set<string>;
-  warhookAdjacentLandingTiles: (
-    state: GameState,
-    playerId: string,
-    target: WarhookTarget,
-  ) => { x: number; y: number }[];
-  warhookNearestLandings: (
-    player: Player,
-    landings: { x: number; y: number }[],
-  ) => { x: number; y: number }[];
-  validateWarhookAction: (
-    state: GameState,
-    player: Player,
-    payload: WarhookPayload,
-  ) => string | null;
-  applyWarhook: (
-    state: GameState,
-    player: Player,
-    payload: WarhookPayload,
-  ) => { message: string; detail: string; targets: AttackTarget[] };
 };
 
 function sethian(): SethianModule {
@@ -1144,71 +1098,6 @@ export function applyOmnistrike(
 ): { message: string; targets: AttackTarget[] } {
   return sabaoth().applyOmnistrike(state, player, payload);
 }
-
-export const WARHOOK_RANGE = 3;
-
-export function isWarhookWeaponName(name: string | undefined | null): boolean {
-  return sethian().isWarhookWeaponName(name);
-}
-
-export function isWarhookTerrainTarget(tile: MapTile | undefined): boolean {
-  return sethian().isWarhookTerrainTarget(tile);
-}
-
-export function warhookRangeKeys(
-  state: GameState,
-  origin: { x: number; y: number },
-): Set<string> {
-  return sethian().warhookRangeKeys(state, origin);
-}
-
-export function isWarhookTargetAt(
-  state: GameState,
-  player: Player,
-  x: number,
-  y: number,
-): WarhookTarget | null {
-  return sethian().isWarhookTargetAt(state, player, x, y);
-}
-
-export function warhookValidTargetKeys(
-  state: GameState,
-  player: Player,
-): Set<string> {
-  return sethian().warhookValidTargetKeys(state, player);
-}
-
-export function warhookAdjacentLandingTiles(
-  state: GameState,
-  playerId: string,
-  target: WarhookTarget,
-): { x: number; y: number }[] {
-  return sethian().warhookAdjacentLandingTiles(state, playerId, target);
-}
-
-export function warhookNearestLandings(
-  player: Player,
-  landings: { x: number; y: number }[],
-): { x: number; y: number }[] {
-  return sethian().warhookNearestLandings(player, landings);
-}
-
-export function validateWarhookAction(
-  state: GameState,
-  player: Player,
-  payload: WarhookPayload,
-): string | null {
-  return sethian().validateWarhookAction(state, player, payload);
-}
-
-export function applyWarhook(
-  state: GameState,
-  player: Player,
-  payload: WarhookPayload,
-): { message: string; detail: string; targets: AttackTarget[] } {
-  return sethian().applyWarhook(state, player, payload);
-}
-
 
 export function enemyAttackDamage(spec: EnemyAttackSpec): number | undefined {
   if (spec.damage == null || spec.damage === "") return undefined;

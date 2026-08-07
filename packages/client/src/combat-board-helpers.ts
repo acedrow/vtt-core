@@ -112,6 +112,8 @@ export type ClientCombatBoardHelpers = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- opaque pack call signatures
   emptyAdjacentPlantTiles?: (...args: any[]) => { x: number; y: number }[];
   tileIsStained: (state: GameState, x: number, y: number) => boolean;
+  /** True for specialIds whose GM targeting flow is select-a-target-then-teleport-to-any-stained-tile. */
+  isStainTeleportAttack?: (specialId: string | undefined) => boolean;
   /** Prefer solid pieces over terrain-like share-space tokens (e.g. Living Tide). */
   filterBoardPieceEnemies?: (enemies: readonly Enemy[]) => Enemy[];
   isLivingTide?: (enemy: Pick<Enemy, "name">) => boolean;
@@ -170,6 +172,7 @@ function stubHelpers(): ClientCombatBoardHelpers {
     isEmptyAdjacentPlantAttack: (specialId) => specialId === "flowerbud-plant",
     emptyAdjacentPlantTiles: emptyTiles,
     tileIsStained: () => false,
+    isStainTeleportAttack: () => false,
     filterBoardPieceEnemies: (enemies) => [...enemies],
     isLivingTide: () => false,
     enemyShowsBoardHp: () => true,

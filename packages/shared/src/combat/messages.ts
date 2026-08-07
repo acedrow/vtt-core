@@ -24,6 +24,7 @@ import {
   occupancyBlockedByEnemy,
 } from "../game.js";
 import { getArmorByName, getArmorSpeed, getWeaponByName } from "../player-data.js";
+import { abilityLabel } from "../rule-text.js";
 import type { StructuredArmorAction } from "./types.js";
 import { createDefaultActionBudget, type ActionTier } from "./types.js";
 import { coordKey, isInBounds, isObstacleTile, isTerrainType, setTileTerrain, tileAt } from "../map.js";
@@ -847,7 +848,7 @@ export function applyPlayerAction(
             player.y = landing.y;
             recordSeenTilesForPlayer(state, player.id);
             maybeSpendActionTier(state, player, "support");
-            let msg = `${playerLabel(player)} used Formless`;
+            let msg = `${playerLabel(player)} used ${abilityLabel(armor.armorAction) ?? "armor action"}`;
             if (provokeMsg) msg = `${provokeMsg}; ${msg}`;
             return msg;
           }
@@ -883,7 +884,7 @@ export function applyPlayerAction(
             parts.push(applyRecoilFromTarget(state, player, targetX, targetY, pushDist));
             maybeSpendActionTier(state, player, "support");
             const detailMsg = parts.filter(Boolean).join("; ");
-            return `${playerLabel(player)} used Hasaphet's Palm — ${detailMsg}`;
+            return `${playerLabel(player)} used ${abilityLabel(armor.armorAction) ?? "armor action"} — ${detailMsg}`;
           }
           maybeSpendActionTier(state, player, "support");
           if (structured.kind === "place_tower" && x != null && y != null) {

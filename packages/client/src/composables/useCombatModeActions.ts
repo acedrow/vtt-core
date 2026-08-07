@@ -1,9 +1,9 @@
 import { isHeavenBurningWeaponName } from "@vtt-core/shared";
 import type { StructuredArmorAction } from "@vtt-core/shared";
-import { isRangeTargetAttack, isSabaothWeaponName, isWarhookWeaponName, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
+import { isRangeTargetAttack, rangeTargetMax, resolveCombatAttackSpec } from "@vtt-core/shared";
 import { computed, ref, type Ref } from "vue";
 
-import { boardModeForClass } from "../client-content-pack.js";
+import { boardModeForClass, boardModeForWeapon } from "../client-content-pack.js";
 import { useBoardActionMode, type BoardActionMode } from "./useBoardActionMode.js";
 import { useCombatActions } from "./useCombatActions.js";
 
@@ -28,17 +28,12 @@ export function useCombatModeActions(opts?: {
 
   const {
     mode,
-    omnistrikeStep,
-    omnistrikeBombs,
-    omnistrikeAnchors,
-    assistedLaunchStep,
-    assistedLaunchAnchor,
-    kataptyTargetIds,
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     packUi,
     setMode,
     clearMode,
+    patchPackUi,
     confirmRangeAttack,
   } = useBoardActionMode();
 
@@ -94,8 +89,10 @@ export function useCombatModeActions(opts?: {
     setMode("assistedLaunch");
     const anchors = assistedLaunchAnchorOptions.value;
     if (anchors.length === 1) {
-      assistedLaunchAnchor.value = { x: anchors[0]!.x, y: anchors[0]!.y };
-      assistedLaunchStep.value = "confirm";
+      patchPackUi({
+        assistedLaunchAnchor: { x: anchors[0]!.x, y: anchors[0]!.y },
+        step: "confirm",
+      });
     }
   }
 
@@ -150,12 +147,9 @@ export function useCombatModeActions(opts?: {
 
   function useWeaponActive(weaponName?: string | null) {
     const name = weaponName ?? activePlayer.value?.weapon;
-    if (isSabaothWeaponName(name)) {
-      toggleMode("omnistrike");
-      return;
-    }
-    if (isWarhookWeaponName(name)) {
-      toggleMode("warhook");
+    const packMode = boardModeForWeapon(name ?? undefined);
+    if (packMode) {
+      toggleMode(packMode);
       return;
     }
     if (isHeavenBurningWeaponName(name)) {
@@ -174,13 +168,14 @@ export function useCombatModeActions(opts?: {
   }
 
   function confirmKatapty() {
-    if (kataptyTargetIds.value.length !== 3) return;
+    const ids = packUi.value.kataptyTargetIds ?? [];
+    if (ids.length !== 3) return;
     sendPlayerAction({
       action: "pack",
       kind: "armorAction",
       detail: {
         kind: "katapty_end_turn",
-        targetEnemyIds: [...kataptyTargetIds.value],
+        targetEnemyIds: [...ids],
       },
     });
     clearMode();
@@ -204,18 +199,25 @@ export function useCombatModeActions(opts?: {
   }
 
   function onDualBombIndices(indices: [number | null, number | null]) {
-    omnistrikeBombs.value = indices;
     if (indices[0] == null || indices[1] == null) {
-      omnistrikeStep.value = "selectBombs";
-      omnistrikeAnchors.value = [null, null];
+      patchPackUi({ omnistrikeBombs: indices, step: "selectBombs", omnistrikeAnchors: [null, null] });
+      return;
     }
+    patchPackUi({ omnistrikeBombs: indices });
   }
 
   function onDualBombComplete() {
-    if (omnistrikeBombs.value[0] != null && omnistrikeBombs.value[1] != null) {
-      omnistrikeStep.value = "placeFirst";
+    const bombs = packUi.value.omnistrikeBombs;
+    if (bombs?.[0] != null && bombs[1] != null) {
+      patchPackUi({ step: "placeFirst" });
     }
   }
+
+  const kataptyTargetIds = computed(() => packUi.value.kataptyTargetIds ?? []);
+  const omnistrikeStep = computed(() => packUi.value.step ?? "selectBombs");
+  const omnistrikeBombs = computed<[number | null, number | null]>(
+    () => packUi.value.omnistrikeBombs ?? [null, null],
+  );
 
   return {
     mode,

@@ -117,6 +117,21 @@ export type PackBoardUi = {
   step?: string;
   sourceEnemyId?: string;
   attackIndex?: number;
+  /** Warhook: chosen target before a landing tile is picked. */
+  warhookTarget?: { enemyId?: string; x: number; y: number };
+  warhookLandingOptions?: { x: number; y: number }[];
+  /** Omnistrike: two bomb indices and their placed anchors. */
+  omnistrikeBombs?: [number | null, number | null];
+  omnistrikeAnchors?: [{ x: number; y: number } | null, { x: number; y: number } | null];
+  /** Tower armor modes: chosen landing / pending target enemy. */
+  towerLanding?: { x: number; y: number };
+  keraunoTargetEnemyId?: string;
+  kataptyTargetIds?: string[];
+  /** Assisted launch: chosen anchor tile. */
+  assistedLaunchAnchor?: { x: number; y: number };
+  /** Generic structured-armor pending target (teleport). */
+  armorTargetEnemyId?: string;
+  armorPush?: 1 | 2 | 3;
 };
 
 export type BoardModeContext = {
@@ -147,6 +162,10 @@ export type BoardModeHost = {
     obstacleCoords?: { x: number; y: number }[];
   }) => void;
   runWeaponAttackClick: (x: number, y: number, targetEnemyId?: string) => boolean;
+  /** Run `action` immediately, or after a provoke-confirmation prompt if moving to (x, y) provokes. */
+  gateProvoke: (x: number, y: number, action: () => void) => void;
+  /** Same as gateProvoke, but checks every step of a multi-tile move path. */
+  gateProvokePath: (path: { x: number; y: number }[], action: () => void) => void;
 };
 
 export type BoardModeClickContext = BoardModeContext & {
@@ -165,6 +184,7 @@ export type ClientBoardModePlugin = {
   id: string;
   activateForClass?: string;
   activateForArmor?: string;
+  activateForWeapon?: (weaponName: string) => boolean;
   activateForEquipment?: (equipmentName: string) => boolean;
   /** Static string or dynamic (equipment steps, aimed state). */
   hint?: string | ((ctx: BoardModeContext) => string | null);
@@ -458,6 +478,18 @@ export function boardModeForClass(className: string | undefined): string | null 
 
 export function boardModeForEquipment(equipmentName: string): string | null {
   const plugin = boardModes.find((m) => m.activateForEquipment?.(equipmentName));
+  return plugin?.id ?? null;
+}
+
+export function boardModeForWeapon(weaponName: string | undefined): string | null {
+  if (!weaponName) return null;
+  const plugin = boardModes.find((m) => m.activateForWeapon?.(weaponName));
+  return plugin?.id ?? null;
+}
+
+export function boardModeForArmor(armorName: string | undefined): string | null {
+  if (!armorName) return null;
+  const plugin = boardModes.find((m) => m.activateForArmor === armorName);
   return plugin?.id ?? null;
 }
 

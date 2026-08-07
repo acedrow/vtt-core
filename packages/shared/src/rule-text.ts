@@ -24,6 +24,15 @@ export type StructuredAbility = {
 
 export type AbilityText = string | StructuredAbility;
 
+/** Short display name for an ability: structured name, or string text before the em dash. */
+export function abilityLabel(text: AbilityText | undefined | null): string | null {
+  if (!text) return null;
+  if (typeof text !== "string") return text.name;
+  const idx = text.indexOf("—");
+  const label = (idx >= 0 ? text.slice(0, idx) : text).trim();
+  return label || null;
+}
+
 export type RuleTermTooltip = {
   title: string;
   summary: string;

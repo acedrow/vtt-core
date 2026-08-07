@@ -3,6 +3,7 @@ import { computed } from "vue";
 
 import { getWeaponAttackSpec } from "@vtt-core/shared";
 
+import { boardModeForWeapon } from "../client-content-pack.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useCombatModeActions } from "../composables/useCombatModeActions.js";
 import { useCombatModeHints } from "../composables/useCombatModeHints.js";
@@ -47,6 +48,10 @@ const { phaseAction, onPhaseAction } = usePhaseAction();
 const showEndTurnHere = computed(() => phaseAction.value?.action === "endPlayerTurn");
 
 const weaponName = computed(() => activePlayer.value?.weapon ?? null);
+const weaponActiveModeActive = computed(() => {
+  if (mode.value === "omnistrike") return true;
+  return !!weaponName.value && boardModeForWeapon(weaponName.value) === mode.value;
+});
 
 const {
   mode,
@@ -73,7 +78,8 @@ const {
   clearMode,
 } = useCombatModeActions();
 
-const { armorPush } = useBoardActionMode();
+const { packUi, patchPackUi } = useBoardActionMode();
+const armorPush = computed(() => packUi.value.armorPush ?? 1);
 
 const { boardHintRows } = useCombatModeHints({
   player: activePlayer,
@@ -184,7 +190,7 @@ function weaponSwap() {
           <button
             type="button"
             class="action-btn"
-            :class="{ active: mode === 'omnistrike' || mode === 'warhook' }"
+            :class="{ active: weaponActiveModeActive }"
             :disabled="!canUseWeaponActive"
             @click="useWeaponActive()"
           >
@@ -331,7 +337,7 @@ function weaponSwap() {
         type="button"
         class="action-btn"
         :class="{ active: armorPush === n }"
-        @click="armorPush = n as 1 | 2 | 3"
+        @click="patchPackUi({ armorPush: n as 1 | 2 | 3 })"
       >
         {{ n }}
       </button>

@@ -28,11 +28,6 @@ export function useCombatModeHints(opts: {
     mode,
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
-    omnistrikeStep,
-    warhookStep,
-    towerTeleportStep,
-    kataptyTargetIds,
-    assistedLaunchStep,
     packUi,
     attackDirection,
     attackAimed,
@@ -86,54 +81,6 @@ export function useCombatModeHints(opts: {
       return "Click a tile in range to aim, then click a highlighted tile to attack";
     }
     return null;
-  });
-
-  const omnistrikeHint = computed(() => {
-    if (mode.value !== "omnistrike") return null;
-    switch (omnistrikeStep.value) {
-      case "selectBombs":
-        return "Select two bomb types to combine (tap to toggle).";
-      case "placeFirst":
-        return "Place the first pattern — hover to preview, press R to rotate, click to confirm placement.";
-      case "placeSecond":
-        return "Place the second pattern adjacent to or overlapping the first. Press R to rotate.";
-      case "confirm":
-        return "Click the combined pattern to launch Omnistrike. Press R to rotate.";
-      default:
-        return null;
-    }
-  });
-
-  const warhookHint = computed(() => {
-    if (mode.value !== "warhook") return null;
-    if (warhookStep.value === "selectLanding") return "Choose destination tile";
-    return "Click an enemy, obstacle, or wall within range";
-  });
-
-  const armorHint = computed(() => {
-    if (mode.value === "armorPlaceTower") return "Click a tile within Range:2 to place your tower";
-    if (mode.value === "armorPush") return "Choose Push:1–3, then click an adjacent creature";
-    if (mode.value === "armorTeleport") return "Click an adjacent enemy, then choose a landing space";
-    return null;
-  });
-
-  const towerTeleportHint = computed(() => {
-    if (mode.value !== "towerTeleport") return null;
-    if (towerTeleportStep.value === "selectKeraunoTarget") return "Select adjacent enemy for Kerauno";
-    return "Spend all remaining Speed — click a tile adjacent to your tower";
-  });
-
-  const kataptyHint = computed(() => {
-    if (mode.value !== "kataptyPick") return null;
-    return `Select exactly 3 Katapty targets (${kataptyTargetIds.value.length}/3), then confirm`;
-  });
-
-  const assistedLaunchHint = computed(() => {
-    if (mode.value !== "assistedLaunch") return null;
-    if (assistedLaunchStep.value === "selectAnchor") {
-      return "Select impassable terrain, an obstacle, or an ally to launch from";
-    }
-    return "Click the highlighted landing tile to launch";
   });
 
   const packModeHint = computed(() => {
@@ -212,11 +159,6 @@ export function useCombatModeHints(opts: {
       rows.push({ key: "elevationBonus", text: elevationBonusHint.value });
     }
     if (omnistrikeHint.value) rows.push({ key: "omnistrike", text: omnistrikeHint.value });
-    if (warhookHint.value) rows.push({ key: "warhook", text: warhookHint.value });
-    if (armorHint.value) rows.push({ key: "armor", text: armorHint.value });
-    if (towerTeleportHint.value) rows.push({ key: "towerTeleport", text: towerTeleportHint.value });
-    if (kataptyHint.value) rows.push({ key: "katapty", text: kataptyHint.value });
-    if (assistedLaunchHint.value) rows.push({ key: "assistedLaunch", text: assistedLaunchHint.value });
     if (packModeHint.value && mode.value) {
       const already = rows.some((r) => r.key === mode.value);
       if (!already && !(isPackEquipmentAttack.value && packModeHint.value === attackHint.value)) {
@@ -226,6 +168,8 @@ export function useCombatModeHints(opts: {
     return rows;
   });
 
+  const warhookHint = computed(() => (mode.value === "warhook" ? packModeHint.value : null));
+  const omnistrikeHint = computed(() => (mode.value === "omnistrike" ? packModeHint.value : null));
   const equipmentCorridorHint = computed(() =>
     mode.value === "equipmentCorridor" ? packModeHint.value : null,
   );
@@ -245,10 +189,6 @@ export function useCombatModeHints(opts: {
     rangedPatternAttackHint,
     omnistrikeHint,
     warhookHint,
-    armorHint,
-    towerTeleportHint,
-    kataptyHint,
-    assistedLaunchHint,
     equipmentCorridorHint,
     equipmentCoverHint,
     equipmentForceProjectionHint,

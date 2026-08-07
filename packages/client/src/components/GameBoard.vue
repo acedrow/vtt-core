@@ -2,14 +2,14 @@
 import { getCombatBoardHelpers } from "../combat-board-helpers.js";
 import type { CombatBoardSwarmChipTarget } from "../combat-board-helpers.js";
 import type { EffectStacks, Enemy, GmEnemyAction, MapTile, MovementPathResult, PatternDirection, Player, PlayerAction, TerrainObject } from "@vtt-core/shared";
-import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, formlessLandingTiles, formlessTargetTileKeys, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, evaluateOmnistrikePlacement, collectBombPatternTiles, unionPatternTiles, resolveBombAttackSpec, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, warhookAdjacentLandingTiles, warhookNearestLandings, warhookRangeKeys, warhookValidTargetKeys, isWarhookTargetAt, isFortificationEnemy, getArmorByName, outOfLineOfSightTileKeys, tilesOnCardinalLine, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, assistedLaunchAnchors, computeAssistedLaunch, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, computeOmnistrikeRangeSpan, type AttackPreviewState } from "@vtt-core/shared";
+import { applyGmEnemyAction, applyPlayerAction, areDeploymentZonesEnforced, boardCellKey, buildBoardOccupancy, canGmMoveEnemies, canPlayerMove, coordKey, coordsToKeySet, drawableExpansionOptions, ensureEnemyMovement, enemyFootprintTiles, enemyMovementReachability, fixedPatternTilesInBounds, getEnemyMaxHp, getEnemyScale, getEnemyScaleByName, getObstacleHp, getPlayerMaxHp, isObstacleTile, isPlayerDowned, isSandboxMode, isHealAttackSpec, isRangeTargetAttack, isRangedPatternAttack, isWalkable, isInBounds, manhattanDistance, enemyMoveStepCost, aegisFlyingRemaining, playerAttackDirectionsAt, playerMovementReachability, evaluateAnchoredPatternPlacement, isSelectTargetEnemyAttack, isPatternEnemyAttack, enemyAttackPatternOptionsAt, enemyPatternOrigins, enemyDirectAttackTargetEnemyIds, PATTERN_DIRECTIONS, rangeAttackTileKeys, rangeTargetDistance, rangeTargetMax, rangedPatternPlacementKeys, recoilTilesInBounds, resolveCombatAttackSpec, tileAt, usesAnchoredPatternPlacement, patternOriginFromAnchor, validateEnemyFootprint, validateGmForceMove, isFortificationEnemy, outOfLineOfSightTileKeys, tilesOnSegment, getEnemyAttack, getEnemyListingByName, collectAttackTiles, elevationBonusTileCandidates, enemyDirectAttackTargetPlayerIds, isSethianWeaponName, previewPathProvokes, previewEnemyMoveProvokes, previewSprintProvokes, hasTileEffects, formatTileEffectTooltipLabel, terrainTypeDisplayName, type ProvokeTrigger, computeAttackPreviewHighlights, type AttackPreviewState } from "@vtt-core/shared";
 import { computed, onMounted, onUnmounted, provide, ref, shallowRef, toRaw, watch } from "vue";
 
 import { routesTokenClickToCellTargeting } from "../lib/boardCellTargeting.js";
 import { fogTokenDisplay } from "../lib/fogTokenDisplay.js";
 import { BOARD_CELL_GAP, boardContentHeightPx, boardContentWidthPx } from "../lib/boardLayout.js";
 import { boardCellMetrics, buildElevationContourPaths, buildOccupiedRegionContourPaths } from "../lib/elevationContours.js";
-import { useBoardActionMode } from "../composables/useBoardActionMode.js";
+import { useBoardActionMode, type OmnistrikeStep } from "../composables/useBoardActionMode.js";
 import { useCombatActions } from "../composables/useCombatActions.js";
 import { useBoardSelection } from "../composables/useBoardSelection.js";
 import { useBoardViewport } from "../composables/useBoardViewport.js";
@@ -222,19 +222,6 @@ const {
   elevBonusTile,
   rangeAttackTargetIds,
   rangeAttackObstacleCoords,
-  pendingTargetEnemyId,
-  armorPush,
-  omnistrikeStep,
-  omnistrikeBombs,
-  omnistrikeAnchors,
-  warhookStep,
-  warhookTarget,
-  warhookLandingOptions,
-  towerTeleportStep,
-  towerTeleportLanding,
-  kataptyTargetIds,
-  assistedLaunchStep,
-  assistedLaunchAnchor,
   packUi,
   gmEnemyAttack,
   clearMode: clearBoardActionMode,
@@ -288,6 +275,24 @@ function buildPackModeHost(): BoardModeHost {
     },
     runWeaponAttackClick(x, y, targetEnemyId) {
       return handleAttackCellClick(x, y, targetEnemyId);
+    },
+    gateProvoke(x, y, action) {
+      const s = gameState.value;
+      const me = yourPlayer.value;
+      if (!s || !me) {
+        action();
+        return;
+      }
+      gateProvoke(previewSprintProvokes(s, me.id, x, y), action);
+    },
+    gateProvokePath(path, action) {
+      const s = gameState.value;
+      const me = yourPlayer.value;
+      if (!s || !me) {
+        action();
+        return;
+      }
+      gateProvoke(previewPathProvokes(s, me.id, path), action);
     },
   };
 }
@@ -461,7 +466,7 @@ const provokePromptOpen = ref(false);
 const provokeTriggers = ref<ProvokeTrigger[]>([]);
 const pendingProvokeMove = ref<(() => void) | null>(null);
 const swarmChipOpen = ref(false);
-const swarmChipEnemyId = ref<string | null>(null);
+const swarmChipEnemyName = ref("Swarm");
 const swarmChipTargets = ref<CombatBoardSwarmChipTarget[]>([]);
 const swarmAttackModalOpen = ref(false);
 const swarmAttackPending = ref<{
@@ -545,28 +550,8 @@ function closeTargetPicker() {
   targetPickerTileIds.value = [];
 }
 
-function maybePromptSwarmChip(enemyId: string) {
-  if (props.role !== "gm") return;
-  const s = gameState.value;
-  if (!s || !canGmMoveEnemies(s)) return;
-  const enemy = s.enemies.find((e) => e.id === enemyId);
-  if (!enemy || enemy.exhausted || getCombatBoardHelpers().isTowerEnemy(enemy)) return;
-  if (!getCombatBoardHelpers().swarmChipPromptRequired(s, enemyId)) return;
-  const group = getCombatBoardHelpers().swarmGroupForEnemy(s, enemyId)!;
-  swarmChipEnemyId.value = group.canonicalId;
-  swarmChipTargets.value = getCombatBoardHelpers().swarmChipEligibleTargets(s, enemyId);
-  swarmChipOpen.value = true;
-}
-
-function ensureSwarmChipResolved(enemyId: string): boolean {
-  const s = gameState.value;
-  if (!s || !getCombatBoardHelpers().swarmChipPromptRequired(s, enemyId)) return true;
-  maybePromptSwarmChip(enemyId);
-  return false;
-}
-
 watch(selectedEnemyId, (id) => {
-  if (id) maybePromptSwarmChip(id);
+  if (id) combatBoardHostBridge.maybePromptSwarmChip(id);
 });
 
 const breakerSethianHint = computed(() => {
@@ -603,24 +588,6 @@ function onProvokeCancel() {
   provokeTriggers.value = [];
 }
 
-function onSwarmChipConfirm(targetPlayerIds: string[]) {
-  const enemyId = swarmChipEnemyId.value;
-  if (!enemyId) return;
-  sendGmEnemyAction({ action: "pack", kind: "swarmChip", enemyId, detail: { targetPlayerIds } });
-  swarmChipOpen.value = false;
-}
-
-function onSwarmChipClose() {
-  swarmChipOpen.value = false;
-}
-
-const swarmChipEnemyName = computed(() => {
-  const s = gameState.value;
-  const id = swarmChipEnemyId.value;
-  if (!s || !id) return "Swarm";
-  return s.enemies.find((e) => e.id === id)?.name ?? "Swarm";
-});
-
 const swarmAttackModalProps = computed(() => {
   const pending = swarmAttackPending.value;
   const s = gameState.value;
@@ -650,8 +617,12 @@ const combatBoardHostBridge = {
   swarmChipOpen,
   swarmChipEnemyName,
   swarmChipTargets,
-  onSwarmChipConfirm,
-  onSwarmChipClose,
+  onSwarmChipConfirm: (_targetPlayerIds: string[]) => {},
+  onSwarmChipClose: () => {
+    swarmChipOpen.value = false;
+  },
+  maybePromptSwarmChip: (_enemyId: string) => {},
+  ensureSwarmChipResolved: (_enemyId: string) => true,
   swarmAttackModalOpen,
   swarmAttackModalProps,
   onSwarmAttackConfirm,
@@ -788,157 +759,6 @@ const anchoredPlacementPreview = computed(() => {
   );
 });
 
-const omnistrikePlacementPreview = computed(() => {
-  const step = omnistrikeStep.value;
-  if (boardActionMode.value !== "omnistrike" || step === "selectBombs" || step === "confirm") {
-    return null;
-  }
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  if (!ctx || !s) return null;
-  const anchor = previewHoverCell.value;
-  if (!anchor) return null;
-
-  if (step === "placeFirst") {
-    return evaluateOmnistrikePlacement(ctx.me, anchor, ctx.bombA, attackDirection.value, s);
-  }
-
-  const firstAnchor = omnistrikeAnchors.value[0];
-  if (!firstAnchor) return null;
-  const firstTiles = collectBombPatternTiles(s, firstAnchor, ctx.bombA, attackDirection.value);
-  return evaluateOmnistrikePlacement(
-    ctx.me,
-    anchor,
-    ctx.bombB,
-    attackDirection.value,
-    s,
-    firstTiles,
-  );
-});
-
-const omnistrikeLockedFirstKeys = computed(() => {
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  const anchor = omnistrikeAnchors.value[0];
-  if (
-    boardActionMode.value !== "omnistrike" ||
-    !ctx ||
-    !s ||
-    !anchor ||
-    omnistrikeStep.value === "selectBombs" ||
-    omnistrikeStep.value === "placeFirst"
-  ) {
-    return new Set<string>();
-  }
-  return coordsToKeySet(collectBombPatternTiles(s, anchor, ctx.bombA, attackDirection.value));
-});
-
-const omnistrikePrimaryKeys = computed(() => {
-  if (boardActionMode.value !== "omnistrike" || omnistrikeStep.value !== "confirm") {
-    return new Set<string>();
-  }
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  const anchorA = omnistrikeAnchors.value[0];
-  const anchorB = omnistrikeAnchors.value[1];
-  if (!ctx || !s || !anchorA || !anchorB) return new Set<string>();
-  const tilesA = collectBombPatternTiles(s, anchorA, ctx.bombA, attackDirection.value);
-  const tilesB = collectBombPatternTiles(s, anchorB, ctx.bombB, attackDirection.value);
-  return coordsToKeySet(unionPatternTiles(tilesA, tilesB));
-});
-
-const omnistrikeSecondaryKeys = computed(() => {
-  if (boardActionMode.value !== "omnistrike") return new Set<string>();
-  const step = omnistrikeStep.value;
-  if (step === "confirm") return new Set<string>();
-  if (step === "selectBombs") return new Set<string>();
-
-  const preview = omnistrikePlacementPreview.value;
-  if (preview && (step === "placeFirst" || step === "placeSecond")) {
-    const keys = coordsToKeySet(preview.patternTiles);
-    for (const key of omnistrikeLockedFirstKeys.value) keys.add(key);
-    return keys;
-  }
-  return omnistrikeLockedFirstKeys.value;
-});
-
-const omnistrikeInvalidKeys = computed(() => {
-  if (boardActionMode.value !== "omnistrike") return new Set<string>();
-  const step = omnistrikeStep.value;
-  if (step !== "placeFirst" && step !== "placeSecond") return new Set<string>();
-  const preview = omnistrikePlacementPreview.value;
-  if (!preview) return new Set<string>();
-  if (preview.tooFar) return coordsToKeySet(preview.patternTiles);
-  if (!preview.adjacentToOther && step === "placeSecond") {
-    return coordsToKeySet(preview.patternTiles);
-  }
-  return preview.tooCloseKeys;
-});
-
-const warhookPrimaryKeys = computed(() => {
-  if (boardActionMode.value !== "warhook") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  if (warhookStep.value === "selectLanding" && warhookTarget.value) {
-    return new Set([coordKey(warhookTarget.value.x, warhookTarget.value.y)]);
-  }
-  return warhookValidTargetKeys(s, me);
-});
-
-const warhookSecondaryKeys = computed(() => {
-  if (boardActionMode.value !== "warhook") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  if (warhookStep.value === "selectLanding") {
-    return coordsToKeySet(warhookLandingOptions.value);
-  }
-  return warhookRangeKeys(s, me);
-});
-
-const armorPlaceTowerKeys = computed(() => {
-  if (boardActionMode.value !== "armorPlaceTower") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  const armor = getArmorByName(me.armor ?? "");
-  const structured = armor?.armorActionStructured;
-  if (!structured || structured.kind !== "place_tower") return new Set<string>();
-  return getCombatBoardHelpers().yadathanPlacementKeys(s, me, structured.range);
-});
-
-const armorPushTargetKeys = computed(() => {
-  if (boardActionMode.value !== "armorPush") return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  const keys = formlessTargetTileKeys(s, me.x, me.y);
-  for (const p of s.players) {
-    if (p.id !== me.id && Math.abs(p.x - me.x) + Math.abs(p.y - me.y) === 1) {
-      keys.add(coordKey(p.x, p.y));
-    }
-  }
-  return keys;
-});
-
-const armorTeleportTargetKeys = computed(() => {
-  if (boardActionMode.value !== "armorTeleport" || pendingTargetEnemyId.value) return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  return formlessTargetTileKeys(s, me.x, me.y);
-});
-
-const armorTeleportLandingKeys = computed(() => {
-  if (boardActionMode.value !== "armorTeleport" || !pendingTargetEnemyId.value) return new Set<string>();
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return new Set<string>();
-  return coordsToKeySet(formlessLandingTiles(s, me.id, pendingTargetEnemyId.value));
-});
-
-
 const lineOfSightObserver = computed((): { x: number; y: number } | null => {
   const s = gameState.value;
   if (!s) return null;
@@ -1001,111 +821,6 @@ const seenTileKeys = computed(() => {
   const s = gameState.value;
   if (!id || !s?.seenTilesByPlayerId?.[id]) return new Set<string>();
   return new Set(s.seenTilesByPlayerId[id]);
-});
-
-const towerTeleportPrimaryKeys = computed(() => {
-  if (boardActionMode.value !== "towerTeleport") return new Set<string>();
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  if (!id || !s) return new Set<string>();
-  if (towerTeleportStep.value === "selectKeraunoTarget" && towerTeleportLanding.value) {
-    const adjacent = getCombatBoardHelpers().keraunoAdjacentEnemyIds(s, towerTeleportLanding.value.x, towerTeleportLanding.value.y);
-    const keys = new Set<string>();
-    for (const enemyId of adjacent) {
-      const enemy = s.enemies.find((e) => e.id === enemyId);
-      if (enemy) keys.add(coordKey(enemy.x, enemy.y));
-    }
-    return keys;
-  }
-  return new Set<string>();
-});
-
-const towerTeleportSecondaryKeys = computed(() => {
-  if (boardActionMode.value !== "towerTeleport") return new Set<string>();
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  if (!id || !s || towerTeleportStep.value === "selectKeraunoTarget") return new Set<string>();
-  return getCombatBoardHelpers().towerTeleportLandingKeys(s, id);
-});
-
-const assistedLaunchPreview = computed(() => {
-  if (boardActionMode.value !== "assistedLaunch") return null;
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  const anchor = assistedLaunchAnchor.value;
-  if (!id || !s || !anchor) return null;
-  return computeAssistedLaunch(s, id, anchor.x, anchor.y);
-});
-
-const assistedLaunchAnchorKeys = computed(() => {
-  if (boardActionMode.value !== "assistedLaunch" || assistedLaunchStep.value !== "selectAnchor") {
-    return new Set<string>();
-  }
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  const me = yourPlayer.value;
-  if (!id || !s) return new Set<string>();
-  const anchors = assistedLaunchAnchors(s, id);
-  const coords: { x: number; y: number }[] = [];
-  for (const anchor of anchors) {
-    if (isInBounds(anchor.x, anchor.y, s.width, s.height)) {
-      coords.push({ x: anchor.x, y: anchor.y });
-    }
-  }
-  const edgeAnchors = anchors.filter((a) => a.kind === "edge");
-  if (edgeAnchors.length === 1 && me) {
-    coords.push({ x: me.turnStartX ?? me.x, y: me.turnStartY ?? me.y });
-  }
-  return coordsToKeySet(coords);
-});
-
-const assistedLaunchPathKeys = computed(() => {
-  const preview = assistedLaunchPreview.value;
-  if (!preview || assistedLaunchStep.value !== "confirm") return new Set<string>();
-  const keys = new Set<string>();
-  for (const step of preview.path.slice(0, -1)) {
-    keys.add(coordKey(step.x, step.y));
-  }
-  return keys;
-});
-
-const assistedLaunchLandingKeys = computed(() => {
-  const preview = assistedLaunchPreview.value;
-  if (!preview || assistedLaunchStep.value !== "confirm") return new Set<string>();
-  return new Set([coordKey(preview.landing.x, preview.landing.y)]);
-});
-
-const assistedLaunchLineKeys = computed(() => {
-  const preview = assistedLaunchPreview.value;
-  const me = yourPlayer.value;
-  if (!preview || !me || assistedLaunchStep.value !== "confirm") return new Set<string>();
-  const startX = me.turnStartX ?? me.x;
-  const startY = me.turnStartY ?? me.y;
-  const keys = new Set<string>();
-  for (const tile of tilesOnCardinalLine(startX, startY, preview.landing.x, preview.landing.y)) {
-    keys.add(coordKey(tile.x, tile.y));
-  }
-  return keys;
-});
-
-const kataptyPickKeys = computed(() => {
-  if (boardActionMode.value !== "kataptyPick") return new Set<string>();
-  const id = yourPlayerId.value;
-  const s = gameState.value;
-  if (!id || !s) return new Set<string>();
-  return getCombatBoardHelpers().kataptyTargetKeys(s, id);
-});
-
-const kataptySelectedCoordKeys = computed(() => {
-  const keys = new Set<string>();
-  if (boardActionMode.value !== "kataptyPick") return keys;
-  const s = gameState.value;
-  if (!s) return keys;
-  for (const id of kataptyTargetIds.value) {
-    const enemy = s.enemies.find((e) => e.id === id);
-    if (enemy) keys.add(coordKey(enemy.x, enemy.y));
-  }
-  return keys;
 });
 
 const reversalLineKeys = computed(() => {
@@ -1182,19 +897,6 @@ const attackContext = computed(() => {
 
 
 
-
-const omnistrikeContext = computed(() => {
-  const me = yourPlayer.value;
-  if (boardActionMode.value !== "omnistrike" || !me?.weapon) return null;
-  const [indexA, indexB] = omnistrikeBombs.value;
-  if (indexA == null || indexB == null) return null;
-  const bombA = resolveBombAttackSpec(me.weapon, indexA);
-  const bombB = resolveBombAttackSpec(me.weapon, indexB);
-  if (!bombA || !bombB) return null;
-  const combinedSpan = computeOmnistrikeRangeSpan(bombA, bombB);
-  if (!combinedSpan) return null;
-  return { me, weapon: me.weapon, bombA, bombB, combinedSpan, indexA, indexB };
-});
 
 const attackPreviewByDirection = computed(() => {
   const ctx = attackContext.value;
@@ -1343,28 +1045,6 @@ function buildLocalAttackPreview(): AttackPreviewState | null {
     };
   }
 
-  if (m === "omnistrike") {
-    const step = omnistrikeStep.value;
-    if (step === "selectBombs") return null;
-    const [indexA, indexB] = omnistrikeBombs.value;
-    if (indexA == null || indexB == null) return null;
-    return {
-      playerId,
-      mode: "omnistrike",
-      direction: attackDirection.value,
-      pack: getCombatBoardHelpers().buildOmnistrikeAttackPreviewPack({
-        omnistrikeStep: step,
-        omnistrikeBombIndices: [indexA, indexB],
-        omnistrikeAnchors: [
-          omnistrikeAnchors.value[0] ? { ...omnistrikeAnchors.value[0] } : null,
-          omnistrikeAnchors.value[1] ? { ...omnistrikeAnchors.value[1] } : null,
-        ],
-      }),
-      hoverX: previewHoverCell.value?.x,
-      hoverY: previewHoverCell.value?.y,
-    };
-  }
-
   return null;
 }
 
@@ -1393,9 +1073,6 @@ watch(
     rangeAttackTargetIds,
     rangeAttackObstacleCoords,
     packUi,
-    omnistrikeStep,
-    omnistrikeBombs,
-    omnistrikeAnchors,
     gmEnemyAttack,
   ],
   syncAttackPreviewNow,
@@ -1598,10 +1275,9 @@ const gmEnemyAttackTargetKeys = computed(() => {
   if (!attackSpec) return keys;
   if (isPatternEnemyAttack(attackSpec)) return keys;
   const stainTeleport =
-    pending.stainTeleport || attackSpec.specialId === "stain-teleport";
+    pending.stainTeleport || !!getCombatBoardHelpers().isStainTeleportAttack?.(attackSpec.specialId);
   const plantFlowerbud =
     pending.plantFlowerbud ||
-    attackSpec.specialId === "flowerbud-plant" ||
     !!getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(attackSpec.specialId);
 
   if (plantFlowerbud && enemy) {
@@ -1935,33 +1611,17 @@ const cellStateByKey = computed(() => {
     const packLayers = packModeLayers.value;
     const combatPrimary =
       combatAttackPrimaryKeys.value.has(ck) ||
-      omnistrikePrimaryKeys.value.has(ck) ||
       packLayers.primary.has(ck) ||
-      warhookPrimaryKeys.value.has(ck) ||
-      armorPushTargetKeys.value.has(ck) ||
-      armorTeleportTargetKeys.value.has(ck) ||
-      towerTeleportPrimaryKeys.value.has(ck) ||
-      assistedLaunchAnchorKeys.value.has(ck) ||
-      assistedLaunchLandingKeys.value.has(ck) ||
       combatAttackSelectedKeys.value.has(ck) ||
       (elevBonusTile.value != null && coordKey(elevBonusTile.value.x, elevBonusTile.value.y) === ck) ||
       (remoteSelected?.has(ck) ?? false) ||
       reversalLineKeys.value.damage.has(ck) ||
       gmEnemyAttackTargetKeys.value.has(ck) ||
       gmEnemyPatternPrimaryKeys.value.has(ck) ||
-      (remotePrimary?.has(ck) ?? false) ||
-      (boardActionMode.value === "kataptyPick" && kataptySelectedCoordKeys.value.has(ck));
+      (remotePrimary?.has(ck) ?? false);
     const combatSecondary =
       combatAttackSecondaryKeys.value.has(ck) ||
-      omnistrikeSecondaryKeys.value.has(ck) ||
       packLayers.secondary.has(ck) ||
-      warhookSecondaryKeys.value.has(ck) ||
-      armorPlaceTowerKeys.value.has(ck) ||
-      armorTeleportLandingKeys.value.has(ck) ||
-      towerTeleportSecondaryKeys.value.has(ck) ||
-      assistedLaunchPathKeys.value.has(ck) ||
-      assistedLaunchLineKeys.value.has(ck) ||
-      kataptyPickKeys.value.has(ck) ||
       rezTargetKeys.value.has(ck) ||
       gmEnemyPatternSecondaryKeys.value.has(ck) ||
       (elevationBonusCandidateKeys.value.has(ck) &&
@@ -2010,7 +1670,6 @@ const cellStateByKey = computed(() => {
         (remoteHeal && ((remotePrimary?.has(ck) ?? false) || (remoteSecondary?.has(ck) ?? false))),
       combatTargetInvalid:
         combatAttackInvalidKeys.value.has(coordKey(c.x, c.y)) ||
-        omnistrikeInvalidKeys.value.has(coordKey(c.x, c.y)) ||
         packLayers.invalid.has(ck) ||
         (remoteInvalid?.has(ck) ?? false),
       patternRecoil: patternRecoilKeys.value.has(coordKey(c.x, c.y)),
@@ -2728,7 +2387,7 @@ function tryMoveSelectedEnemyToDest(
   if (!s || !selected) return false;
   if (optimisticEnemyIds.value.has(selected)) return false;
   if (swarmChipOpen.value) return false;
-  if (!ensureSwarmChipResolved(selected)) return false;
+  if (!combatBoardHostBridge.ensureSwarmChipResolved(selected)) return false;
   const enemy = s.enemies.find((e) => e.id === selected);
   if (!enemy) {
     clearBoardSelection();
@@ -2770,37 +2429,10 @@ function tryMoveSelectedEnemyToDest(
   return true;
 }
 
-function handleKataptyPick(enemyId: string): boolean {
-  const s = gameState.value;
-  if (!s || boardActionMode.value !== "kataptyPick") return false;
-  const enemy = s.enemies.find((e) => e.id === enemyId);
-  if (!enemy || getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
-  if (!kataptyPickKeys.value.has(coordKey(enemy.x, enemy.y))) return true;
-  const ids = kataptyTargetIds.value;
-  const idx = ids.indexOf(enemy.id);
-  if (idx >= 0) {
-    kataptyTargetIds.value = ids.filter((id) => id !== enemy.id);
-  } else if (ids.length < 3) {
-    kataptyTargetIds.value = [...ids, enemy.id];
-  }
-  if (kataptyTargetIds.value.length === 3) {
-    sendPlayerAction({
-      action: "pack",
-      kind: "armorAction",
-      detail: {
-        kind: "katapty_end_turn",
-        targetEnemyIds: [...kataptyTargetIds.value],
-      },
-    });
-    clearBoardActionMode();
-  }
-  return true;
-}
-
 let enemyClickTimer: ReturnType<typeof setTimeout> | null = null;
 
 function boardTargetingContext() {
-  return { omnistrikeStep: omnistrikeStep.value };
+  return { omnistrikeStep: packUi.value.step as OmnistrikeStep | undefined };
 }
 
 function onEnemyCellClick(x: number, y: number, enemyId: string) {
@@ -3373,150 +3005,6 @@ function handleAttackCellClick(x: number, y: number, targetEnemyId?: string): bo
   return true;
 }
 
-function commitWarhook(landing: { x: number; y: number }) {
-  const me = yourPlayer.value;
-  const target = warhookTarget.value;
-  const s = gameState.value;
-  if (!me || !target || !s) return;
-  const triggers = previewSprintProvokes(s, me.id, landing.x, landing.y);
-  gateProvoke(triggers, () => {
-    sendPlayerAction({
-      action: "pack",
-      kind: "weaponActive",
-      detail: {
-        warhook: {
-          targetEnemyId: target.enemyId,
-          targetX: target.x,
-          targetY: target.y,
-          landingX: landing.x,
-          landingY: landing.y,
-        },
-      },
-    });
-    clearBoardActionMode();
-  });
-}
-
-function handleWarhookCellClick(x: number, y: number): boolean {
-  const me = yourPlayer.value;
-  const s = gameState.value;
-  if (!me || !s) return false;
-
-  if (warhookStep.value === "selectLanding") {
-    const key = coordKey(x, y);
-    if (!warhookSecondaryKeys.value.has(key)) return false;
-    const landing = warhookLandingOptions.value.find((t) => t.x === x && t.y === y);
-    if (!landing) return false;
-    commitWarhook(landing);
-    return true;
-  }
-
-  const key = coordKey(x, y);
-  if (!warhookPrimaryKeys.value.has(key)) return false;
-
-  const target = isWarhookTargetAt(s, me, x, y);
-  if (!target) return false;
-
-  const landings = warhookAdjacentLandingTiles(s, me.id, target);
-  if (!landings.length) {
-    showToast("No space adjacent to target");
-    return true;
-  }
-
-  const nearest = warhookNearestLandings(me, landings);
-  if (nearest.length === 1) {
-    warhookTarget.value = target;
-    commitWarhook(nearest[0]!);
-    return true;
-  }
-
-  warhookTarget.value = target;
-  warhookLandingOptions.value = nearest;
-  warhookStep.value = "selectLanding";
-  return true;
-}
-
-function handleOmnistrikeCellClick(x: number, y: number): boolean {
-  const ctx = omnistrikeContext.value;
-  const s = gameState.value;
-  if (!ctx || !s) return false;
-
-  const step = omnistrikeStep.value;
-  const key = coordKey(x, y);
-
-  if (step === "confirm") {
-    if (omnistrikePrimaryKeys.value.has(key)) {
-      const anchorA = omnistrikeAnchors.value[0];
-      const anchorB = omnistrikeAnchors.value[1];
-      if (!anchorA || !anchorB) return false;
-      sendPlayerAction({
-        action: "pack",
-        kind: "weaponActive",
-        detail: {
-          omnistrike: {
-            bombIndices: [ctx.indexA, ctx.indexB],
-            anchors: [anchorA, anchorB],
-            direction: attackDirection.value,
-          },
-        },
-      });
-      clearBoardActionMode();
-      return true;
-    }
-    omnistrikeAnchors.value = [omnistrikeAnchors.value[0], null];
-    omnistrikeStep.value = "placeSecond";
-    return true;
-  }
-
-  if (step === "placeFirst") {
-    const placement = evaluateOmnistrikePlacement(ctx.me, { x, y }, ctx.bombA, attackDirection.value, s);
-    if (placement.tooFar) {
-      showToast("outside maximum range");
-      return true;
-    }
-    if (placement.tooCloseKeys.size > 0) {
-      showToast("inside minimum range");
-      return true;
-    }
-    if (!placement.valid) return false;
-    omnistrikeAnchors.value = [{ x, y }, null];
-    omnistrikeStep.value = "placeSecond";
-    return true;
-  }
-
-  if (step === "placeSecond") {
-    const firstAnchor = omnistrikeAnchors.value[0];
-    if (!firstAnchor) return false;
-    const firstTiles = collectBombPatternTiles(s, firstAnchor, ctx.bombA, attackDirection.value);
-    const placement = evaluateOmnistrikePlacement(
-      ctx.me,
-      { x, y },
-      ctx.bombB,
-      attackDirection.value,
-      s,
-      firstTiles,
-    );
-    if (placement.tooFar) {
-      showToast("outside maximum range");
-      return true;
-    }
-    if (placement.tooCloseKeys.size > 0) {
-      showToast("inside minimum range");
-      return true;
-    }
-    if (!placement.adjacentToOther) {
-      showToast("Patterns must be adjacent or overlap");
-      return true;
-    }
-    if (!placement.valid) return false;
-    omnistrikeAnchors.value = [firstAnchor, { x, y }];
-    omnistrikeStep.value = "confirm";
-    return true;
-  }
-
-  return false;
-}
-
 function handleCombatCellClick(x: number, y: number): boolean {
   const m = boardActionMode.value;
   if (!m || !yourPlayer.value || !gameState.value) return false;
@@ -3576,12 +3064,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
       }
     }
   }
-  if (m === "omnistrike") {
-    return handleOmnistrikeCellClick(x, y);
-  }
-  if (m === "warhook") {
-    return handleWarhookCellClick(x, y);
-  }
   if (m === "shove") {
     if (enemy && Math.abs(x - me.x) + Math.abs(y - me.y) === 1) {
       sendPlayerAction({ action: "shove", targetEnemyId: enemy.id });
@@ -3606,108 +3088,6 @@ function handleCombatCellClick(x: number, y: number): boolean {
       sendSprintPath(path);
     });
     return true;
-  }
-  if (m === "armorTeleport") {
-    const key = coordKey(x, y);
-    if (!pendingTargetEnemyId.value) {
-      if (!armorTeleportTargetKeys.value.has(key) || !enemy) return true;
-      pendingTargetEnemyId.value = enemy.id;
-      return true;
-    }
-    if (!armorTeleportLandingKeys.value.has(key)) return true;
-    const s = gameState.value;
-    const id = yourPlayerId.value;
-    if (!s || !id) return true;
-    gateProvoke(previewSprintProvokes(s, id, x, y), () => {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: pendingTargetEnemyId.value!,
-        landingX: x,
-        landingY: y } });
-      clearBoardActionMode();
-    });
-    return true;
-  }
-  if (m === "armorPush") {
-    if (enemy && armorPushTargetKeys.value.has(coordKey(x, y))) {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetEnemyId: enemy.id, push: armorPush.value } });
-      clearBoardActionMode();
-      return true;
-    }
-    if (player && player.id !== me.id && Math.abs(x - me.x) + Math.abs(y - me.y) === 1) {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { targetPlayerId: player.id, push: armorPush.value } });
-      clearBoardActionMode();
-      return true;
-    }
-    return true;
-  }
-  if (m === "armorPlaceTower") {
-    const key = coordKey(x, y);
-    if (!armorPlaceTowerKeys.value.has(key)) return true;
-    sendPlayerAction({ action: "pack", kind: "armorAction", detail: { x, y } });
-    clearBoardActionMode();
-    return true;
-  }
-  if (m === "towerTeleport") {
-    const s = gameState.value;
-    if (!s) return true;
-    const key = coordKey(x, y);
-    if (towerTeleportStep.value === "selectKeraunoTarget" && enemy) {
-      sendPlayerAction({ action: "pack", kind: "armorAction", detail: { kind: "tower_teleport",
-        x: towerTeleportLanding.value!.x,
-        y: towerTeleportLanding.value!.y,
-        keraunoTargetEnemyId: enemy.id } });
-      clearBoardActionMode();
-      return true;
-    }
-    if (!towerTeleportSecondaryKeys.value.has(key)) return true;
-    const tower = getCombatBoardHelpers().getPlayerTower(s, me.id);
-    towerTeleportLanding.value = { x, y };
-    if (tower?.name === "Kerauno") {
-      const adjacent = getCombatBoardHelpers().keraunoAdjacentEnemyIds(s, x, y);
-      if (adjacent.length > 0) {
-        towerTeleportStep.value = "selectKeraunoTarget";
-        return true;
-      }
-    }
-    sendPlayerAction({ action: "pack", kind: "armorAction", detail: { kind: "tower_teleport", x, y } });
-    clearBoardActionMode();
-    return true;
-  }
-  if (m === "assistedLaunch") {
-    const s = gameState.value;
-    const id = yourPlayerId.value;
-    if (!s || !id || !me) return true;
-    const key = coordKey(x, y);
-    if (assistedLaunchStep.value === "selectAnchor") {
-      if (!assistedLaunchAnchorKeys.value.has(key)) return true;
-      const anchors = assistedLaunchAnchors(s, id);
-      let picked = anchors.find((a) => a.x === x && a.y === y);
-      if (!picked) {
-        const startX = me.turnStartX ?? me.x;
-        const startY = me.turnStartY ?? me.y;
-        if (x === startX && y === startY) {
-          const edgeAnchors = anchors.filter((a) => a.kind === "edge");
-          if (edgeAnchors.length === 1) picked = edgeAnchors[0];
-        }
-      }
-      if (!picked) return true;
-      assistedLaunchAnchor.value = { x: picked.x, y: picked.y };
-      assistedLaunchStep.value = "confirm";
-      return true;
-    }
-    if (!assistedLaunchLandingKeys.value.has(key)) return true;
-    const anchor = assistedLaunchAnchor.value;
-    if (!anchor) return true;
-    const preview = computeAssistedLaunch(s, id, anchor.x, anchor.y);
-    if (!preview) return true;
-    gateProvoke(previewPathProvokes(s, id, preview.path), () => {
-      sendPlayerAction({ action: "pack", kind: "assistedLaunch", detail: { anchorX: anchor.x, anchorY: anchor.y } });
-      clearBoardActionMode();
-    });
-    return true;
-  }
-  if (m === "kataptyPick") {
-    if (!enemy || getCombatBoardHelpers().isTowerEnemy(enemy)) return true;
-    return handleKataptyPick(enemy.id);
   }
   if (m === "rez") {
     if (player && player.id !== me.id && (player.hp ?? 0) <= 0) {
@@ -3801,7 +3181,6 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
 
   const plantFlowerbud =
     pending.plantFlowerbud ||
-    attackSpec.specialId === "flowerbud-plant" ||
     !!getCombatBoardHelpers().isEmptyAdjacentPlantAttack?.(attackSpec.specialId);
   if (plantFlowerbud) {
     sendGmEnemyAction({
@@ -3816,7 +3195,7 @@ function handleGmEnemyAttackCellClick(x: number, y: number): boolean {
   }
 
   const stainTeleport =
-    pending.stainTeleport || attackSpec.specialId === "stain-teleport";
+    pending.stainTeleport || !!getCombatBoardHelpers().isStainTeleportAttack?.(attackSpec.specialId);
 
   if (stainTeleport && (pending.targetPlayerId || pending.targetEnemyId)) {
     sendGmEnemyAction({
@@ -4820,8 +4199,7 @@ function onKeydown(e: KeyboardEvent) {
       }
       return;
     }
-    if (mode === "attack" || mode === "omnistrike" || mode === "gmEnemyAttack") {
-      if (mode === "omnistrike" && omnistrikeStep.value === "selectBombs") return;
+    if (mode === "attack" || mode === "gmEnemyAttack") {
       e.preventDefault();
       rotateAttackDirection();
       if (mode === "attack") {

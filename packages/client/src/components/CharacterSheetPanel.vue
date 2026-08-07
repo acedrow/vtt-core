@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   boardModeForEquipment,
+  boardModeForWeapon,
   extrasFromSheetData,
   extrasPayload,
   listClientSheetSections,
@@ -133,8 +134,6 @@ const {
   mode,
   attackAimed,
   attackAnchor,
-  omnistrikeStep,
-  omnistrikeBombs,
   setMode,
 } = useBoardActionMode();
 
@@ -152,10 +151,18 @@ const {
   onDualBombComplete,
   clearMode,
   classModeActive,
+  omnistrikeStep,
+  omnistrikeBombs,
 } = useCombatModeActions({ playerClass, playerId: () => boardPlayerId.value });
 
 const equipmentActionActive = computed(() => {
   const boardMode = form.value.equipment ? boardModeForEquipment(form.value.equipment) : null;
+  return boardMode != null && mode.value === boardMode;
+});
+
+const weaponActiveModeActive = computed(() => {
+  if (mode.value === "omnistrike") return true;
+  const boardMode = boardModeForWeapon(equippedWeaponName.value);
   return boardMode != null && mode.value === boardMode;
 });
 
@@ -897,7 +904,7 @@ onUnmounted(() => {
               </SheetActionButton>
               <SheetActionButton
                 v-if="!replacesWeaponActive"
-                :active="mode === 'omnistrike' || mode === 'warhook'"
+                :active="weaponActiveModeActive"
                 :disabled="!canUseWeaponActive"
                 @click="useWeaponActive(equippedWeaponName)"
               >

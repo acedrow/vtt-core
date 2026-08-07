@@ -9,18 +9,10 @@ export type BoardTargetingContext = {
 export const BOARD_CELL_TARGETING_MODES = [
   "move",
   "attack",
-  "omnistrike",
-  "warhook",
   "shove",
   "sprint",
   "aegis",
-  "armorTeleport",
-  "armorPush",
-  "armorPlaceTower",
-  "towerTeleport",
-  "kataptyPick",
   "rez",
-  "assistedLaunch",
 ] as const;
 
 const targetingModes = new Set<string>(BOARD_CELL_TARGETING_MODES);
