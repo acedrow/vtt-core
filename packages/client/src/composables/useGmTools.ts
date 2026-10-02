@@ -568,6 +568,11 @@ export function useGmTools() {
     paintbrushSelectHeld.value = active;
   }
 
+  function sampledImageKey(key: string, isGroupKey: (key: string) => boolean): string {
+    const groupKey = key.slice(0, key.lastIndexOf("/"));
+    return isGroupKey(groupKey) ? groupKey : key;
+  }
+
   function tileToPaintPreset(tile: MapTile): TilePaintPreset {
     const effects = Object.entries(tile.tileEffects ?? {})
       .filter(([, stacks]) => stacks !== 0)
@@ -582,9 +587,15 @@ export function useGmTools() {
       tileName: tile.name ?? "",
       ...(terrain === "obstacle" ? { obstacleHp: getObstacleHp(tile) } : {}),
       ...(tile.baseColor ? { baseColor: tile.baseColor } : {}),
-      ...(tile.appearanceKey ? { appearanceKey: tile.appearanceKey } : {}),
-      ...(tile.overlayKey ? { overlayKey: tile.overlayKey } : {}),
-      ...(tile.featureKey ? { featureKey: tile.featureKey } : {}),
+      ...(tile.appearanceKey
+        ? { appearanceKey: sampledImageKey(tile.appearanceKey, isAppearanceGroupKey) }
+        : {}),
+      ...(tile.overlayKey
+        ? { overlayKey: sampledImageKey(tile.overlayKey, isOverlayGroupKey) }
+        : {}),
+      ...(tile.featureKey
+        ? { featureKey: sampledImageKey(tile.featureKey, isFeatureGroupKey) }
+        : {}),
       ...(tile.appearanceTint ? { appearanceTint: { ...tile.appearanceTint } } : {}),
       ...(tile.overlayTint ? { overlayTint: { ...tile.overlayTint } } : {}),
       ...(tile.featureTint ? { featureTint: { ...tile.featureTint } } : {}),

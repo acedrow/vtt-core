@@ -102,6 +102,13 @@ function activateMap() {
 
 function saveStartingState() {
   if (!canSaveStartingState.value) return;
+  if (
+    !confirm(
+      "Save the current board as the starting state? This replaces any saved starting state with the current tile terrain and enemy positions/HP.",
+    )
+  ) {
+    return;
+  }
   savingStartingState.value = true;
   actionError.value = null;
   send({ type: "saveStartingState" });
